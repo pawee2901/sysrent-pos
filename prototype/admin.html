@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>หลังบ้านร้าน — Muay Premium</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* ===== หลังบ้าน: แถบซ้าย + เนื้อหา · ทุกหน้าใช้โครงเดียวกัน (หัวหน้า → ตัวเลข → ตาราง) ===== */
+  body { font-size: 14.5px; }
+  .shell { display: grid; grid-template-columns: 244px minmax(0, 1fr); min-height: 100vh; }
+  .side { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 4px; padding: 16px 12px; background: var(--surface); border-right: 1px solid var(--line); }
+  .side-brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; }
+  .side-brand .mark { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; }
+  .side-brand b { display: block; font-family: var(--font-head); line-height: 1.2; }
+  .side-brand small { color: var(--muted); font-size: 12px; }
+  .side-search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; margin-bottom: 8px; border-radius: 10px; background: var(--surface-2); color: var(--faint); font-size: 13px; cursor: pointer; border: 1px solid var(--line); }
+  .side-search kbd { margin-left: auto; font-family: inherit; font-size: 11px; padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); }
+  .nav-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--faint); padding: 12px 10px 4px; }
+  .nav a { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: 10px; color: var(--muted); font-weight: 500; }
+  .nav a:hover { background: var(--surface-2); color: var(--text); }
+  .nav a.on { background: var(--accent-soft); color: var(--accent); }
+  .nav svg { width: 19px; height: 19px; flex: none; }
+  .nav .count { margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+  .side-foot { margin-top: auto; padding: 12px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; }
+  .side-foot .meter { margin: 8px 0 4px; }
+
+  .main { min-width: 0; }
+  .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 28px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .topbar .crumbs { font-size: 14px; color: var(--muted); }
+  .topbar .crumbs b { color: var(--text); font-weight: 600; }
+  .topbar .acts { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  .me { width: 34px; height: 34px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-weight: 600; font-size: 14px; }
+  .content { padding: 24px 28px 64px; max-width: 1400px; }
+
+  /* หัวหน้า (เหมือนกันทุกหน้า) */
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .page-head h1 { font-size: 24px; }
+  .page-head p { margin: 4px 0 0; color: var(--muted); }
+  .page-head .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ตัวเลขสรุป */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .kpi { padding: 16px 18px; display: flex; flex-direction: column; gap: 2px; }
+  .kpi .lbl { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .kpi .val { font-family: var(--font-head); font-size: 26px; font-weight: 700; }
+  .kpi .delta { font-size: 12px; color: var(--ok); font-weight: 600; }
+  .kpi .delta.down { color: var(--bad); }
+  .kpi .delta.mute { color: var(--faint); font-weight: 400; }
+  .kpi-ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-size: 15px; }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .stack { display: flex; flex-direction: column; gap: 20px; }
+
+  /* สิ่งที่ต้องทำ */
+  .todo { list-style: none; margin: 0; padding: 6px 0; }
+  .todo li { display: flex; align-items: center; gap: 12px; padding: 10px 20px; }
+  .todo li + li { border-top: 1px solid var(--line); }
+  .todo .ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; font-size: 17px; }
+  .todo .ic.warn { background: var(--warn-soft); } .todo .ic.bad { background: var(--bad-soft); } .todo .ic.acc { background: var(--accent-soft); }
+  .todo .grow { flex: 1; min-width: 0; }
+  .todo small { display: block; color: var(--muted); }
+
+  /* กราฟแท่งยอดขาย 7 วัน */
+  .chart { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding: 20px 20px 8px; }
+  .chart .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+  .chart .b { width: 100%; max-width: 46px; border-radius: 8px 8px 4px 4px; background: var(--accent-soft); position: relative; transition: background .15s; }
+  .chart .col:last-child .b { background: var(--accent); }
+  .chart .col:hover .b { background: var(--accent); }
+  .chart .col:hover .tip { opacity: 1; }
+  .chart .tip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); font-size: 12px; font-weight: 600; white-space: nowrap; opacity: 0; transition: opacity .15s; background: var(--text); color: var(--bg); padding: 2px 8px; border-radius: 6px; }
+  .chart .col:last-child .tip { opacity: 1; }
+  .chart .d { font-size: 12px; color: var(--faint); }
+
+  /* โควตาตรวจสลิป */
+  .meter { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--line); }
+  .meter i { display: block; height: 100%; border-radius: 99px; background: var(--accent); }
+  .meter.warn i { background: var(--warn); }
+
+  /* ตาราง (ระเบียบเดียวกันทุกหน้า) */
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .toolbar .input { height: 38px; max-width: 280px; }
+  .seg { display: inline-flex; padding: 3px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--line); gap: 2px; }
+  .seg button { height: 30px; padding: 0 12px; border: 0; border-radius: 8px; background: none; cursor: pointer; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .seg button.on { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
+  .seg button span { color: var(--faint); font-weight: 400; margin-left: 4px; }
+  .tbl { width: 100%; border-collapse: collapse; }
+  .tbl th { text-align: left; font-size: 12px; font-weight: 600; color: var(--faint); padding: 10px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--surface-2); }
+  .tbl td { padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl tbody tr { cursor: pointer; }
+  .tbl tbody tr:hover td { background: var(--surface-2); }
+  .tbl .r { text-align: right; }
+  .tbl .prod { display: flex; align-items: center; gap: 12px; }
+  .tbl .prod .applogo { width: 38px; height: 38px; border-radius: 10px; font-size: 14px; }
+  .tbl small { display: block; color: var(--muted); font-size: 12.5px; }
+  .tbl .code { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tbl-foot { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  .stockbar { width: 90px; }
+  .stockbar .meter { margin-top: 4px; height: 6px; }
+  .toggle { width: 38px; height: 22px; border-radius: 99px; background: var(--line); position: relative; border: 0; cursor: pointer; flex: none; }
+  .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .toggle.on { background: var(--ok); }
+  .toggle.on::after { left: 19px; }
+
+  /* คลังบัญชี: จอ */
+  .acc { margin-bottom: 16px; }
+  .acc-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .acc-head .grow { flex: 1; min-width: 200px; }
+  .acc-head small { display: block; color: var(--muted); }
+  .slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; padding: 16px 18px; }
+  .slot { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; cursor: pointer; background: var(--surface); }
+  .slot:hover { border-color: var(--accent); }
+  .slot b { font-size: 14px; }
+  .slot.used { background: var(--ok-soft); border-color: transparent; }
+  .slot.reset { background: var(--warn-soft); border-color: transparent; }
+  .slot.broken { background: var(--bad-soft); border-color: transparent; }
+  .slot .who { color: var(--muted); }
+
+  /* ตั้งค่า: แบบฟอร์ม + ตัวอย่างสด */
+  .set-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+  .form { display: grid; gap: 14px; padding: 20px; }
+  .form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .swatches { display: flex; gap: 10px; }
+  .sw { width: 34px; height: 34px; border-radius: 10px; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
+  .sw.on { box-shadow: 0 0 0 2px var(--text); }
+  .preview { position: sticky; top: 80px; overflow: hidden; }
+  .phone { margin: 16px auto; width: 250px; border-radius: 28px; border: 8px solid #1b1d26; overflow: hidden; background: var(--bg); box-shadow: var(--shadow-lg); }
+  .phone-top { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--surface); border-bottom: 1px solid var(--line); font-weight: 700; font-size: 13px; }
+  .phone-top .m { width: 22px; height: 22px; border-radius: 7px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 11px; }
+  .phone-body { padding: 12px; display: grid; gap: 8px; }
+  .phone-hero { padding: 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 12px; }
+  .phone-hero b { font-size: 14px; display: block; }
+  .phone-hero span.btnp { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 11px; }
+  .phone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .phone-grid div { border-radius: 10px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); font-size: 11px; }
+  .phone-grid .applogo { width: 100%; height: 56px; border-radius: 0; font-size: 18px; }
+  .phone-grid p { margin: 0; padding: 6px 8px; } .phone-grid p b { color: var(--accent); }
+
+  /* ลิ้นชักรายละเอียด (กดแถว) */
+  .drawer-bg { position: fixed; inset: 0; z-index: 40; background: rgba(15, 17, 23, .4); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .drawer { position: fixed; z-index: 41; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--surface); border-left: 1px solid var(--line); transform: translateX(100%); transition: transform .25s ease; display: flex; flex-direction: column; }
+  .drawer.open { transform: none; } .drawer-bg.open { opacity: 1; pointer-events: auto; }
+  .drawer-head { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  .drawer-body { padding: 20px; overflow-y: auto; flex: 1; display: grid; gap: 16px; align-content: start; }
+  .drawer-foot { padding: 14px 20px; border-top: 1px solid var(--line); display: flex; gap: 8px; }
+  .drawer-foot .btn { flex: 1; }
+  .dl { display: grid; grid-template-columns: 110px 1fr; gap: 8px 12px; margin: 0; font-size: 14px; }
+  .dl dt { color: var(--muted); } .dl dd { margin: 0; }
+  .delivered { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-family: ui-monospace, monospace; font-size: 13px; white-space: pre-wrap; }
+
+  /* ค้นหาด่วน Ctrl+K */
+  .cmd-bg { position: fixed; inset: 0; z-index: 60; background: rgba(15, 17, 23, .45); display: none; align-items: flex-start; justify-content: center; padding: 12vh 16px 0; }
+  .cmd-bg.open { display: flex; }
+  .cmd { width: min(560px, 100%); }
+  .cmd input { height: 54px; border: 0; border-bottom: 1px solid var(--line); border-radius: 16px 16px 0 0; font-size: 16px; box-shadow: none !important; }
+  .cmd ul { list-style: none; margin: 0; padding: 8px; max-height: 320px; overflow-y: auto; }
+  .cmd li a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; }
+  .cmd li a:hover, .cmd li a.sel { background: var(--accent-soft); color: var(--accent); }
+  .cmd li small { margin-left: auto; color: var(--faint); }
+
+  /* เมนูล่างมือถือ */
+  .mnav { display: none; }
+
+  @media (max-width: 1100px) {
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cols, .set-grid { grid-template-columns: 1fr; }
+    .preview { position: static; }
+    .slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    .side { display: none; }
+    .topbar { padding: 0 14px; }
+    .content { padding: 16px 14px 90px; }
+    .page-head h1 { font-size: 21px; }
+    .kpi { padding: 12px 14px; } .kpi .val { font-size: 21px; }
+    .form .two { grid-template-columns: 1fr; }
+    .slots { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px; }
+    /* ตาราง → การ์ดทีละแถว (ป้ายจาก data-l) */
+    .tbl thead { display: none; }
+    .tbl, .tbl tbody, .tbl tr, .tbl td { display: block; }
+    .tbl tr { padding: 12px 14px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; }
+    .tbl tr:last-child { border-bottom: 0; }
+    .tbl td { padding: 0; border: 0; }
+    .tbl td.m-full { grid-column: 1 / -1; }
+    .tbl td.m-hide { display: none; }
+    .tbl td.r { text-align: right; }
+    .toolbar .input { max-width: none; flex: 1 1 100%; }
+    .seg { overflow-x: auto; max-width: 100%; }
+    .mnav { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); }
+    .mnav a { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--faint); position: relative; }
+    .mnav a.on { color: var(--accent); font-weight: 600; }
+    .mnav svg { width: 22px; height: 22px; }
+    .mnav .count { position: absolute; top: -4px; right: calc(50% - 22px); min-width: 18px; height: 18px; border-radius: 99px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="side-brand"><span class="mark">M</span><div><b>Muay Premium</b><small>muay.sysrent.shop</small></div></div>
+    <div class="side-search" onclick="openCmd()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>ค้นหา<kbd>Ctrl K</kbd></div>
+    <nav class="nav" id="sideNav"></nav>
+    <div class="side-foot">
+      <div style="display:flex;justify-content:space-between"><b>ตรวจสลิปเดือนนี้</b><span class="num">87 / 100</span></div>
+      <div class="meter warn"><i style="width:87%"></i></div>
+      <span class="muted" style="font-size:12px">แพ็กเกจเริ่มต้น · เกินโควตา ฿0.05/สลิป</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="crumbs">หลังบ้าน / <b id="crumb">ภาพรวม</b></div>
+      <div class="acts">
+        <button class="icon-btn" onclick="openCmd()" aria-label="ค้นหา"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+        <button class="icon-btn" onclick="toast('แจ้งเตือน 3 รายการ')" aria-label="แจ้งเตือน"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4"/></svg><span class="pill bad plain" style="position:absolute;top:4px;right:2px;height:16px;padding:0 5px;font-size:10px">3</span></button>
+        <a href="store.html" class="btn sm" target="_blank">ดูหน้าร้าน ↗</a>
+        <span class="me">ป</span>
+      </div>
+    </header>
+    <div class="content" id="view"></div>
+  </div>
+</div>
+
+<nav class="mnav" id="mobNav" aria-label="เมนูหลังบ้าน"></nav>
+
+<div class="drawer-bg" id="drawerBg" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+
+<div class="cmd-bg" id="cmdBg" onclick="if(event.target===this)closeCmd()">
+  <div class="card cmd" role="dialog" aria-label="ค้นหาด่วน">
+    <input class="input" id="cmdIn" placeholder="ค้นหาออเดอร์ ลูกค้า สินค้า หรือหน้า…" oninput="renderCmd(this.value)">
+    <ul id="cmdList"></ul>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+  const IC = {
+    home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    orders: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h4"/>',
+    products: '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',
+    accounts: '<path d="M6 11h12v10H6zM9 11V8a3 3 0 0 1 6 0v3"/>',
+    customers: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/>',
+    payments: '<path d="M3 7a2 2 0 0 1 2-2h14v4M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2zM16 14.5h.01"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  };
+  const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
+  const MENU = [
+    { g: 'ร้านค้า', items: [['dashboard', 'ภาพรวม', 'home'], ['orders', 'ออเดอร์', 'orders', 2], ['products', 'สินค้า', 'products'], ['accounts', 'คลังบัญชี', 'accounts', 3]] },
+    { g: 'ลูกค้าและเงิน', items: [['customers', 'ลูกค้า', 'customers'], ['payments', 'การชำระเงิน', 'payments']] },
+    { g: 'ร้านของฉัน', items: [['settings', 'ตั้งค่าร้าน', 'settings']] },
+  ];
+  $('#sideNav').innerHTML = MENU.map((s) => `<div class="nav-label">${s.g}</div>` + s.items.map(([k, l, i, c]) => `<a href="#${k}" data-nav="${k}">${svg(i)}${l}${c ? `<span class="count">${c}</span>` : ''}</a>`).join('')).join('');
+  $('#mobNav').innerHTML = [['dashboard', 'ภาพรวม', 'home'], ['orders', 'ออเดอร์', 'orders', 2], ['products', 'สินค้า', 'products'], ['accounts', 'คลังบัญชี', 'accounts', 3], ['settings', 'ตั้งค่า', 'settings']]
+    .map(([k, l, i, c]) => `<a href="#${k}" data-nav="${k}">${svg(i)}${l}${c ? `<span class="count">${c}</span>` : ''}</a>`).join('');
+  const TITLE = { dashboard: 'ภาพรวม', orders: 'ออเดอร์', products: 'สินค้า', accounts: 'คลังบัญชี', customers: 'ลูกค้า', payments: 'การชำระเงิน', settings: 'ตั้งค่าร้าน' };
+  document.addEventListener('view', (e) => { $('#crumb').textContent = TITLE[e.detail] ?? ''; closeDrawer(); });
+
+  const head = (title, sub, acts = '') => `<div class="page-head"><div><h1>${title}</h1><p>${sub}</p></div><div class="acts">${acts}</div></div>`;
+  const kpi = (lbl, val, delta, ic, cls = '') => `<div class="card kpi"><span class="lbl">${lbl}<span class="kpi-ic">${ic}</span></span><span class="val num">${val}</span><span class="delta ${cls}">${delta}</span></div>`;
+
+  const ORDERS = [
+    { code: 'A8F2K1', user: 'ploy_s', app: 'netflix', plan: '30 วัน', total: 99, st: 'ok', stl: 'สำเร็จ', when: '2 นาทีที่แล้ว', pay: 'พร้อมเพย์' },
+    { code: '9KD3MX', user: 'nook99', app: 'youtube', plan: '30 วัน', total: 59, st: 'warn', stl: 'รอส่ง (สั่งทำ)', when: '15 นาทีที่แล้ว', pay: 'กระเป๋าเงิน' },
+    { code: 'B2QW7Z', user: 'tanapon', app: 'spotify', plan: '90 วัน', total: 139, st: 'warn', stl: 'รอส่ง (สั่งทำ)', when: '41 นาทีที่แล้ว', pay: 'พร้อมเพย์' },
+    { code: 'X0P1LM', user: 'mild.k', app: 'disney', plan: '30 วัน', total: 69, st: 'ok', stl: 'สำเร็จ', when: '1 ชม.ที่แล้ว', pay: 'พร้อมเพย์' },
+    { code: 'K2M9DD', user: 'aom_a', app: 'canva', plan: '30 วัน', total: 39, st: '', stl: 'รอชำระ', when: '2 ชม.ที่แล้ว', pay: '—' },
+    { code: 'Q7R4TT', user: 'benz.p', app: 'netflix', plan: '7 วัน', total: 39, st: 'ok', stl: 'สำเร็จ', when: '3 ชม.ที่แล้ว', pay: 'กระเป๋าเงิน' },
+    { code: 'J5H8UE', user: 'kaew', app: 'chatgpt', plan: '30 วัน', total: 199, st: 'bad', stl: 'คืนเงินแล้ว', when: 'เมื่อวาน', pay: 'พร้อมเพย์' },
+  ];
+
+  const pages = {
+    dashboard() {
+      const days = [['จ.', 2140], ['อ.', 3210], ['พ.', 2680], ['พฤ.', 4120], ['ศ.', 3890], ['ส.', 5240], ['วันนี้', 4385]];
+      const max = Math.max(...days.map((d) => d[1]));
+      return head('สวัสดี คุณปอย 👋', 'นี่คือภาพรวมร้านวันนี้ · อัปเดตล่าสุด 1 นาทีที่แล้ว', `<a href="#products" class="btn">+ เพิ่มสินค้า</a><a href="store.html" target="_blank" class="btn primary">เปิดหน้าร้าน ↗</a>`)
+      + `<div class="kpis">
+          ${kpi('ยอดขายวันนี้', '฿4,385', '▲ 12% จากเมื่อวาน', '฿')}
+          ${kpi('ออเดอร์วันนี้', '46', '▲ 8 ออเดอร์', '🧾')}
+          ${kpi('ลูกค้าใหม่', '9', '▼ 2 จากเมื่อวาน', '👤', 'down')}
+          ${kpi('จอว่างพร้อมขาย', '97', 'จาก 140 จอ', '🔑', 'mute')}
+        </div>
+        <div class="cols">
+          <div class="stack">
+            <section class="card">
+              <div class="card-head"><h2>ยอดขาย 7 วัน</h2><span class="muted num">รวม ฿25,665</span></div>
+              <div class="chart">${days.map(([d, v]) => `<div class="col"><div class="b" style="height:${(v / max) * 100}%"><span class="tip num">${baht(v)}</span></div><span class="d">${d}</span></div>`).join('')}</div>
+            </section>
+            <section class="card">
+              <div class="card-head"><h2>ออเดอร์ล่าสุด</h2><a href="#orders" class="btn ghost sm">ดูทั้งหมด →</a></div>
+              ${orderTable(ORDERS.slice(0, 5), true)}
+            </section>
+          </div>
+          <div class="stack">
+            <section class="card">
+              <div class="card-head"><h2>ต้องทำวันนี้</h2><span class="pill warn">5 รายการ</span></div>
+              <ul class="todo">
+                <li><span class="ic warn">🛠️</span><div class="grow"><b>ออเดอร์สั่งทำรอส่ง</b><small>YouTube, Spotify — เชิญเข้าครอบครัว</small></div><a href="#orders" class="btn sm">ทำเลย</a></li>
+                <li><span class="ic acc">🔑</span><div class="grow"><b>จอรอเปลี่ยน PIN</b><small>3 จอ ลูกค้าเดิมหมดอายุ</small></div><a href="#accounts" class="btn sm">ดู</a></li>
+                <li><span class="ic bad">📦</span><div class="grow"><b>ChatGPT Plus หมดสต็อก</b><small>ลูกค้ากดซื้อไม่ได้</small></div><a href="#accounts" class="btn sm">เพิ่ม</a></li>
+                <li><span class="ic warn">💳</span><div class="grow"><b>จ่ายค่าบัญชี Netflix</b><small>nf.muay02 · อีก 2 วัน (฿419)</small></div><button class="btn sm" onclick="toast('ทำเครื่องหมายว่าจ่ายแล้ว')">จ่ายแล้ว</button></li>
+              </ul>
+            </section>
+            <section class="card card-pad">
+              <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="font-size:16px">ตรวจสลิปเดือนนี้</h2><span class="pill warn">87%</span></div>
+              <div style="font-family:var(--font-head);font-size:28px;font-weight:700;margin-top:6px" class="num">87 <span class="muted" style="font-size:16px;font-weight:500">/ 100 ครั้ง</span></div>
+              <div class="meter warn" style="margin:8px 0"><i style="width:87%"></i></div>
+              <p class="muted" style="margin:0;font-size:13px">เกินโควตาคิด ฿0.05/สลิป ตัดจากกระเป๋าร้าน (คงเหลือ ฿120) · รีเซ็ต 1 ธ.ค.</p>
+              <a href="#payments" class="btn soft block" style="margin-top:12px">อัปเกรดเป็นโปร (500 ครั้ง)</a>
+            </section>
+          </div>
+        </div>`;
+    },
+
+    orders() {
+      return head('ออเดอร์', 'ทุกออเดอร์ของร้าน · กดแถวเพื่อดูรายละเอียด / ส่งของ / คืนเงิน', `<button class="btn" onclick="toast('ดาวน์โหลด Excel')">⬇ ส่งออก Excel</button>`)
+      + `<section class="card">
+          <div class="toolbar">
+            <input class="input" placeholder="🔍 เลขออเดอร์ / ชื่อลูกค้า" oninput="$$('#otbl tbody tr').forEach(r=>r.classList.toggle('hide',!r.textContent.toLowerCase().includes(this.value.toLowerCase())))">
+            <div class="seg" role="tablist">${[['ทั้งหมด', 128], ['รอส่ง', 2], ['สำเร็จ', 119], ['รอชำระ', 4], ['คืนเงิน', 3]].map(([l, n], i) => `<button class="${i ? '' : 'on'}" onclick="$$('.seg button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${l}<span>${n}</span></button>`).join('')}</div>
+          </div>
+          ${orderTable(ORDERS, false)}
+          <div class="tbl-foot"><span>แสดง 7 จาก 128 รายการ</span><span><button class="btn sm" disabled>‹</button> <button class="btn sm">›</button></span></div>
+        </section>`;
+    },
+
+    products() {
+      return head('สินค้า', 'สินค้าและแพ็กเกจที่ขายในร้าน', `<button class="btn" onclick="toast('เลือกจากแม่แบบสินค้า: Netflix, YouTube, Disney+ …')">✨ เพิ่มจากแม่แบบ</button><button class="btn primary" onclick="toast('เปิดฟอร์มเพิ่มสินค้า')">+ เพิ่มสินค้า</button>`)
+      + `<div class="kpis">${kpi('เปิดขาย', '8', 'จาก 9 สินค้า', '🛍️', 'mute')}${kpi('ของหมด', '1', 'ChatGPT Plus', '📦', 'down')}${kpi('ขายดีสุดเดือนนี้', 'Netflix', '412 ชิ้น', '🏆', 'mute')}${kpi('กำไรเฉลี่ย/ชิ้น', '฿21', '▲ ฿3 จากเดือนก่อน', '📈')}</div>
+        <section class="card">
+          <div class="toolbar"><input class="input" placeholder="🔍 ค้นหาสินค้า"><div class="seg">${['ทั้งหมด', 'ดูหนัง', 'เพลง', 'ทำงาน'].map((c, i) => `<button class="${i ? '' : 'on'}" onclick="$$('.seg button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${c}</button>`).join('')}</div></div>
+          <table class="tbl">
+            <thead><tr><th>สินค้า</th><th>วิธีส่งของ</th><th class="r">ราคา</th><th>สต็อก</th><th class="r">ขายแล้ว</th><th>เปิดขาย</th></tr></thead>
+            <tbody>${Object.entries(APPS).map(([k, a]) => {
+              const pct = Math.min(100, (a.left / 20) * 100);
+              const ful = ['youtube', 'spotify', 'canva'].includes(k) ? 'สั่งทำ' : 'แบ่งจอ';
+              return `<tr onclick="toast('เปิดแก้ไข ${a.name}')">
+                <td class="m-full"><div class="prod">${logo(k)}<div><b>${a.name}</b><small>${a.plans.map((p) => p.name).join(' · ')}</small></div></div></td>
+                <td class="m-hide"><span class="pill plain">${ful}</span></td>
+                <td class="r num">${baht(Math.min(...a.plans.map((p) => p.price)))}${a.plans.length > 1 ? '<small>เริ่มต้น</small>' : ''}</td>
+                <td><div class="stockbar"><span class="num ${a.left ? '' : 'faint'}">${a.left ? `${a.left} ${ful === 'แบ่งจอ' ? 'จอ' : 'ที่'}` : 'หมด'}</span><div class="meter ${a.left <= 3 ? 'warn' : ''}"><i style="width:${pct}%"></i></div></div></td>
+                <td class="r num m-hide">${a.sold.toLocaleString('th-TH')}</td>
+                <td><button class="toggle ${a.left ? 'on' : ''}" onclick="event.stopPropagation();this.classList.toggle('on');toast(this.classList.contains('on')?'เปิดขายแล้ว':'ปิดขายแล้ว')" aria-label="เปิด/ปิดขาย"></button></td>
+              </tr>`; }).join('')}</tbody>
+          </table>
+        </section>`;
+    },
+
+    accounts() {
+      const accs = [
+        { login: 'nf.muay01@gmail.com', cost: 419, renew: 'อีก 18 วัน', slots: [['Muay-1', 'used', '@ploy*** · 27 วัน'], ['Muay-2', 'used', '@nong*** · 12 วัน'], ['Muay-3', 'reset', 'รอเปลี่ยน PIN'], ['Muay-4', 'free', 'ว่าง'], ['Muay-5', 'free', 'ว่าง']] },
+        { login: 'nf.muay02@gmail.com', cost: 419, renew: 'อีก 2 วัน', warn: true, slots: [['Muay-1', 'used', '@mild*** · 30 วัน'], ['Muay-2', 'used', '@benz*** · 6 วัน'], ['Muay-3', 'used', '@kaew*** · 21 วัน'], ['Muay-4', 'used', '@tan*** · 3 วัน'], ['Muay-5', 'broken', 'เสีย']] },
+      ];
+      return head('คลังบัญชี', 'บัญชีหลักที่ร้านซื้อมา แบ่งเป็นจอ · ขายแล้วระบบจัดจอให้อัตโนมัติ', `<button class="btn primary" onclick="toast('เปิดฟอร์มเพิ่มบัญชีหลัก (อีเมล + รหัส + จำนวนจอ)')">+ เพิ่มบัญชีหลัก</button>`)
+      + `<div class="kpis">${kpi('จอว่าง', '2', 'พร้อมขายตอนนี้', '⚪', 'mute')}${kpi('มีคนเช่า', '6', '60% ของทั้งหมด', '🟢', 'mute')}${kpi('รอเปลี่ยน PIN', '1', 'เปลี่ยนแล้วกด "พร้อมขาย"', '🟡', 'down')}${kpi('ต้นทุน / รายรับ', '฿838 / ฿594', 'ขายอีก 3 จอ = คุ้มทุน', '📊', 'mute')}</div>
+        <div class="seg" style="margin-bottom:14px">${['Netflix Premium', 'Disney+', 'Prime Video', 'Viu', 'ChatGPT Plus'].map((n, i) => `<button class="${i ? '' : 'on'}" onclick="$$('.seg button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${n}</button>`).join('')}</div>
+        ${accs.map((a) => `<section class="card acc">
+          <div class="acc-head">${logo('netflix')}<div class="grow"><b>${a.login}</b><small>ต้นทุน ${baht(a.cost)}/เดือน · จ่ายรอบถัดไป <span style="color:${a.warn ? 'var(--bad)' : 'inherit'};font-weight:${a.warn ? 600 : 400}">${a.renew}</span></small></div>
+            <span class="pill ok">ใช้ ${a.slots.filter((s) => s[1] === 'used').length}/${a.slots.length} จอ</span>
+            <button class="btn sm" onclick="toast('รหัส: Mu4y#2026nf (บันทึกการเปิดดูแล้ว)')">👁 ดูรหัส</button>
+            <button class="btn ghost sm" onclick="toast('แก้ไขบัญชี')">แก้ไข</button></div>
+          <div class="slots">${a.slots.map(([l, st, who]) => `<div class="slot ${st}" onclick="toast('${st === 'reset' ? 'เปลี่ยน PIN แล้ว → พร้อมขาย' : 'จัดการจอ ' + l}')"><b>${l}</b><span class="who">${who}</span></div>`).join('')}</div>
+        </section>`).join('')}`;
+    },
+
+    customers() {
+      const cs = [['ploy_s', 'ปอย สมใจ', 3, 1240, '2 นาทีที่แล้ว', true], ['nook99', 'นุ๊ก', 1, 59, '15 นาทีที่แล้ว'], ['tanapon', 'ธนพล', 6, 2310, 'วันนี้', true], ['mild.k', 'มายด์', 2, 168, 'เมื่อวาน'], ['aom_a', 'ออม', 0, 0, '3 วันก่อน']];
+      return head('ลูกค้า', '2,184 คน · กดเพื่อดูประวัติ ปรับยอดเงิน หรือส่งข้อความ', `<button class="btn" onclick="toast('ส่งออกรายชื่อ')">⬇ ส่งออก</button>`)
+      + `<section class="card"><div class="toolbar"><input class="input" placeholder="🔍 ชื่อผู้ใช้ / ชื่อ / เบอร์โทร"></div>
+        <table class="tbl"><thead><tr><th>ลูกค้า</th><th class="r">แอปที่เช่าอยู่</th><th class="r">ยอดซื้อรวม</th><th>ล่าสุด</th></tr></thead><tbody>
+        ${cs.map(([u, n, subs, spent, last, vip]) => `<tr onclick="toast('เปิดข้อมูล @${u}')"><td class="m-full"><div class="prod"><span class="me" style="background:var(--accent-soft);color:var(--accent)">${n[0]}</span><div><b>@${u}</b> ${vip ? '<span class="pill accent plain">ลูกค้าประจำ</span>' : ''}<small>${n}</small></div></div></td>
+          <td class="r num">${subs} แอป</td><td class="r num"><b>${baht(spent)}</b></td><td class="muted m-hide">${last}</td></tr>`).join('')}
+        </tbody></table></section>`;
+    },
+
+    payments() {
+      const slips = [['ploy_s', 99, 'ผ่าน', 'ok', 'นาง ปอย ส. · KBank', '2 นาทีที่แล้ว'], ['tanapon', 139, 'ผ่าน', 'ok', 'นาย ธนพล ก. · SCB', '41 นาทีที่แล้ว'], ['kaew', 100, 'ยอดไม่ตรง', 'bad', 'โอน ฿10 (ต้อง ฿100)', '1 ชม.ที่แล้ว'], ['aom_a', 39, 'รอสลิป', '', '—', '2 ชม.ที่แล้ว']];
+      return head('การชำระเงิน', 'รายการโอนพร้อมเพย์ และโควตาตรวจสลิป', '')
+      + `<div class="kpis">${kpi('รับเงินวันนี้', '฿3,120', '32 รายการ', '฿')}${kpi('ตรวจสลิปเดือนนี้', '87 / 100', 'เหลือ 13 ครั้งฟรี', '🧾', 'down')}${kpi('ค่าสลิปเกินโควตา', '฿0.00', '฿0.05 ต่อสลิป', '💸', 'mute')}${kpi('กระเป๋าร้าน', '฿120', 'ไว้จ่ายค่าสลิปส่วนเกิน', '👛', 'mute')}</div>
+        <section class="card"><div class="card-head"><h2>สลิปล่าสุด</h2><span class="muted">เงินเข้าบัญชีร้านโดยตรง</span></div>
+        <table class="tbl"><thead><tr><th>ลูกค้า</th><th class="r">ยอด</th><th>ผลตรวจ</th><th>ผู้โอน</th><th>เวลา</th></tr></thead><tbody>
+        ${slips.map(([u, a, s, t, who, w]) => `<tr><td><b>@${u}</b></td><td class="r num"><b>${baht(a)}</b></td><td><span class="pill ${t}">${s}</span></td><td class="muted m-full">${who}</td><td class="muted m-hide">${w}</td></tr>`).join('')}
+        </tbody></table></section>`;
+    },
+
+    settings() {
+      return head('ตั้งค่าร้าน', 'เปลี่ยนแล้วเห็นผลที่หน้าร้านทันที', `<button class="btn primary" onclick="toast('บันทึกแล้ว ✓')">บันทึก</button>`)
+      + `<div class="set-grid">
+          <div class="stack">
+            <section class="card"><div class="card-head"><h2>ข้อมูลร้าน</h2></div>
+              <div class="form">
+                <div class="two"><label class="field"><span>ชื่อร้าน</span><input class="input" value="Muay Premium" oninput="$$('.pv-name').forEach(e=>e.textContent=this.value||'ชื่อร้าน')"></label>
+                  <label class="field"><span>ที่อยู่เว็บ</span><input class="input" value="muay.sysrent.shop" disabled></label></div>
+                <label class="field"><span>ข้อความหน้าแรก</span><input class="input" value="แอปพรีเมียมราคาดี จ่ายแล้วได้ทันที" oninput="$('.pv-hero').textContent=this.value"></label>
+                <div class="field"><span>สีร้าน</span><div class="swatches">${[['indigo', '#5b5bd6'], ['pink', '#e64980'], ['emerald', '#0d9f6e'], ['orange', '#ea6a12'], ['sky', '#0e8fd1']].map(([k, c]) => `<button class="sw${document.documentElement.dataset.accent === k ? ' on' : ''}" style="background:${c}" onclick="document.documentElement.dataset.accent='${k}';$$('.sw').forEach(s=>s.classList.remove('on'));this.classList.add('on')" aria-label="สี ${k}"></button>`).join('')}</div></div>
+                <div class="two"><label class="field"><span>LINE ร้าน</span><input class="input" value="@muaypremium"></label><label class="field"><span>ประกาศแถบบน</span><input class="input" placeholder="เช่น 🎉 Netflix ลด 20% ถึงสิ้นเดือน"></label></div>
+              </div></section>
+            <section class="card"><div class="card-head"><h2>รับเงิน</h2><span class="pill ok">พร้อมใช้</span></div>
+              <div class="form">
+                <div class="two"><label class="field"><span>พร้อมเพย์ (เบอร์ / เลขบัตร)</span><input class="input" value="08x-xxx-1866"></label><label class="field"><span>ชื่อบัญชี (ตามสลิป)</span><input class="input" value="นาย ปวีณ ส."></label></div>
+                <p class="muted" style="margin:0;font-size:13px">✓ ตรวจสลิปอัตโนมัติโดย SysRent — ไม่ต้องสมัคร SlipOK เอง · เงินเข้าบัญชีร้านโดยตรง</p>
+              </div></section>
+            <section class="card"><div class="card-head"><h2>แจ้งเตือน</h2></div>
+              <div class="form">${[['ออเดอร์ใหม่', true], ['สต็อกใกล้หมด', true], ['จ่ายค่าบัญชีหลัก', true], ['ลูกค้าใกล้หมดอายุ (ส่งให้ลูกค้า)', false]].map(([l, on]) => `<div style="display:flex;justify-content:space-between;align-items:center"><span>${l}</span><button class="toggle ${on ? 'on' : ''}" onclick="this.classList.toggle('on')" aria-label="${l}"></button></div>`).join('')}
+                <p class="muted" style="margin:0;font-size:13px">ส่งเข้า LINE ของคุณผ่าน SysRent</p></div></section>
+          </div>
+          <section class="card preview"><div class="card-head"><h2>ตัวอย่างหน้าร้าน</h2><span class="pill accent plain">สด</span></div>
+            <div class="phone"><div class="phone-top"><span class="m">M</span><span class="pv-name">Muay Premium</span></div>
+              <div class="phone-body"><div class="phone-hero"><b class="pv-hero">แอปพรีเมียมราคาดี จ่ายแล้วได้ทันที</b><span class="btnp">เลือกซื้อเลย</span></div>
+                <div class="phone-grid">${['netflix', 'youtube', 'disney', 'spotify'].map((k) => `<div>${logo(k)}<p>${APPS[k].name.split(' ')[0]}<br><b>${baht(APPS[k].plans[0].price)}</b></p></div>`).join('')}</div></div></div>
+          </section>
+        </div>`;
+    },
+  };
+
+  function orderTable(rows, compact) {
+    return `<table class="tbl" id="${compact ? '' : 'otbl'}">
+      <thead><tr><th>ออเดอร์</th><th>ลูกค้า</th><th>สินค้า</th><th class="r">ยอด</th><th>สถานะ</th>${compact ? '' : '<th>ชำระด้วย</th>'}</tr></thead>
+      <tbody>${rows.map((o) => `<tr onclick="openOrder('${o.code}')">
+        <td><span class="code">#${o.code}</span><small>${o.when}</small></td>
+        <td class="m-hide">@${o.user}</td>
+        <td class="m-full"><div class="prod">${logo(o.app)}<div>${APPS[o.app].name}<small>${o.plan} · @${o.user}</small></div></div></td>
+        <td class="r num"><b>${baht(o.total)}</b></td>
+        <td><span class="pill ${o.st}">${o.stl}</span></td>
+        ${compact ? '' : `<td class="muted m-hide">${o.pay}</td>`}
+      </tr>`).join('')}</tbody></table>`;
+  }
+
+  // ลิ้นชักรายละเอียดออเดอร์
+  function openOrder(code) {
+    const o = ORDERS.find((x) => x.code === code);
+    const waiting = o.st === 'warn';
+    $('#drawer').innerHTML = `
+      <div class="drawer-head"><div style="flex:1"><b style="font-size:17px">ออเดอร์ #${o.code}</b><br><span class="pill ${o.st}">${o.stl}</span></div><button class="icon-btn" onclick="closeDrawer()" aria-label="ปิด">✕</button></div>
+      <div class="drawer-body">
+        <div class="card" style="padding:14px;display:flex;gap:12px;align-items:center">${logo(o.app, 'lg')}<div><b>${APPS[o.app].name}</b><br><span class="muted">${o.plan}</span><br><b class="num" style="color:var(--accent)">${baht(o.total)}</b></div></div>
+        <dl class="dl"><dt>ลูกค้า</dt><dd>@${o.user}</dd><dt>ชำระด้วย</dt><dd>${o.pay}</dd><dt>เวลา</dt><dd>${o.when}</dd><dt>วิธีส่งของ</dt><dd>${waiting ? 'สั่งทำ (แอดมินทำเอง)' : 'แบ่งจอ — จัดให้อัตโนมัติ'}</dd></dl>
+        ${waiting ? `<label class="field"><span>สิ่งที่ส่งให้ลูกค้า</span><textarea class="input" rows="4" placeholder="เช่น เชิญอีเมล xxx@gmail.com เข้าครอบครัวแล้ว กดยอมรับในอีเมลได้เลย"></textarea></label>`
+          : `<div><span class="muted" style="font-size:13px">ส่งให้ลูกค้าแล้ว</span><div class="delivered">nf.muay02@gmail.com\nโปรไฟล์ Muay-5 · PIN 3364\nใช้ได้ถึง 30 พ.ย.</div></div>`}
+      </div>
+      <div class="drawer-foot">${waiting ? `<button class="btn danger" onclick="toast('คืนเงินเข้ากระเป๋าลูกค้าแล้ว');closeDrawer()">คืนเงิน</button><button class="btn primary" onclick="toast('ส่งของแล้ว — แจ้งลูกค้าทาง LINE');closeDrawer()">ส่งของ</button>`
+        : `<button class="btn" onclick="toast('ส่งข้อความหาลูกค้า')">💬 ทักลูกค้า</button><button class="btn" onclick="toast('ย้ายไปจออื่นแล้ว')">ย้ายจอ</button>`}</div>`;
+    $('#drawer').classList.add('open'); $('#drawerBg').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false');
+  }
+  function closeDrawer() { $('#drawer')?.classList.remove('open'); $('#drawerBg')?.classList.remove('open'); $('#drawer')?.setAttribute('aria-hidden', 'true'); }
+
+  // ค้นหาด่วน Ctrl+K
+  const CMD = [
+    ...Object.entries(TITLE).map(([k, l]) => ({ l: `ไปหน้า ${l}`, href: `#${k}`, t: 'หน้า' })),
+    ...ORDERS.map((o) => ({ l: `#${o.code} · ${APPS[o.app].name} · @${o.user}`, href: `#orders`, code: o.code, t: 'ออเดอร์' })),
+    ...Object.values(APPS).map((a) => ({ l: a.name, href: '#products', t: 'สินค้า' })),
+  ];
+  function renderCmd(q = '') {
+    const list = CMD.filter((c) => c.l.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+    $('#cmdList').innerHTML = list.map((c, i) => `<li><a href="${c.href}" class="${i ? '' : 'sel'}" onclick="closeCmd();${c.code ? `setTimeout(()=>openOrder('${c.code}'),80)` : ''}">${c.l}<small>${c.t}</small></a></li>`).join('') || '<li class="muted" style="padding:12px">ไม่พบ</li>';
+  }
+  function openCmd() { $('#cmdBg').classList.add('open'); $('#cmdIn').value = ''; renderCmd(); setTimeout(() => $('#cmdIn').focus(), 20); }
+  function closeCmd() { $('#cmdBg').classList.remove('open'); }
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openCmd(); }
+    if (e.key === 'Escape') { closeCmd(); closeDrawer(); }
+    if (e.key === 'Enter' && $('#cmdBg').classList.contains('open')) $('#cmdList a.sel')?.click();
+  });
+
+  initTheme();
+  router(pages, 'dashboard');
+</script>
+</body>
+</html>

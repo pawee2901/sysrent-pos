@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ต้นแบบเว็บขายแอปพรีเมียม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  body { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+  .box { max-width: 760px; width: 100%; }
+  h1 { font-size: clamp(26px, 4vw, 36px); }
+  .lead { color: var(--muted); margin: 8px 0 24px; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .opt { padding: 22px; display: flex; flex-direction: column; gap: 8px; transition: transform .15s, box-shadow .15s; }
+  .opt:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .opt .ic { width: 48px; height: 48px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 24px; }
+  .opt h2 { font-size: 19px; margin-top: 6px; }
+  .opt ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+  .opt .go { margin-top: auto; padding-top: 8px; color: var(--accent); font-weight: 600; }
+  .note { margin-top: 20px; font-size: 13px; color: var(--faint); text-align: center; }
+  @media (max-width: 640px) { .opts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <main class="box">
+    <span class="pill accent plain">ต้นแบบ · SysRent</span>
+    <h1 style="margin-top:12px">เว็บขายแอปพรีเมียม พร้อมใช้</h1>
+    <p class="lead">ตัวอย่างหน้าตาสำหรับแพ็กเกจเริ่มต้น ฿299/เดือน — กดลองได้ทุกปุ่ม ข้อมูลทั้งหมดเป็นตัวอย่าง · ทดลองเปลี่ยนสีร้านและโหมดมืดได้ที่ปุ่มมุมขวาล่าง</p>
+    <div class="opts">
+      <a href="store.html" class="card opt">
+        <span class="ic">🛍️</span><h2>หน้าร้าน (ลูกค้าเห็น)</h2>
+        <ul><li>หน้าแรก · หมวด · ค้นหา</li><li>หน้าสินค้า เลือกแพ็กเกจ</li><li>ตะกร้า → จ่ายพร้อมเพย์ + อัปสลิป</li><li>บัญชีของฉัน: วันคงเหลือ · ดูรหัส · OTP</li></ul>
+        <span class="go">เปิดหน้าร้าน →</span>
+      </a>
+      <a href="admin.html" class="card opt">
+        <span class="ic">📊</span><h2>หลังบ้าน (เจ้าของร้าน)</h2>
+        <ul><li>ภาพรวม + สิ่งที่ต้องทำวันนี้</li><li>ออเดอร์ · สินค้า · คลังบัญชี (แบ่งจอ)</li><li>ลูกค้า · การชำระเงิน · โควตาสลิป</li><li>ตั้งค่าร้าน พร้อมตัวอย่างสด · ค้นหา Ctrl+K</li></ul>
+        <span class="go">เปิดหลังบ้าน →</span>
+      </a>
+    </div>
+    <p class="note">โลโก้แอปในต้นแบบเป็นสัญลักษณ์แทน — ร้านจริงอัปโหลดรูปสินค้าเอง</p>
+  </main>
+  <script src="assets/app.js"></script>
+  <script>initTheme();</script>
+</body>
+</html>

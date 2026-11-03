@@ -1,0 +1,113 @@
+/* =========================================================
+   ต้นแบบเว็บขายแอปพรีเมียม (เช่าบน SysRent) — ระบบดีไซน์กลาง
+   สีหลักเปลี่ยนได้ตามร้าน (data-accent) · รองรับโหมดมืด (data-theme)
+   ========================================================= */
+:root {
+  --accent: #5b5bd6;
+  --accent-soft: #eeeefc;
+  --accent-ink: #ffffff;
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --surface-2: #f9fafc;
+  --line: #e6e8ef;
+  --text: #171a26;
+  --muted: #6b7083;
+  --faint: #9aa0b2;
+  --ok: #16a34a;   --ok-soft: #e8f7ee;
+  --warn: #d97706; --warn-soft: #fdf3e2;
+  --bad: #dc2626;  --bad-soft: #fdecec;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 4px 16px rgba(16, 24, 40, .06);
+  --shadow-lg: 0 12px 40px rgba(16, 24, 40, .14);
+  --font: 'IBM Plex Sans Thai', system-ui, sans-serif;
+  --font-head: 'Anuphan', 'IBM Plex Sans Thai', sans-serif;
+}
+[data-accent="pink"]    { --accent: #e64980; --accent-soft: #fdeaf1; }
+[data-accent="emerald"] { --accent: #0d9f6e; --accent-soft: #e3f6ee; }
+[data-accent="orange"]  { --accent: #ea6a12; --accent-soft: #fdeee2; }
+[data-accent="sky"]     { --accent: #0e8fd1; --accent-soft: #e2f3fb; }
+
+[data-theme="dark"] {
+  --bg: #0f1117; --surface: #171a23; --surface-2: #1d212c; --line: #2a2f3c;
+  --text: #eef0f6; --muted: #a2a8ba; --faint: #747b8f;
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, #171a23);
+  --ok-soft: #16301f; --warn-soft: #33270f; --bad-soft: #351717;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3); --shadow-lg: 0 12px 40px rgba(0, 0, 0, .5);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+img { max-width: 100%; display: block; }
+h1, h2, h3 { font-family: var(--font-head); line-height: 1.3; margin: 0; font-weight: 600; }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.num { font-variant-numeric: tabular-nums; }
+.hide { display: none !important; }
+
+/* ---------- ปุ่ม ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, transform .1s; }
+.btn:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.btn:active { transform: scale(.98); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.soft { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.danger { color: var(--bad); }
+.btn.sm { height: 34px; padding: 0 12px; font-size: 14px; border-radius: 10px; }
+.btn.lg { height: 50px; padding: 0 24px; font-size: 16px; border-radius: 14px; }
+.btn.block { width: 100%; }
+.icon-btn { width: 40px; height: 40px; display: inline-grid; place-items: center; border-radius: 12px; border: 0; background: transparent; cursor: pointer; color: var(--muted); position: relative; }
+.icon-btn:hover { background: var(--surface-2); color: var(--text); }
+
+/* ---------- ช่องกรอก ---------- */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > span { font-size: 13px; font-weight: 500; color: var(--muted); }
+.input { height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); outline: none; width: 100%; transition: border-color .15s, box-shadow .15s; }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+textarea.input { height: auto; padding: 10px 14px; resize: vertical; }
+
+/* ---------- ป้ายสถานะ ---------- */
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--surface-2); color: var(--muted); }
+.pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.accent { background: var(--accent-soft); color: var(--accent); }
+.pill.plain::before { display: none; }
+
+/* ---------- การ์ด ---------- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card-pad { padding: 20px; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.card-head h2, .card-head h3 { font-size: 16px; }
+
+/* ---------- โลโก้แอป (ตัวอย่าง — ร้านจริงอัปโหลดรูปเอง) ---------- */
+.applogo { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: #fff; font-weight: 700; font-family: var(--font-head); font-size: 17px; flex: none; letter-spacing: -.02em; }
+.applogo.lg { width: 72px; height: 72px; border-radius: 20px; font-size: 28px; }
+.applogo.xl { width: 100%; height: auto; aspect-ratio: 1; border-radius: 0; font-size: 52px; }
+.l-netflix { background: #141414; color: #e50914; }
+.l-youtube { background: #ff0033; }
+.l-disney { background: linear-gradient(135deg, #0b1d5c, #1f5bc4); }
+.l-spotify { background: #1db954; color: #0b0b0b; }
+.l-chatgpt { background: #10a37f; }
+.l-canva { background: linear-gradient(135deg, #00c4cc, #7d2ae8); }
+.l-viu { background: #f7c600; color: #111; }
+.l-prime { background: #00a8e1; }
+
+/* ---------- ตัวช่วยเดโม (แถบเปลี่ยนธีม) ---------- */
+.demo-bar { position: fixed; z-index: 90; right: 16px; bottom: 16px; display: flex; gap: 6px; align-items: center; padding: 6px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-lg); }
+.demo-bar .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--surface); cursor: pointer; box-shadow: 0 0 0 1px var(--line); }
+.demo-bar .dot.on { box-shadow: 0 0 0 2px var(--text); }
+.demo-bar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 2px; }
+.demo-bar .icon-btn { width: 30px; height: 30px; border-radius: 99px; }
+@media (max-width: 760px) { .demo-bar { bottom: 80px; right: auto; left: 10px; } .demo-bar .dot { width: 18px; height: 18px; } }
+
+/* ---------- toast ---------- */
+.toast { position: fixed; z-index: 100; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 12px; background: var(--text); color: var(--bg); font-size: 14px; font-weight: 500; transition: opacity .2s, transform .2s; box-shadow: var(--shadow-lg); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 760px) { .toast { bottom: 90px; } }

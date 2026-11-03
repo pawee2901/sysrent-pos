@@ -1,0 +1,88 @@
+import Link from 'next/link';
+import { getShop, baht } from '@/lib/shop';
+import { loadProducts, type Product } from '@/lib/catalog';
+import { db } from '@/lib/db';
+import { AppLogo } from '@/components/AppLogo';
+
+export const dynamic = 'force-dynamic';
+
+const mask = (u: string) => (u.length <= 2 ? u[0] + '*' : `${u[0]}***${u[u.length - 1]}`);
+const ago = (iso: string) => {
+  const m = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
+  return m < 60 ? `${m} นาทีที่แล้ว` : m < 1440 ? `${Math.round(m / 60)} ชม.ที่แล้ว` : `${Math.round(m / 1440)} วันที่แล้ว`;
+};
+
+function Card({ p }: { p: Product }) {
+  const compare = Math.max(0, ...p.options.map((o) => o.compareAt ?? 0));
+  return (
+    <Link href={`/p/${p.id}`} className={`card pcard${p.inStock ? '' : ' out'}`}>
+      <div className="pcard-img"><AppLogo image={p.image} template={p.template} name={p.name} size="xl" />{p.badge && <span className="pill accent plain tag">{p.badge}</span>}</div>
+      <div className="pcard-body">
+        <span className="pcard-name">{p.name}</span>
+        <span className="pcard-price">{p.from !== null && <>{p.options.length > 1 && <small>เริ่ม </small>}{baht(p.from)}</>}{compare > (p.from ?? 0) && <s className="faint" style={{ fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{baht(compare)}</s>}</span>
+        <span className="pcard-meta"><span>{p.left === null ? 'พร้อมส่ง' : p.left ? `เหลือ ${p.left}` : 'หมด'}</span><span>ขายแล้ว {p.sold.toLocaleString('th-TH')}</span></span>
+      </div>
+    </Link>
+  );
+}
+
+/** หน้าแรกร้าน: หัวเว็บ · ความเคลื่อนไหวจริง · ตัวเลข · หมวด · สินค้า · ขั้นตอนซื้อ */
+export default async function Home({ searchParams }: { searchParams: Promise<{ c?: string; q?: string }> }) {
+  const shop = (await getShop())!;
+  const { c = '', q = '' } = await searchParams;
+  const d = db();
+  const [products, { count: members }, { data: recent }] = await Promise.all([
+    loadProducts(shop.id),
+    d.from('shop_customers').select('id', { count: 'exact', head: true }).eq('shop_id', shop.id),
+    d.from('shop_orders').select('paid_at, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(4),
+  ]);
+  const cats = [...new Set(products.map((p) => p.category).filter(Boolean))];
+  const term = q.trim().toLowerCase();
+  const shown = products.filter((p) => (!c || p.category === c) && (!term || p.name.toLowerCase().includes(term)));
+  const sold = products.reduce((s, p) => s + p.sold, 0);
+  const ready = products.reduce((s, p) => s + (p.left ?? 0), 0);
+  type R = { paid_at: string; shop_customers: { username: string } | null; shop_order_items: { name: string }[] };
+  const live = ((recent ?? []) as unknown as R[]).map((r) => ({ who: r.shop_customers ? `@${mask(r.shop_customers.username)}` : 'ลูกค้า', what: (r.shop_order_items[0]?.name ?? 'สินค้า').split(' · ')[0], when: ago(r.paid_at) }));
+
+  return (
+    <>
+      <section className="hero">
+        <div>
+          <span className="pill accent plain">✨ ส่งอัตโนมัติ 24 ชั่วโมง</span>
+          <h1 style={{ marginTop: 12 }}>{shop.tagline.includes(' ') ? <>{shop.tagline.split(' ').slice(0, -1).join(' ')}<br /><em>{shop.tagline.split(' ').slice(-1)}</em></> : shop.tagline}</h1>
+          <p>สแกนจ่ายพร้อมเพย์ ระบบตรวจสลิปและส่งรหัสให้เองภายในไม่กี่วินาที มีปัญหาทักร้านได้ตลอด</p>
+          <div className="hero-acts"><a href="#cat" className="btn primary lg">เลือกซื้อเลย</a><Link href="/my" className="btn lg">บัญชีของฉัน</Link></div>
+          <div className="hero-ticks"><span>ตรวจสลิปอัตโนมัติ</span><span>รับประกันตลอดอายุ</span><span>ดูแลทาง LINE</span></div>
+        </div>
+        <div className="hero-art">{products.slice(0, 6).map((p) => <AppLogo key={p.id} image={p.image} template={p.template} name={p.name} />)}</div>
+      </section>
+      {live.length > 0 && (
+        <div className="live"><span className="live-dot" />{live.map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> ซื้อ {l.what} · {l.when}</span>)}</div>
+      )}
+      <div className="stats">
+        <div className="card stat"><b className="num">{(members ?? 0).toLocaleString('th-TH')}</b><span>สมาชิก</span></div>
+        <div className="card stat"><b className="num">{sold.toLocaleString('th-TH')}</b><span>ขายไปแล้ว</span></div>
+        <div className="card stat"><b className="num">{ready.toLocaleString('th-TH')}</b><span>พร้อมส่งตอนนี้</span></div>
+      </div>
+      <section className="sec" id="cat">
+        <div className="sec-head"><h2>{term ? `ผลการค้นหา "${q}"` : 'สินค้าทั้งหมด'}</h2><span className="muted" style={{ fontSize: 14 }}>{shown.length} รายการ</span></div>
+        {cats.length > 1 && (
+          <div className="chips" style={{ marginBottom: 14 }}>
+            <Link href="/#cat" className={`chip${c ? '' : ' on'}`}>ทั้งหมด</Link>
+            {cats.map((x) => <Link key={x} href={`/?c=${encodeURIComponent(x)}#cat`} className={`chip${x === c ? ' on' : ''}`}>{x}</Link>)}
+          </div>
+        )}
+        {shown.length ? <div className="grid">{shown.map((p) => <Card key={p.id} p={p} />)}</div>
+          : <div className="card success"><p className="muted">{products.length ? 'ไม่พบสินค้าที่ค้นหา' : 'ร้านกำลังเตรียมสินค้า แวะมาใหม่เร็ว ๆ นี้นะ'}</p></div>}
+      </section>
+      <section className="sec">
+        <div className="sec-head"><h2>ซื้อง่าย 3 ขั้นตอน</h2></div>
+        <div className="how">
+          <div className="card"><span className="how-n">1</span><div><b>เลือกแอปและแพ็กเกจ</b><span>มีให้เลือกหลายระยะเวลา</span></div></div>
+          <div className="card"><span className="how-n">2</span><div><b>สแกนจ่ายพร้อมเพย์</b><span>อัปสลิป ระบบตรวจให้อัตโนมัติ</span></div></div>
+          <div className="card"><span className="how-n">3</span><div><b>ได้รหัสทันที</b><span>ดูได้ที่ &quot;บัญชีของฉัน&quot; ตลอดอายุ</span></div></div>
+        </div>
+      </section>
+    </>
+  );
+}
