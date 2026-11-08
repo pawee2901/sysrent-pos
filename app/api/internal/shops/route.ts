@@ -27,7 +27,10 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('check'), slug }),
   z.object({
     action: z.literal('create'), slug, owner_id: z.string().uuid(), name: z.string().trim().min(1).max(40),
-    admin_username: z.string().trim().min(3).max(40), admin_password: z.string().min(8).max(72), expires_at: until,
+    admin_username: z.string().trim().min(3).max(40), expires_at: until,
+    admin_password: z.string().min(8).max(72).optional(), // ส่งอย่างใดอย่างหนึ่ง
+    admin_pass_hash: z.string().regex(/^s1\$[\w-]+\$[\w-]+$/).optional(),
+    plan: z.enum(['starter', 'pro', 'max']).default('starter'),
   }),
   z.object({ action: z.literal('extend'), slug, expires_at: until }),
   z.object({ action: z.enum(['suspend', 'resume']), slug }),
@@ -68,9 +71,11 @@ export async function POST(req: Request) {
   if (x.action === 'create') {
     const why = await slugTaken(x.slug);
     if (why) return fail(why, 409);
+    const passHash = x.admin_pass_hash ?? (x.admin_password ? await hashPassword(x.admin_password) : '');
+    if (!passHash) return fail('ต้องกำหนดรหัสผ่านผู้ดูแล', 400);
     const { data, error } = await d.from('shops').insert({
       slug: x.slug, owner_id: x.owner_id, name: x.name, admin_username: x.admin_username,
-      admin_pass_hash: await hashPassword(x.admin_password), expires_at: x.expires_at, plan: 'starter', slip_quota: SLIP_QUOTA.starter, slip_overage: 0.45,
+      admin_pass_hash: passHash, expires_at: x.expires_at, plan: x.plan, slip_quota: SLIP_QUOTA[x.plan], slip_overage: 0.45,
     }).select('id, slug').single();
     if (error) return fail(error.code === '23505' ? 'ชื่อนี้มีคนใช้แล้ว' : 'สร้างร้านไม่สำเร็จ', error.code === '23505' ? 409 : 500);
     return NextResponse.json({ ok: true, shop: data });
