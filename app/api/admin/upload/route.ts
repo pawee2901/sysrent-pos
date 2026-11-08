@@ -6,7 +6,7 @@ const TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png',
 
 /** อัปรูปสินค้า / โลโก้ร้าน → bucket shop-media/<shop id>/... (ตรวจหัวไฟล์จริง ไม่เชื่อแค่ชนิดที่เบราว์เซอร์บอก) */
 export async function POST(req: Request) {
-  const a = await requireAdmin();
+  const a = await requireAdmin(['products', 'settings']);
   if ('res' in a) return a.res;
   const file = (await req.formData().catch(() => null))?.get('file');
   if (!(file instanceof Blob) || !file.size) return fail('กรุณาเลือกรูป');

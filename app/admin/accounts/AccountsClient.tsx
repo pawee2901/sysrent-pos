@@ -1,4 +1,5 @@
 'use client';
+import { to } from '@/lib/routes';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -51,7 +52,7 @@ export function AccountsClient({ products, current, accounts }: { products: { id
         <div className="card kpi"><span className="lbl">รอเปลี่ยน PIN</span><span className="val num">{cnt('reset')}</span><span className={`delta${cnt('reset') ? ' down' : ' mute'}`}>{cnt('reset') ? 'เปลี่ยน PIN แล้วกด "พร้อมขาย"' : 'ไม่มีค้าง'}</span></div>
         <div className="card kpi"><span className="lbl">ต้นทุนรวม/รอบ</span><span className="val num">{baht(live.reduce((s, a) => s + (a.cost ?? 0), 0))}</span><span className="delta mute">{live.length} บัญชี</span></div>
       </div>
-      {products.length > 1 && <div className="seg" style={{ marginBottom: 14, flexWrap: 'wrap' }}>{products.map((p) => <Link key={p.id} href={`/admin/accounts?p=${p.id}`} className={p.id === current.id ? 'on' : ''} style={{ display: 'inline-flex', alignItems: 'center', height: 30, padding: '0 12px', borderRadius: 8, fontSize: 13 }}>{p.name}</Link>)}</div>}
+      {products.length > 1 && <div className="seg" style={{ marginBottom: 14, flexWrap: 'wrap' }}>{products.map((p) => <Link key={p.id} href={to(`/admin/accounts?p=${p.id}`)} className={p.id === current.id ? 'on' : ''} style={{ display: 'inline-flex', alignItems: 'center', height: 30, padding: '0 12px', borderRadius: 8, fontSize: 13 }}>{p.name}</Link>)}</div>}
       {err && <p style={{ color: 'var(--bad)' }} role="alert">{err}</p>}
 
       {add && (

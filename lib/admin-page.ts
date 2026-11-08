@@ -1,14 +1,25 @@
+import { to } from '@/lib/routes';
 import 'server-only';
+import { redirect } from 'next/navigation';
 import { getShop, type Shop } from '@/lib/shop';
-import { isShopAdmin } from '@/lib/auth';
+import { adminPerms, isShopAdmin } from '@/lib/auth';
+import { PERMS, type Perm } from '@/lib/perms';
 
 /**
  * ทุกหน้าในหลังบ้านเรียกก่อนดึงข้อมูล — layout ที่ไม่แสดง children ไม่ได้หยุด page ไม่ให้ทำงาน
  * ไม่ใช่แอดมิน = null (หน้าคืนค่าว่าง ส่วน layout แสดงฟอร์มล็อกอินแทน)
  */
-export async function adminShop(): Promise<Shop | null> {
+export async function adminShop(perm?: Perm): Promise<Shop | null> {
   const shop = await getShop();
   if (!shop || !(await isShopAdmin())) return null;
+  if (perm) {
+    const mine = await adminPerms();
+    if (!mine.includes(perm)) {
+      // แอดมินไม่มีสิทธิ์หน้านี้ → ไปหน้าแรกที่มีสิทธิ์ (ไม่มีเลย = กลับหน้าร้าน)
+      const first = PERMS.find((p) => mine.includes(p.key));
+      redirect(first ? to(`/admin${first.href}`) : '/');
+    }
+  }
   return shop;
 }
 

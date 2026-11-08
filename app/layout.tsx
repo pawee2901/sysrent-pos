@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next';
+import { accentVars } from '@/lib/colors';
 import { getShop } from '@/lib/shop';
+import 'sweetalert2/dist/sweetalert2.min.css';
 import './globals.css';
+import './themes.css';
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getShop();
@@ -8,6 +11,10 @@ export async function generateMetadata(): Promise<Metadata> {
     title: s ? { default: `${s.name} — ${s.tagline}`, template: `%s · ${s.name}` } : 'ไม่พบร้าน',
     description: s?.tagline ?? '',
     ...(s?.logo_url ? { icons: { icon: s.logo_url, apple: s.logo_url } } : {}),
+    // รูปตอนแชร์ลิงก์ใน LINE / Facebook: แบนเนอร์ (ถ้ามี) ไม่งั้นโลโก้ร้าน
+    ...(s ? { openGraph: { type: 'website', siteName: s.name, title: `${s.name} — ${s.tagline}`, description: s.tagline, locale: 'th_TH',
+      ...(s.banner_url || s.logo_url ? { images: [s.banner_url || s.logo_url] } : {}) },
+      twitter: { card: s.banner_url ? 'summary_large_image' : 'summary' } } : {}),
   };
 }
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
@@ -16,11 +23,11 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const shop = await getShop();
   return (
-    <html lang="th" data-accent={shop?.accent ?? 'indigo'}>
+    <html lang="th" data-accent={shop?.accent ?? 'indigo'} style={accentVars(shop?.accent ?? 'indigo') as React.CSSProperties}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Mali:wght@500;600;700&family=Kanit:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Noto+Serif+Thai:wght@500;700&display=swap" rel="stylesheet" />
       </head>
       <body>
         {shop ? children : (

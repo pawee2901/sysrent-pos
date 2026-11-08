@@ -16,7 +16,7 @@ const schema = z.discriminatedUnion('action', [
 
 /** คลังบัญชีหลัก: เพิ่มบัญชี + จอ · แก้ไข · ดูรหัส · เปลี่ยน PIN แล้วพร้อมขาย (ทุกคำสั่งตรวจว่าเป็นของร้านนี้) */
 export async function POST(req: Request) {
-  const a = await requireAdmin();
+  const a = await requireAdmin('accounts');
   if ('res' in a) return a.res;
   const b = await body(req, schema);
   if ('res' in b) return b.res;

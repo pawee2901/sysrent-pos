@@ -1,4 +1,5 @@
 'use client';
+import { to } from '@/lib/routes';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/components/Cart';
@@ -40,9 +41,9 @@ export function SubCard({ s }: { s: S }) {
         )}
         <div className="sub-acts">
           <button type="button" className="btn primary sm" disabled={busy} onClick={reveal}>{busy ? 'กำลังเปิด…' : sec ? 'ซ่อนรหัส' : '👁 ดูรหัส'}</button>
-          {s.productId && <Link href={`/p/${s.productId}`} className={`btn sm${tone === 'warn' ? ' soft' : ''}`}>🛒 ซื้อเพิ่ม</Link>}
+          {s.productId && <Link href={to(`/p/${s.productId}`)} className={`btn sm${tone === 'warn' ? ' soft' : ''}`}>🛒 ซื้อเพิ่ม</Link>}
         </div>
-      </> : <><p className="muted" style={{ margin: 0, fontSize: 14 }}>หมดอายุแล้ว — รหัสถูกซ่อนเพื่อความปลอดภัย</p>{s.productId && <div className="sub-acts"><Link href={`/p/${s.productId}`} className="btn soft sm">🛒 ซื้อใหม่</Link></div>}</>}
+      </> : <><p className="muted" style={{ margin: 0, fontSize: 14 }}>หมดอายุแล้ว — รหัสถูกซ่อนเพื่อความปลอดภัย</p>{s.productId && <div className="sub-acts"><Link href={to(`/p/${s.productId}`)} className="btn soft sm">🛒 ซื้อใหม่</Link></div>}</>}
       {err && <p style={{ color: 'var(--bad)', margin: 0 }} role="alert">{err}</p>}
     </article>
   );

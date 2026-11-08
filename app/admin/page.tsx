@@ -1,3 +1,4 @@
+import { to } from '@/lib/routes';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { baht } from '@/lib/shop';
@@ -9,7 +10,7 @@ const DAYS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 /** ภาพรวม: ตัวเลขวันนี้ · ยอดขาย 7 วัน · ต้องทำวันนี้ · โควตาสลิป · ออเดอร์ล่าสุด */
 export default async function Dashboard() {
-  const shop = await adminShop();
+  const shop = await adminShop('dashboard');
   if (!shop) return null;
   const d = db();
   const today = bkkMidnight(), week = bkkMidnight(6);
@@ -36,17 +37,17 @@ export default async function Dashboard() {
   const out = products.filter((p) => !p.inStock);
   const used = usage?.used ?? 0, pct = Math.min(100, Math.round((used / shop.slip_quota) * 100));
   const todo = [
-    ...(queued?.length ? [{ ic: '🛠️', cls: 'warn', t: `ออเดอร์สั่งทำรอส่ง ${queued.length} รายการ`, s: [...new Set(queued.map((q) => q.name.split(' · ')[0]))].slice(0, 3).join(', '), href: '/admin/orders?s=queued', btn: 'ทำเลย' }] : []),
-    ...(reset ? [{ ic: '🔑', cls: 'acc', t: `จอรอเปลี่ยน PIN ${reset} จอ`, s: 'ลูกค้าเดิมหมดอายุ เปลี่ยน PIN แล้วกดพร้อมขาย', href: '/admin/accounts', btn: 'ดู' }] : []),
-    ...out.slice(0, 3).map((p) => ({ ic: '📦', cls: 'bad', t: `${p.name} หมดสต็อก`, s: 'ลูกค้ากดซื้อไม่ได้', href: p.fulfillment === 'slot' ? '/admin/accounts' : '/admin/products', btn: 'เพิ่ม' })),
-    ...(renew ?? []).map((a) => ({ ic: '💳', cls: 'warn', t: `จ่ายค่าบัญชี ${a.login}`, s: `ครบ ${a.renew_at}${a.cost ? ` · ${baht(Number(a.cost))}` : ''}`, href: '/admin/accounts', btn: 'ดู' })),
+    ...(queued?.length ? [{ ic: '🛠️', cls: 'warn', t: `ออเดอร์สั่งทำรอส่ง ${queued.length} รายการ`, s: [...new Set(queued.map((q) => q.name.split(' · ')[0]))].slice(0, 3).join(', '), href: to('/admin/orders?s=queued'), btn: 'ทำเลย' }] : []),
+    ...(reset ? [{ ic: '🔑', cls: 'acc', t: `จอรอเปลี่ยน PIN ${reset} จอ`, s: 'ลูกค้าเดิมหมดอายุ เปลี่ยน PIN แล้วกดพร้อมขาย', href: to('/admin/accounts'), btn: 'ดู' }] : []),
+    ...out.slice(0, 3).map((p) => ({ ic: '📦', cls: 'bad', t: `${p.name} หมดสต็อก`, s: 'ลูกค้ากดซื้อไม่ได้', href: p.fulfillment === 'slot' ? to('/admin/accounts') : to('/admin/products'), btn: 'เพิ่ม' })),
+    ...(renew ?? []).map((a) => ({ ic: '💳', cls: 'warn', t: `จ่ายค่าบัญชี ${a.login}`, s: `ครบ ${a.renew_at}${a.cost ? ` · ${baht(Number(a.cost))}` : ''}`, href: to('/admin/accounts'), btn: 'ดู' })),
   ];
   type L = { code: string; status: string; total: number; created_at: string; shop_customers: { username: string } | null; shop_order_items: { name: string }[] };
 
   return (
     <>
       <div className="page-head"><div><h1>ภาพรวมร้าน</h1><p>อัปเดตทุกครั้งที่เปิดหน้า</p></div>
-        <div className="acts"><Link href="/admin/products" className="btn">+ เพิ่มสินค้า</Link><a href="/" target="_blank" rel="noopener noreferrer" className="btn primary">เปิดหน้าร้าน ↗</a></div></div>
+        <div className="acts"><Link href={to('/admin/products')} className="btn">+ เพิ่มสินค้า</Link><a href="/" target="_blank" rel="noopener noreferrer" className="btn primary">เปิดหน้าร้าน ↗</a></div></div>
       <div className="kpis">
         <div className="card kpi"><span className="lbl">ยอดขายวันนี้<span className="kpi-ic">฿</span></span><span className="val num">{baht(todaySales)}</span><span className="delta mute">{todayOrders} ออเดอร์</span></div>
         <div className="card kpi"><span className="lbl">ยอดขาย 7 วัน<span className="kpi-ic">📈</span></span><span className="val num">{baht(rows.reduce((s, r) => s + Number(r.total), 0))}</span><span className="delta mute">{rows.length} ออเดอร์</span></div>
@@ -58,11 +59,11 @@ export default async function Dashboard() {
           <section className="card"><div className="card-head"><h2>ยอดขาย 7 วัน</h2></div>
             <div className="chart">{days.map(([l, v], i) => <div key={i} className="col"><div className="b" style={{ height: `${Math.max(2, (v / max) * 100)}%` }}><span className="tip num">{baht(v)}</span></div><span className="d">{l}</span></div>)}</div>
           </section>
-          <section className="card"><div className="card-head"><h2>ออเดอร์ล่าสุด</h2><Link href="/admin/orders" className="btn ghost sm">ดูทั้งหมด →</Link></div>
+          <section className="card"><div className="card-head"><h2>ออเดอร์ล่าสุด</h2><Link href={to('/admin/orders')} className="btn ghost sm">ดูทั้งหมด →</Link></div>
             {!latest?.length ? <p className="muted card-pad" style={{ margin: 0 }}>ยังไม่มีออเดอร์</p> : (
               <table className="tbl"><thead><tr><th>ออเดอร์</th><th>สินค้า</th><th className="r">ยอด</th><th>สถานะ</th></tr></thead>
                 <tbody>{(latest as unknown as L[]).map((o) => { const st = ORDER_STATUS[o.status] ?? ORDER_STATUS.pending; return (
-                  <tr key={o.code}><td><Link href={`/admin/orders?q=${o.code}`} className="code">#{o.code}</Link><small>{when(o.created_at)}</small></td>
+                  <tr key={o.code}><td><Link href={to(`/admin/orders?q=${o.code}`)} className="code">#{o.code}</Link><small>{when(o.created_at)}</small></td>
                     <td className="m-full">{o.shop_order_items.map((i) => i.name).join(', ')}<small>@{o.shop_customers?.username ?? '-'}</small></td>
                     <td className="r num"><b>{baht(Number(o.total))}</b></td><td><span className={`pill ${st.tone}`}>{st.label}</span></td></tr>); })}</tbody></table>
             )}

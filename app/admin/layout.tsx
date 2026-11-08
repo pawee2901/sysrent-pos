@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getShop } from '@/lib/shop';
-import { isShopAdmin } from '@/lib/auth';
+import { adminKind, adminPerms, isShopAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { AdminLogin } from './AdminLogin';
 import { AdminNav } from './AdminNav';
@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ]);
   return (
     <AdminNav shop={{ name: shop.name, slug: shop.slug, logo: shop.logo_url }} counts={{ orders: queue ?? 0, accounts: reset ?? 0 }}
-      slip={{ used: usage?.used ?? 0, quota: shop.slip_quota, overage: shop.slip_overage }}>
+      slip={{ used: usage?.used ?? 0, quota: shop.slip_quota, overage: shop.slip_overage }} plan={shop.plan} perms={await adminPerms()} staff={(await adminKind()) === 'staff'}>
       {children}
     </AdminNav>
   );

@@ -1,4 +1,5 @@
 'use client';
+import { to } from '@/lib/routes';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, baht } from '@/components/Cart';
@@ -18,13 +19,13 @@ export function PayBox({ code, total, balance, expiresAt }: { code: string; tota
     const r = await api<Qr>(`/api/orders/${code}/pay`, { method: m });
     setBusy(false);
     if (!r.ok) { setErr(r.error); return; }
-    if (m === 'wallet') { router.replace(`/orders/${code}?paid=1`); router.refresh(); return; }
+    if (m === 'wallet') { router.replace(to(`/orders/${code}?paid=1`)); router.refresh(); return; }
     setQr(r.data);
   }
 
   if (qr) {
     return <PromptPayPanel qr={qr} onRenew={() => { setQr(null); pay('promptpay'); }}
-      onPaid={(p) => { if (p.order) { router.replace(`/orders/${p.order}?paid=1`); router.refresh(); } else { setQr(null); setErr(p.orderError ?? 'เงินเข้ากระเป๋าแล้ว'); router.refresh(); } }} />;
+      onPaid={(p) => { if (p.order) { router.replace(to(`/orders/${p.order}?paid=1`)); router.refresh(); } else { setQr(null); setErr(p.orderError ?? 'เงินเข้ากระเป๋าแล้ว'); router.refresh(); } }} />;
   }
   return (
     <>

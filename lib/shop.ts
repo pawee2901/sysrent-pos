@@ -5,10 +5,12 @@ import { db } from '@/lib/db';
 
 export type Shop = {
   id: string; slug: string; owner_id: string | null; name: string; tagline: string; logo_url: string; accent: string;
-  line_url: string; announcement: string; promptpay_id: string; receiver_name: string; plan: string;
+  line_url: string; facebook_url: string; announcement: string;
+  banner_url: string; banner_link: string; popup_text: string; popup_image: string; popup_link: string;
+  bg_style: string; bg_image: string; bg_color: string; card_style: string; theme: string; themes_owned: string[]; promptpay_id: string; receiver_name: string; plan: string;
   slip_quota: number; slip_overage: number; active: boolean; expires_at: string | null;
 };
-export const SHOP_COLS = 'id, slug, owner_id, name, tagline, logo_url, accent, line_url, announcement, promptpay_id, receiver_name, plan, slip_quota, slip_overage, active, expires_at';
+export const SHOP_COLS = 'id, slug, owner_id, name, tagline, logo_url, accent, line_url, facebook_url, announcement, banner_url, banner_link, popup_text, popup_image, popup_link, bg_style, bg_image, bg_color, card_style, theme, themes_owned, promptpay_id, receiver_name, plan, slip_quota, slip_overage, active, expires_at';
 
 /** slug ร้านจาก subdomain เช่น muay.sysrent.shop → 'muay' (ตอนรันในเครื่องใช้ DEV_SHOP_SLUG) */
 export async function shopSlug(): Promise<string | null> {

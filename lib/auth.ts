@@ -4,6 +4,8 @@ import { cookies, headers } from 'next/headers';
 import { createHash, randomBytes, scrypt as _scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { db } from '@/lib/db';
+import { can } from '@/lib/plan';
+import { ALL_PERMS, DEFAULT_STAFF_PERMS, cleanPerms, type Perm } from '@/lib/perms';
 import { getShop } from '@/lib/shop';
 
 /**
@@ -68,13 +70,40 @@ export const getCustomer = cache(async (): Promise<Customer | null> => {
   return { id: data.id, username: data.username, contact: data.contact, balance: Number(data.balance) };
 });
 
-/** แอดมินร้านล็อกอินอยู่ไหม */
-export const isShopAdmin = cache(async (): Promise<boolean> => {
+/**
+ * ใครเข้าหลังบ้านอยู่: owner = ล็อกอินด้วยบัญชีแอดมินร้าน · staff = ลูกค้าที่ร้านตั้งยศ "แอดมิน" (ล็อกอินบัญชีลูกค้าของตัวเอง)
+ * ยังไม่รัน 0017 = มีแต่ owner
+ */
+export const adminKind = cache(async (): Promise<'owner' | 'staff' | null> => {
   const shop = await getShop();
-  if (!shop) return false;
+  if (!shop) return null;
   const s = await sessionOf(ADMIN_COOKIE, shop.id);
-  return !!s && s.customer_id === null;
+  if (s && s.customer_id === null) return 'owner';
+  return can(shop.plan, 'staff') && (await staffRow())?.role === 'admin' ? 'staff' : null;
 });
+
+/** แถวยศ / สิทธิ์ของลูกค้าที่ล็อกอินอยู่ (ยังไม่รัน 0018 = สิทธิ์เริ่มต้น · ยังไม่รัน 0017 = ไม่มียศ) */
+const staffRow = cache(async (): Promise<{ role: string; perms: Perm[] } | null> => {
+  const shop = await getShop();
+  const me = await getCustomer();
+  if (!shop || !me) return null;
+  const d = db();
+  const r = await d.from('shop_customers').select('role, admin_perms').eq('id', me.id).eq('shop_id', shop.id).maybeSingle();
+  if (!r.error) return r.data ? { role: r.data.role, perms: cleanPerms(r.data.admin_perms) } : null;
+  const r2 = await d.from('shop_customers').select('role').eq('id', me.id).eq('shop_id', shop.id).maybeSingle();
+  return !r2.error && r2.data ? { role: r2.data.role, perms: DEFAULT_STAFF_PERMS } : null;
+});
+
+/** เมนูหลังบ้านที่เข้าได้: เจ้าของร้าน = ทุกเมนู · แอดมิน = ตามที่เจ้าของร้านเลือก */
+export const adminPerms = cache(async (): Promise<Perm[]> => {
+  const k = await adminKind();
+  if (k === 'owner') return ALL_PERMS;
+  if (k === 'staff') return (await staffRow())?.perms ?? [];
+  return [];
+});
+
+/** เข้าหลังบ้านได้ไหม (เจ้าของ หรือ ลูกค้ายศแอดมิน) */
+export const isShopAdmin = cache(async (): Promise<boolean> => (await adminKind()) !== null);
 
 /** IP ลูกค้า (หลัง nginx / Cloudflare) สำหรับนับล็อกอินผิด */
 export async function clientIp(): Promise<string> {
@@ -99,3 +128,9 @@ export async function loginFailed(keys: string[]) {
 export async function loginOk(keys: string[]) {
   await db().from('shop_login_fails').delete().in('key', keys);
 }
+
+/** อีเมลรับแจ้งเตือนของลูกค้า (แยก query: ยังไม่รัน 0020 = ไม่มีอีเมล แต่ล็อกอินได้ตามปกติ) */
+export const customerEmail = cache(async (customerId: string): Promise<string> => {
+  const { data, error } = await db().from('shop_customers').select('email').eq('id', customerId).maybeSingle();
+  return error ? '' : (data?.email as string | undefined) ?? '';
+});

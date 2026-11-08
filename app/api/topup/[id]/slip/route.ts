@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { fail, isUuid, requireCustomer } from '@/lib/api';
-import { checkSlip, slipOkConfigured } from '@/lib/slipok';
+import { slipServiceConfigured, verifySlip } from '@/lib/slip-service';
 import { receiverIsShop } from '@/lib/slip-receiver';
 import { MAX_ATTEMPTS, SLIP_GRACE_MS } from '@/lib/topup';
+import { checkSlipFree } from '@/lib/slip-free';
+import { notifyOrderPaid, notifyTopup } from '@/lib/notify';
 
 const TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const SKEW = 60_000;
@@ -11,11 +13,12 @@ type Ctx = { params: Promise<{ id: string }> };
 
 /**
  * อัปสลิป → ใช้โควตาตรวจสลิปของร้าน (เกิน 500/เดือน ตัดกระเป๋า SysRent ของเจ้าของร้าน ไม่พอ = ไม่ตรวจ)
- * → SlipOK → ยอดตรง + ผู้รับเป็นร้านนี้ + เวลาโอนอยู่ในช่วง QR → เงินเข้ากระเป๋า (+ จ่ายออเดอร์ต่อ ถ้า QR นี้มาจากออเดอร์)
+ * → Thunder / SlipOK (lib/slip-service.ts) → ยอดตรง + ผู้รับเป็นร้านนี้ + เวลาโอนอยู่ในช่วง QR → เงินเข้ากระเป๋า (+ จ่ายออเดอร์ต่อ ถ้า QR นี้มาจากออเดอร์)
  */
 export async function POST(req: Request, { params }: Ctx) {
   const a = await requireCustomer();
   if ('res' in a) return a.res;
+  const meId = a.me.id, meName = a.me.username, shop = a.shop;
   const { id } = await params;
   if (!isUuid(id)) return fail('ไม่พบรายการ', 404);
   const d = db();
@@ -31,7 +34,6 @@ export async function POST(req: Request, { params }: Ctx) {
     return fail('เกินเวลาตรวจสลิป หากโอนแล้วกรุณาติดต่อร้านพร้อมสลิป', 410, { expired: true });
   }
   if (t.attempts >= MAX_ATTEMPTS) return fail('อัปสลิปเกินจำนวนครั้ง กรุณาติดต่อร้าน', 429);
-  if (!slipOkConfigured()) return fail('ระบบตรวจสลิปยังไม่พร้อม กรุณาติดต่อร้าน', 503);
 
   const form = await req.formData().catch(() => null);
   const file = form?.get('slip');
@@ -39,14 +41,23 @@ export async function POST(req: Request, { params }: Ctx) {
   if (file.size > 5 * 1024 * 1024) return fail('ไฟล์ใหญ่เกิน 5MB');
   if (!TYPES.has(file.type)) return fail('รองรับเฉพาะรูป jpg, png, webp');
 
-  // โควตาตรวจสลิปของร้าน (นับก่อนส่งไปตรวจ เพราะ SlipOK คิดเงินทุกครั้ง)
+  // ไม่มีบริการตรวจสลิป (Thunder / SlipOK) → ตรวจเอง (QR บนสลิป + AI + แจ้งเตือนเงินเข้า)
+  if (!slipServiceConfigured()) {
+    await d.from('shop_topups').update({ attempts: t.attempts + 1 }).eq('id', t.id);
+    const r = await checkSlipFree(a.shop, a.me.id, { ...t, amount: Number(t.amount) }, Buffer.from(await file.arrayBuffer()));
+    if (r.kind === 'error') { await d.from('shop_topups').update({ last_error: r.message }).eq('id', t.id); return fail(r.message, r.status); }
+    if (r.kind === 'waiting') return NextResponse.json({ ok: true, waiting: true, message: r.message });
+    return finish(r.amount);
+  }
+
+  // โควตาตรวจสลิปของร้าน (นับก่อนส่งไปตรวจ เพราะบริการตรวจสลิปคิดเงินทุกครั้ง)
   const { data: allowed, error: qErr } = await d.rpc('shop_use_slip', { p_shop: a.shop.id });
   if (qErr) { console.error('[slip] quota', qErr.message); return fail('ระบบตรวจสลิปขัดข้อง กรุณาลองใหม่', 500); }
   if (!allowed) return fail('ร้านใช้โควตาตรวจสลิปเดือนนี้ครบแล้ว — ระบบยังรับเงินไม่ได้ชั่วคราว กรุณาติดต่อร้านทาง LINE', 503);
 
   await d.from('shop_topups').update({ attempts: t.attempts + 1 }).eq('id', t.id);
   const amount = Number(t.amount);
-  const r = await checkSlip(file, 'slip.' + (file.type.split('/')[1] || 'jpg'), amount);
+  const r = await verifySlip(file, amount);
   const bad = async (msg: string, status = 400) => { await d.from('shop_topups').update({ last_error: msg }).eq('id', t.id); return fail(msg, status); };
   if (!r.ok) return bad(r.message, r.retryable ? 503 : 400);
   const s = r.data;
@@ -65,11 +76,17 @@ export async function POST(req: Request, { params }: Ctx) {
     return bad('บันทึกยอดเงินไม่สำเร็จ กรุณาติดต่อร้านพร้อมสลิป', 500);
   }
 
+  return finish(amount, Number(balance));
+
   // QR นี้มาจากออเดอร์ → จ่ายต่อจากกระเป๋าทันที (ออเดอร์หมดเวลา/ของหมด = เงินยังอยู่ในกระเป๋า ไม่หาย)
-  if (t.pay_order) {
-    const { data: o, error: pErr } = await d.rpc('shop_pay_order', { p_order: t.pay_order, p_customer: a.me.id, p_paid_by: 'promptpay' });
-    if (!pErr && o) return NextResponse.json({ ok: true, amount, order: (o as { code: string }).code });
-    return NextResponse.json({ ok: true, amount, balance: Number(balance), orderError: 'เงินเข้ากระเป๋าแล้ว แต่ออเดอร์จ่ายไม่สำเร็จ (อาจหมดเวลาหรือของหมด) — สั่งใหม่แล้วจ่ายด้วยกระเป๋าได้เลย' });
+  async function finish(amount: number, balance?: number) {
+  if (t!.pay_order) {
+    const { data: o, error: pErr } = await d.rpc('shop_pay_order', { p_order: t!.pay_order, p_customer: meId, p_paid_by: 'promptpay' });
+    if (!pErr && o) { notifyOrderPaid(shop, t!.pay_order); return NextResponse.json({ ok: true, amount, order: (o as { code: string }).code }); }
+    notifyTopup(shop, meName, amount); // ออเดอร์จ่ายไม่สำเร็จ แต่เงินเข้ากระเป๋าแล้ว
+    return NextResponse.json({ ok: true, amount, balance, orderError: 'เงินเข้ากระเป๋าแล้ว แต่ออเดอร์จ่ายไม่สำเร็จ (อาจหมดเวลาหรือของหมด) — สั่งใหม่แล้วจ่ายด้วยกระเป๋าได้เลย' });
   }
-  return NextResponse.json({ ok: true, amount, balance: Number(balance) });
+  notifyTopup(shop, meName, amount);
+  return NextResponse.json({ ok: true, amount, balance });
+  }
 }

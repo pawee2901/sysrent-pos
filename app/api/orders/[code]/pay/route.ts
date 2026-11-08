@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { body, dbFail, fail, requireCustomer } from '@/lib/api';
 import { createTopup } from '@/lib/topup';
+import { notifyOrderPaid } from '@/lib/notify';
 
 const schema = z.object({ method: z.enum(['wallet', 'promptpay']) });
 type Ctx = { params: Promise<{ code: string }> };
@@ -24,6 +25,7 @@ export async function POST(req: Request, { params }: Ctx) {
   if (b.data.method === 'wallet') {
     const { error } = await d.rpc('shop_pay_order', { p_order: o.id, p_customer: a.me.id, p_paid_by: 'wallet' });
     if (error) return dbFail(error.message);
+    notifyOrderPaid(a.shop, o.id);
     return NextResponse.json({ ok: true });
   }
   const t = await createTopup(a.shop, a.me.id, Number(o.total), o.id);

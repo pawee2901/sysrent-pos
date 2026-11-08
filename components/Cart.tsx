@@ -2,8 +2,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 /** ตะกร้าเก็บในเครื่องลูกค้า (แยกตามร้าน) — ราคาจริงคิดใหม่ที่เซิร์ฟเวอร์ตอนสร้างออเดอร์ */
-export type CartLine = { optionId: string; productId: string; name: string; option: string; price: number; qty: number; image: string; template: string; maxQty: number };
-type Cart = { lines: CartLine[]; ready: boolean; count: number; total: number; add: (l: CartLine) => void; setQty: (id: string, q: number) => void; remove: (id: string) => void; clear: () => void };
+/** ask = หัวข้อข้อมูลที่ร้านขอ (เช่น อีเมลเชิญเข้าครอบครัว) · info = ที่ลูกค้ากรอก */
+export type CartLine = { optionId: string; productId: string; name: string; option: string; price: number; qty: number; image: string; template: string; maxQty: number; ask?: string; info?: string };
+type Cart = { lines: CartLine[]; ready: boolean; count: number; total: number; add: (l: CartLine) => void; setQty: (id: string, q: number) => void; setInfo: (id: string, info: string) => void; remove: (id: string) => void; clear: () => void };
 
 const Ctx = createContext<Cart | null>(null);
 const load = (key: string): CartLine[] => {
@@ -23,9 +24,10 @@ export function CartProvider({ shop, children }: { shop: string; children: React
     return [...cur, { ...l, qty: Math.min(l.qty, l.maxQty, 20) }].slice(-20);
   }), []);
   const setQty = useCallback((id: string, q: number) => setLines((cur) => cur.map((x) => (x.optionId === id ? { ...x, qty: Math.max(1, Math.min(q, x.maxQty, 20)) } : x))), []);
+  const setInfo = useCallback((id: string, info: string) => setLines((cur) => cur.map((x) => (x.optionId === id ? { ...x, info: info.slice(0, 300) } : x))), []);
   const remove = useCallback((id: string) => setLines((cur) => cur.filter((x) => x.optionId !== id)), []);
   const clear = useCallback(() => setLines([]), []);
-  const value = useMemo(() => ({ lines, ready, add, setQty, remove, clear, count: lines.reduce((s, l) => s + l.qty, 0), total: lines.reduce((s, l) => s + l.qty * l.price, 0) }), [lines, ready, add, setQty, remove, clear]);
+  const value = useMemo(() => ({ lines, ready, add, setQty, setInfo, remove, clear, count: lines.reduce((s, l) => s + l.qty, 0), total: lines.reduce((s, l) => s + l.qty * l.price, 0) }), [lines, ready, add, setQty, setInfo, remove, clear]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

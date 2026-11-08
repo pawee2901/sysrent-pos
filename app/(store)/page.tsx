@@ -1,4 +1,8 @@
+import { to } from '@/lib/routes';
 import Link from 'next/link';
+import { getAgent, agentPrices, withAgentPrices } from '@/lib/agents';
+import { getCustomer } from '@/lib/auth';
+import { mergeCategories, shopCategories } from '@/lib/categories';
 import { getShop, baht } from '@/lib/shop';
 import { loadProducts, type Product } from '@/lib/catalog';
 import { db } from '@/lib/db';
@@ -15,7 +19,7 @@ const ago = (iso: string) => {
 function Card({ p }: { p: Product }) {
   const compare = Math.max(0, ...p.options.map((o) => o.compareAt ?? 0));
   return (
-    <Link href={`/p/${p.id}`} className={`card pcard${p.inStock ? '' : ' out'}`}>
+    <Link href={to(`/p/${p.id}`)} className={`card pcard${p.inStock ? '' : ' out'}`}>
       <div className="pcard-img"><AppLogo image={p.image} template={p.template} name={p.name} size="xl" />{p.badge && <span className="pill accent plain tag">{p.badge}</span>}</div>
       <div className="pcard-body">
         <span className="pcard-name">{p.name}</span>
@@ -31,12 +35,18 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const shop = (await getShop())!;
   const { c = '', q = '' } = await searchParams;
   const d = db();
-  const [products, { count: members }, { data: recent }] = await Promise.all([
+  const [all, { count: members }, { data: recent }, me] = await Promise.all([
     loadProducts(shop.id),
     d.from('shop_customers').select('id', { count: 'exact', head: true }).eq('shop_id', shop.id),
     d.from('shop_orders').select('paid_at, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(4),
+    getCustomer(),
   ]);
-  const cats = [...new Set(products.map((p) => p.category).filter(Boolean))];
+  // ตัวแทน (ร้าน Pro): เห็นราคาตัวแทน · ราคาปกติขีดฆ่า
+  const agent = await getAgent(shop, me?.id);
+  const products = agent ? withAgentPrices(all, await agentPrices(all.flatMap((p) => p.options.map((o) => o.id)))) : all;
+  // ปุ่มหมวด: เรียงตามที่ร้านตั้ง · แสดงเฉพาะหมวดที่มีสินค้า
+  const used = new Set(products.map((p) => p.category).filter(Boolean));
+  const cats = mergeCategories(await shopCategories(shop.id), [...used]).filter((x) => used.has(x));
   const term = q.trim().toLowerCase();
   const shown = products.filter((p) => (!c || p.category === c) && (!term || p.name.toLowerCase().includes(term)));
   const sold = products.reduce((s, p) => s + p.sold, 0);
@@ -46,16 +56,20 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
 
   return (
     <>
-      <section className="hero">
+      {/* ร้านอัปรูปหน้าแรกไว้ = แสดงรูปแทนกล่องข้อความ (ไม่ครอปรูป ข้อความในรูปไม่โดนตัด) */}
+      {shop.banner_url ? (shop.banner_link
+        ? <a href={shop.banner_link} className="banner"><img src={shop.banner_url} alt={shop.name} /></a>
+        : <div className="banner"><img src={shop.banner_url} alt={shop.name} /></div>) : (
+      <section className={`hero${products.length ? '' : ' solo'}`}>
         <div>
           <span className="pill accent plain">✨ ส่งอัตโนมัติ 24 ชั่วโมง</span>
           <h1 style={{ marginTop: 12 }}>{shop.tagline.includes(' ') ? <>{shop.tagline.split(' ').slice(0, -1).join(' ')}<br /><em>{shop.tagline.split(' ').slice(-1)}</em></> : shop.tagline}</h1>
           <p>สแกนจ่ายพร้อมเพย์ ระบบตรวจสลิปและส่งรหัสให้เองภายในไม่กี่วินาที มีปัญหาทักร้านได้ตลอด</p>
-          <div className="hero-acts"><a href="#cat" className="btn primary lg">เลือกซื้อเลย</a><Link href="/my" className="btn lg">บัญชีของฉัน</Link></div>
+          <div className="hero-acts"><a href="#cat" className="btn primary lg">เลือกซื้อเลย</a><Link href={to('/orders')} className="btn lg">ประวัติการซื้อ</Link></div>
           <div className="hero-ticks"><span>ตรวจสลิปอัตโนมัติ</span><span>รับประกันตลอดอายุ</span><span>ดูแลทาง LINE</span></div>
         </div>
-        <div className="hero-art">{products.slice(0, 6).map((p) => <AppLogo key={p.id} image={p.image} template={p.template} name={p.name} />)}</div>
-      </section>
+        {products.length > 0 && <div className="hero-art">{products.slice(0, 6).map((p) => <AppLogo key={p.id} image={p.image} template={p.template} name={p.name} />)}</div>}
+      </section>)}
       {live.length > 0 && (
         <div className="live"><span className="live-dot" />{live.map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> ซื้อ {l.what} · {l.when}</span>)}</div>
       )}

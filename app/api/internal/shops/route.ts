@@ -2,13 +2,15 @@ import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { db } from '@/lib/db';
+import { SLIP_QUOTA } from '@/lib/plan';
 import { fail } from '@/lib/api';
 import { hashPassword } from '@/lib/auth';
+import { THEMES } from '@/lib/themes';
 
 /**
  * API ภายในสำหรับ SysRent (เว็บหลัก) เท่านั้น — ต้องส่ง header x-internal-key = SHOP_INTERNAL_KEY
  *  GET  → รายชื่อ slug ร้านที่เปิดอยู่ (ใช้สร้าง nginx map)
- *  POST → create / extend / suspend / resume / check
+ *  POST → create / extend / suspend / resume / check / themes (ปลดล็อกธีมพิเศษที่ซื้อจาก sysrent.shop)
  */
 function authorized(req: Request): boolean {
   const want = process.env.SHOP_INTERNAL_KEY ?? '';
@@ -29,6 +31,10 @@ const schema = z.discriminatedUnion('action', [
   }),
   z.object({ action: z.literal('extend'), slug, expires_at: until }),
   z.object({ action: z.enum(['suspend', 'resume']), slug }),
+  // ธีมพิเศษทั้งหมดที่ร้านเป็นเจ้าของ (ส่งรายการเต็มทุกครั้ง — ไม่ได้ส่งมา = ถอนสิทธิ์)
+  // เปลี่ยนแพ็กเกจ: starter (ปกติ ฿299) · pro (฿399) · max (฿799) — โควตาสลิปเปลี่ยนตามแพ็กเกจ
+  z.object({ action: z.literal('plan'), slug, plan: z.enum(['starter', 'pro', 'max']) }),
+  z.object({ action: z.literal('themes'), slug, themes: z.array(z.string().refine((k) => THEMES.some((t) => t.key === k && t.premium), 'ไม่มีธีมนี้')).max(50) }),
 ]);
 
 /** ชื่อซ้ำกับเว็บเช่า OTP (sub เดียวกันบน sysrent) หรือร้านอื่นไม่ได้ */
@@ -64,10 +70,18 @@ export async function POST(req: Request) {
     if (why) return fail(why, 409);
     const { data, error } = await d.from('shops').insert({
       slug: x.slug, owner_id: x.owner_id, name: x.name, admin_username: x.admin_username,
-      admin_pass_hash: await hashPassword(x.admin_password), expires_at: x.expires_at, plan: 'basic', slip_quota: 500, slip_overage: 0.5,
+      admin_pass_hash: await hashPassword(x.admin_password), expires_at: x.expires_at, plan: 'starter', slip_quota: SLIP_QUOTA.starter, slip_overage: 0.45,
     }).select('id, slug').single();
     if (error) return fail(error.code === '23505' ? 'ชื่อนี้มีคนใช้แล้ว' : 'สร้างร้านไม่สำเร็จ', error.code === '23505' ? 409 : 500);
     return NextResponse.json({ ok: true, shop: data });
+  }
+  if (x.action === 'plan') {
+    const { data } = await d.from('shops').update({ plan: x.plan, slip_quota: SLIP_QUOTA[x.plan] }).eq('slug', x.slug).select('id');
+    return data?.length ? NextResponse.json({ ok: true }) : fail('ไม่พบร้าน', 404);
+  }
+  if (x.action === 'themes') {
+    const { data } = await d.from('shops').update({ themes_owned: [...new Set(x.themes)] }).eq('slug', x.slug).select('id');
+    return data?.length ? NextResponse.json({ ok: true }) : fail('ไม่พบร้าน', 404);
   }
   const upd = x.action === 'extend' ? { expires_at: x.expires_at, active: true } : { active: x.action === 'resume' };
   const { data } = await d.from('shops').update(upd).eq('slug', x.slug).select('id');

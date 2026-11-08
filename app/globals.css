@@ -4,76 +4,89 @@
    ========================================================= */
 :root {
   --accent: #5b5bd6;
-  --accent-soft: #eeeefc;
+  --accent-2: #a855f7;                 /* สีคู่สำหรับไล่เฉด (ปุ่มหลัก / ตัวเลขเด่น) */
+  --accent-soft: #efeffd;
   --accent-ink: #ffffff;
-  --bg: #f5f6fa;
+  --grad: linear-gradient(135deg, var(--accent), var(--accent-2));
+  --glow: 0 10px 28px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+  --bg: #f6f7fb;
   --surface: #ffffff;
-  --surface-2: #f9fafc;
-  --line: #e6e8ef;
-  --text: #171a26;
-  --muted: #6b7083;
-  --faint: #9aa0b2;
-  --ok: #16a34a;   --ok-soft: #e8f7ee;
+  --surface-2: #f3f4f8;
+  --line: #e9eaf1;
+  --text: #0c0e1a;
+  --muted: #5d6276;
+  --faint: #959bb0;
+  --ink: #0b0d1a;                      /* พื้นเข้มของ hero */
+  --ok: #16a34a;   --ok-soft: #e7f7ed;
   --warn: #d97706; --warn-soft: #fdf3e2;
   --bad: #dc2626;  --bad-soft: #fdecec;
-  --radius: 16px;
-  --radius-sm: 10px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 4px 16px rgba(16, 24, 40, .06);
-  --shadow-lg: 0 12px 40px rgba(16, 24, 40, .14);
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: 0 1px 2px rgba(15, 18, 40, .04), 0 6px 20px -8px rgba(15, 18, 40, .08);
+  --shadow-lg: 0 24px 56px -18px rgba(15, 18, 40, .24);
   --font: 'IBM Plex Sans Thai', system-ui, sans-serif;
   --font-head: 'Anuphan', 'IBM Plex Sans Thai', sans-serif;
 }
-[data-accent="pink"]    { --accent: #e64980; --accent-soft: #fdeaf1; }
-[data-accent="emerald"] { --accent: #0d9f6e; --accent-soft: #e3f6ee; }
-[data-accent="orange"]  { --accent: #ea6a12; --accent-soft: #fdeee2; }
-[data-accent="sky"]     { --accent: #0e8fd1; --accent-soft: #e2f3fb; }
+[data-accent="pink"]    { --accent: #e64980; --accent-2: #f97316; --accent-soft: #fdeaf1; }
+[data-accent="emerald"] { --accent: #0d9f6e; --accent-2: #06b6d4; --accent-soft: #e3f6ee; }
+[data-accent="orange"]  { --accent: #ea6a12; --accent-2: #f43f5e; --accent-soft: #fdeee2; }
+[data-accent="sky"]     { --accent: #0e8fd1; --accent-2: #6366f1; --accent-soft: #e2f3fb; }
 
 [data-theme="dark"] {
-  --bg: #0f1117; --surface: #171a23; --surface-2: #1d212c; --line: #2a2f3c;
-  --text: #eef0f6; --muted: #a2a8ba; --faint: #747b8f;
-  --accent-soft: color-mix(in srgb, var(--accent) 18%, #171a23);
-  --ok-soft: #16301f; --warn-soft: #33270f; --bad-soft: #351717;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .3); --shadow-lg: 0 12px 40px rgba(0, 0, 0, .5);
+  --bg: #08090f; --surface: #11131b; --surface-2: #181b25; --line: rgba(255, 255, 255, .08);
+  --text: #f1f2f8; --muted: #a3a8bb; --faint: #6f7589;
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, #11131b);
+  --ok-soft: #13291b; --warn-soft: #2e230e; --bad-soft: #301515;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4); --shadow-lg: 0 24px 56px -18px rgba(0, 0, 0, .7);
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+/* แสงสีร้านจาง ๆ ด้านบนจอ */
+body::before { content: ''; position: fixed; inset: 0 0 auto 0; height: 520px; z-index: -1; pointer-events: none;
+  background: radial-gradient(60% 100% at 15% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
+              radial-gradient(50% 80% at 90% 0%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 70%); }
+::selection { background: color-mix(in srgb, var(--accent) 25%, transparent); }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
 img { max-width: 100%; display: block; }
-h1, h2, h3 { font-family: var(--font-head); line-height: 1.3; margin: 0; font-weight: 600; }
+h1, h2, h3 { font-family: var(--font-head); line-height: 1.25; margin: 0; font-weight: 700; letter-spacing: -.015em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .muted { color: var(--muted); }
 .faint { color: var(--faint); }
 .num { font-variant-numeric: tabular-nums; }
 .hide { display: none !important; }
+.grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 /* ---------- ปุ่ม ---------- */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, transform .1s; }
-.btn:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
-.btn:active { transform: scale(.98); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.btn.primary:hover { filter: brightness(1.06); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 20px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .2s, border-color .2s, box-shadow .2s, transform .15s; }
+.btn:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(.98); }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.btn.primary { background: var(--grad); border-color: transparent; color: var(--accent-ink); box-shadow: var(--glow); }
+.btn.primary:hover { box-shadow: 0 14px 32px -10px color-mix(in srgb, var(--accent) 80%, transparent); }
 .btn.soft { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
 .btn.ghost { background: transparent; border-color: transparent; }
-.btn.ghost:hover { background: var(--surface-2); }
+.btn.ghost:hover { background: var(--surface-2); transform: none; }
 .btn.danger { color: var(--bad); }
-.btn.sm { height: 34px; padding: 0 12px; font-size: 14px; border-radius: 10px; }
-.btn.lg { height: 50px; padding: 0 24px; font-size: 16px; border-radius: 14px; }
+.btn.sm { height: 34px; padding: 0 14px; font-size: 14px; }
+.btn.lg { height: 52px; padding: 0 28px; font-size: 16px; }
 .btn.block { width: 100%; }
-.icon-btn { width: 40px; height: 40px; display: inline-grid; place-items: center; border-radius: 12px; border: 0; background: transparent; cursor: pointer; color: var(--muted); position: relative; }
+.icon-btn { width: 40px; height: 40px; display: inline-grid; place-items: center; border-radius: 99px; border: 0; background: transparent; cursor: pointer; color: var(--muted); position: relative; transition: background .15s, color .15s; }
 .icon-btn:hover { background: var(--surface-2); color: var(--text); }
 
 /* ---------- ช่องกรอก ---------- */
 .field { display: flex; flex-direction: column; gap: 6px; }
-.field > span { font-size: 13px; font-weight: 500; color: var(--muted); }
-.input { height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); outline: none; width: 100%; transition: border-color .15s, box-shadow .15s; }
-.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-textarea.input { height: auto; padding: 10px 14px; resize: vertical; }
+.field > span { font-size: 13px; font-weight: 600; color: var(--muted); }
+.input { height: 46px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); outline: none; width: 100%; transition: border-color .15s, box-shadow .15s, background .15s; }
+.input:hover { border-color: color-mix(in srgb, var(--text) 18%, var(--line)); }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent); }
+textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 
 /* ---------- ป้ายสถานะ ---------- */
-.pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--surface-2); color: var(--muted); }
-.pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--surface-2); color: var(--muted); }
+.pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent); }
 .pill.ok { background: var(--ok-soft); color: var(--ok); }
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 .pill.bad { background: var(--bad-soft); color: var(--bad); }
@@ -82,13 +95,13 @@ textarea.input { height: auto; padding: 10px 14px; resize: vertical; }
 
 /* ---------- การ์ด ---------- */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-.card-pad { padding: 20px; }
-.card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.card-pad { padding: 22px; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--line); }
 .card-head h2, .card-head h3 { font-size: 16px; }
 
 /* ---------- โลโก้แอป (ตัวอย่าง — ร้านจริงอัปโหลดรูปเอง) ---------- */
-.applogo { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: #fff; font-weight: 700; font-family: var(--font-head); font-size: 17px; flex: none; letter-spacing: -.02em; }
-.applogo.lg { width: 72px; height: 72px; border-radius: 20px; font-size: 28px; }
+.applogo { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; color: #fff; font-weight: 700; font-family: var(--font-head); font-size: 17px; flex: none; letter-spacing: -.02em; }
+.applogo.lg { width: 72px; height: 72px; border-radius: 22px; font-size: 28px; }
 .applogo.xl { width: 100%; height: auto; aspect-ratio: 1; border-radius: 0; font-size: 52px; }
 .l-netflix { background: #141414; color: #e50914; }
 .l-youtube { background: #ff0033; }
@@ -100,7 +113,7 @@ textarea.input { height: auto; padding: 10px 14px; resize: vertical; }
 .l-prime { background: #00a8e1; }
 
 /* ---------- (เดิมเป็นแถบเปลี่ยนธีมในต้นแบบ) ---------- */
-.demo-bar { position: fixed; z-index: 90; right: 16px; bottom: 16px; display: flex; gap: 6px; align-items: center; padding: 6px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-lg); }
+.demo-bar { position: fixed; z-index: 90; right: 16px; bottom: 16px; display: flex; gap: 6px; align-items: center; padding: 6px; border-radius: 99px; background: color-mix(in srgb, var(--surface) 80%, transparent); backdrop-filter: blur(16px); border: 1px solid var(--line); box-shadow: var(--shadow-lg); }
 .demo-bar .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--surface); cursor: pointer; box-shadow: 0 0 0 1px var(--line); }
 .demo-bar .dot.on { box-shadow: 0 0 0 2px var(--text); }
 .demo-bar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 2px; }
@@ -108,6 +121,102 @@ textarea.input { height: auto; padding: 10px 14px; resize: vertical; }
 @media (max-width: 760px) { .demo-bar { bottom: 80px; right: auto; left: 10px; } .demo-bar .dot { width: 18px; height: 18px; } }
 
 /* ---------- toast ---------- */
-.toast { position: fixed; z-index: 100; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 12px; background: var(--text); color: var(--bg); font-size: 14px; font-weight: 500; transition: opacity .2s, transform .2s; box-shadow: var(--shadow-lg); }
+.toast { position: fixed; z-index: 100; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 12px 20px; border-radius: 99px; background: var(--text); color: var(--bg); font-size: 14px; font-weight: 500; transition: opacity .2s, transform .2s; box-shadow: var(--shadow-lg); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 @media (max-width: 760px) { .toast { bottom: 90px; } }
+
+/* ---------- พื้นหลังหน้าร้าน (ร้านเลือกเอง) — ชั้นติดจอใต้เนื้อหา ทับแสงสีมาตรฐานของ body ---------- */
+.shop-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--bg); }
+.shop-bg[data-bg="aurora"] { background:
+  radial-gradient(55% 60% at 0% 0%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%),
+  radial-gradient(50% 55% at 100% 10%, color-mix(in srgb, var(--accent-2) 32%, transparent), transparent 70%),
+  radial-gradient(60% 50% at 50% 100%, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 70%), var(--bg); }
+.shop-bg[data-bg="dots"] { background: radial-gradient(color-mix(in srgb, var(--accent) 38%, transparent) 1.4px, transparent 1.9px) 0 0 / 20px 20px, var(--bg); }
+.shop-bg[data-bg="color"] { background: var(--bg-color, var(--bg)); }
+.shop-bg[data-bg="image"] { background:
+  linear-gradient(color-mix(in srgb, var(--bg) 25%, transparent), color-mix(in srgb, var(--bg) 25%, transparent)),
+  var(--bg-image, none) center / cover no-repeat, var(--bg); }
+
+/* ---------- กล่องแจ้งเตือน SweetAlert2 (components/dialog.ts) — ใช้สี/ฟอนต์ของร้าน ---------- */
+.swal2-container { z-index: 2000; padding: 16px; }
+.swal2-container.swal2-backdrop-show { background: rgba(15, 18, 40, .42); backdrop-filter: blur(4px); }
+.swal2-popup.dlg { width: min(420px, 100%); padding: 26px 22px 20px; border-radius: 24px; background: var(--surface, #fff); color: var(--text); font-family: var(--font);
+  border: 1px solid var(--line); box-shadow: 0 30px 80px -24px rgba(15, 18, 40, .45); }
+.swal2-popup.dlg .swal2-title { padding: 6px 4px 0; font-family: var(--font-head); font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.4; }
+.swal2-popup.dlg .swal2-html-container { margin: 8px 6px 0; font-size: 15px; color: var(--muted); line-height: 1.6; white-space: pre-line; }
+.swal2-popup.dlg .swal2-input { width: auto; margin: 16px 6px 0; height: 46px; padding: 0 16px; border-radius: 14px; box-shadow: none; font: inherit; font-size: 16px; color: var(--text); }
+.swal2-popup.dlg .swal2-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.swal2-popup.dlg .swal2-validation-message { margin: 12px 6px 0; border-radius: 12px; background: var(--bad-soft, #fdecec); color: var(--bad); font-size: 14px; }
+.swal2-popup.dlg .swal2-validation-message::before { background: var(--bad); }
+.swal2-popup.dlg .dlg-acts { width: 100%; margin: 20px 0 0; padding: 0 6px; gap: 10px; flex-wrap: nowrap; }
+.swal2-popup.dlg .dlg-acts .btn { flex: 1; margin: 0; height: 46px; font-size: 15px; }
+.swal2-popup.dlg .swal2-icon { margin: 4px auto 6px; transform: scale(.8); }
+.swal2-popup.dlg .swal2-icon.swal2-question { border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent); }
+.swal2-popup.dlg .swal2-icon.swal2-warning { border-color: color-mix(in srgb, var(--warn) 55%, transparent); color: var(--warn); }
+.swal2-popup.dlg-toast { border-radius: 16px !important; font-family: var(--font); box-shadow: 0 14px 40px -12px rgba(15, 18, 40, .35) !important; }
+.swal2-popup.dlg-toast .swal2-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.swal2-popup.dlg-toast .swal2-timer-progress-bar { background: var(--accent); }
+@keyframes dlg-in { from { opacity: 0; transform: translateY(10px) scale(.96); } }
+@keyframes dlg-out { to { opacity: 0; transform: scale(.97); } }
+.dlg-in { animation: dlg-in .22s cubic-bezier(.2, .8, .2, 1); }
+.dlg-out { animation: dlg-out .14s ease-in forwards; }
+.swal2-popup.dlg .btn.danger { background: var(--bad); color: #fff; border-color: transparent; }
+
+/* รหัสที่ลูกค้าได้: แยกช่อง + ปุ่มคัดลอก (components/Delivered.tsx) */
+.dlv { width: 100%; display: grid; gap: 10px; padding: 14px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--line); }
+.dlv-row { display: grid; gap: 5px; }
+.dlv-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.dlv-label i { font-style: normal; }
+.dlv-val { display: flex; gap: 8px; align-items: stretch; }
+.dlv-box { flex: 1; min-width: 0; display: flex; align-items: center; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 14px; letter-spacing: -.01em; color: var(--text); overflow-wrap: anywhere; user-select: all; }
+.copy-btn { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 84px; padding: 0 12px; border: 0; border-radius: 12px;
+  background: var(--ink, #111); color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform .1s, background .2s; }
+.copy-btn:active { transform: scale(.96); }
+.copy-btn.done { background: var(--ok); }
+.dlv-all { display: flex; justify-content: flex-end; }
+.dlv-all .copy-btn { height: 40px; background: var(--grad); }
+.dlv-note { margin: 0; font-size: 14px; color: var(--muted); white-space: pre-line; }
+.dlv-text { position: relative; }
+.dlv-text pre { margin: 0; padding: 12px 14px; padding-top: 50px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 14px; line-height: 1.7; }
+.dlv-text .copy-btn { position: absolute; top: 8px; right: 8px; height: 34px; }
+.dl-btn { height: 40px; }
+.dlv-img { display: grid; gap: 8px; }
+.dlv-img img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.dlv-img .dl-btn { justify-self: end; background: var(--grad); }
+/* แถบแจ้ง "สำเร็จ" (toast) ไม่มีพื้นหลังทึบ/เบลอ และไม่บังการกดหน้าเว็บ — เบลอเฉพาะกล่องกลางจอ */
+body.swal2-toast-shown .swal2-container { background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; padding: 12px; pointer-events: none; }
+body.swal2-toast-shown .swal2-container .swal2-popup { pointer-events: auto; }
+/* กล่องเลือกหัวข้อ (radio) เรียงลงมา อ่านง่าย */
+.swal2-popup.dlg-pick .swal2-radio { display: grid !important; gap: 8px; margin: 16px 6px 0; background: none; }
+.swal2-popup.dlg-pick .swal2-radio label { display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; font-size: 15px; color: var(--text); cursor: pointer; text-align: left; }
+.swal2-popup.dlg-pick .swal2-radio label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.swal2-popup.dlg-pick .swal2-radio input { accent-color: var(--accent); margin: 0; }
+.swal2-popup.dlg .swal2-textarea { margin: 16px 6px 0; width: auto; min-height: 110px; padding: 12px 14px; border-radius: 14px; font: inherit; font-size: 15px; box-shadow: none; }
+
+/* หน้าจอรอโหลด (ซ่อนเองใน 3 วินาทีถ้า JavaScript ไม่ทำงาน) */
+.page-loader { position: fixed; inset: 0; z-index: 2500; display: grid; place-items: center; background: var(--bg, #fff); animation: pl-hide .25s 3s forwards; }
+@keyframes pl-hide { to { opacity: 0; visibility: hidden; } }
+.pl-spin { width: 54px; height: 54px; border-radius: 50%; border: 5px solid var(--accent-soft); border-top-color: var(--accent); animation: pl-turn .8s linear infinite; }
+@keyframes pl-turn { to { transform: rotate(360deg); } }
+.pl-dots { display: flex; gap: 10px; }
+.pl-dots i { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); animation: pl-jump .6s ease-in-out infinite alternate; }
+.pl-dots i:nth-child(2) { animation-delay: .15s; } .pl-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes pl-jump { to { transform: translateY(-16px); opacity: .55; } }
+.pl-heart { font-size: 54px; animation: pl-beat .7s ease-in-out infinite alternate; }
+.pl-logo { width: 84px; height: 84px; object-fit: contain; border-radius: 18px; animation: pl-beat .6s ease-in-out infinite alternate; }
+@keyframes pl-beat { from { transform: scale(.85); } to { transform: scale(1.12); } }
+.pl-bar { width: 180px; height: 6px; border-radius: 99px; overflow: hidden; background: var(--accent-soft); }
+.pl-bar i { display: block; width: 40%; height: 100%; border-radius: 99px; background: var(--accent); animation: pl-slide 1s ease-in-out infinite alternate; }
+@keyframes pl-slide { from { transform: translateX(-20%); } to { transform: translateX(170%); } }
+/* ปุ่มเพลง (จากเว็บ OTP) */
+.music-fab { position: fixed; left: 16px; bottom: 16px; z-index: 30; display: flex; align-items: center; gap: 8px; max-width: min(70vw, 260px); padding: 8px 14px 8px 8px; border: 0; border-radius: 999px; background: rgba(17, 24, 39, .82); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, .2); backdrop-filter: blur(8px); }
+.music-fab:hover { background: rgba(17, 24, 39, .92); }
+.music-disc { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--grad); font-size: 16px; }
+.music-fab.on .music-disc { animation: pl-turn 3s linear infinite; }
+.music-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-bars { display: flex; align-items: flex-end; gap: 2px; height: 14px; flex: none; }
+.music-bars i { width: 3px; background: #f9a8d4; border-radius: 2px; animation: music-bar .9s ease-in-out infinite; }
+.music-bars i:nth-child(2) { animation-delay: .2s; } .music-bars i:nth-child(3) { animation-delay: .4s; }
+@keyframes music-bar { 0%, 100% { height: 4px; } 50% { height: 14px; } }
+@media (max-width: 860px) { .music-fab { bottom: 96px; left: 10px; } }

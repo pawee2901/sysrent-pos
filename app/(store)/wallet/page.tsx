@@ -1,3 +1,4 @@
+import { loginUrl } from '@/lib/routes';
 import { redirect } from 'next/navigation';
 import { baht, getShop } from '@/lib/shop';
 import { getCustomer } from '@/lib/auth';
@@ -9,12 +10,12 @@ const KIND: Record<string, string> = { topup: 'เติมเงิน', purcha
 
 export default async function Wallet() {
   const me = await getCustomer();
-  if (!me) redirect('/login?next=/wallet');
+  if (!me) redirect(loginUrl('/wallet'));
   const shop = (await getShop())!;
   const { data: tx } = await db().from('shop_wallet_tx').select('id, kind, amount, note, created_at').eq('shop_id', shop.id).eq('customer_id', me.id).order('created_at', { ascending: false }).limit(30);
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', display: 'grid', gap: 14 }}>
-      <div className="card card-pad" style={{ background: 'var(--accent)', color: '#fff', border: 0 }}>
+      <div className="card card-pad" style={{ background: 'var(--grad)', color: '#fff', border: 0, boxShadow: 'var(--glow)' }}>
         <span style={{ opacity: .85, fontSize: 14 }}>ยอดเงินคงเหลือ</span>
         <div className="num" style={{ fontFamily: 'var(--font-head)', fontSize: 36, fontWeight: 700 }}>{baht(me.balance)}</div>
       </div>

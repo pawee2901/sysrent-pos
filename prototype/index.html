@@ -3,47 +3,279 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ต้นแบบเว็บขายแอปพรีเมียม</title>
+<title>Muay Premium — แอปพรีเมียมราคาดี ได้ของทันที</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/app.css">
-<style>
-  body { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
-  .box { max-width: 760px; width: 100%; }
-  h1 { font-size: clamp(26px, 4vw, 36px); }
-  .lead { color: var(--muted); margin: 8px 0 24px; }
-  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .opt { padding: 22px; display: flex; flex-direction: column; gap: 8px; transition: transform .15s, box-shadow .15s; }
-  .opt:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-  .opt .ic { width: 48px; height: 48px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 24px; }
-  .opt h2 { font-size: 19px; margin-top: 6px; }
-  .opt ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; line-height: 1.8; }
-  .opt .go { margin-top: auto; padding-top: 8px; color: var(--accent); font-weight: 600; }
-  .note { margin-top: 20px; font-size: 13px; color: var(--faint); text-align: center; }
-  @media (max-width: 640px) { .opts { grid-template-columns: 1fr; } }
-</style>
+<link rel="stylesheet" href="assets/store.css">
 </head>
 <body>
-  <main class="box">
-    <span class="pill accent plain">ต้นแบบ · SysRent</span>
-    <h1 style="margin-top:12px">เว็บขายแอปพรีเมียม พร้อมใช้</h1>
-    <p class="lead">ตัวอย่างหน้าตาสำหรับแพ็กเกจเริ่มต้น ฿299/เดือน — กดลองได้ทุกปุ่ม ข้อมูลทั้งหมดเป็นตัวอย่าง · ทดลองเปลี่ยนสีร้านและโหมดมืดได้ที่ปุ่มมุมขวาล่าง</p>
-    <div class="opts">
-      <a href="store.html" class="card opt">
-        <span class="ic">🛍️</span><h2>หน้าร้าน (ลูกค้าเห็น)</h2>
-        <ul><li>หน้าแรก · หมวด · ค้นหา</li><li>หน้าสินค้า เลือกแพ็กเกจ</li><li>ตะกร้า → จ่ายพร้อมเพย์ + อัปสลิป</li><li>บัญชีของฉัน: วันคงเหลือ · ดูรหัส · OTP</li></ul>
-        <span class="go">เปิดหน้าร้าน →</span>
+<header class="top">
+  <div class="wrap top-row">
+    <a href="#home" class="shop-brand"><span class="shop-mark">M</span>Muay Premium</a>
+    <label class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="input" placeholder="ค้นหาแอป เช่น Netflix, YouTube" aria-label="ค้นหา" oninput="filterSearch(this.value)">
+    </label>
+    <div class="top-acts">
+      <a href="#wallet" class="wallet-chip" title="เติมเงิน">💳 ฿250</a>
+      <a href="#cart" class="icon-btn" aria-label="ตะกร้า">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5zM9 7a3 3 0 0 1 6 0"/></svg>
+        <span class="badge" id="cartCount">1</span>
       </a>
-      <a href="admin.html" class="card opt">
-        <span class="ic">📊</span><h2>หลังบ้าน (เจ้าของร้าน)</h2>
-        <ul><li>ภาพรวม + สิ่งที่ต้องทำวันนี้</li><li>ออเดอร์ · สินค้า · คลังบัญชี (แบ่งจอ)</li><li>ลูกค้า · การชำระเงิน · โควตาสลิป</li><li>ตั้งค่าร้าน พร้อมตัวอย่างสด · ค้นหา Ctrl+K</li></ul>
-        <span class="go">เปิดหลังบ้าน →</span>
-      </a>
+      <a href="#my" class="icon-btn desk" aria-label="บัญชีของฉัน"><span class="avatar">ป</span></a>
     </div>
-    <p class="note">โลโก้แอปในต้นแบบเป็นสัญลักษณ์แทน — ร้านจริงอัปโหลดรูปสินค้าเอง</p>
-  </main>
-  <script src="assets/app.js"></script>
-  <script>initTheme();</script>
+  </div>
+</header>
+
+<main class="wrap" id="view"></main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Muay Premium · ร้านค้าบน <b>SysRent</b></span>
+    <span><a href="#home">หน้าแรก</a> · <a href="#orders">ออเดอร์</a> · เงื่อนไขการใช้งาน · <a href="#">Facebook</a> · <a href="#">LINE</a></span>
+  </div>
+</footer>
+
+<a class="fb-fab" href="#" onclick="toast('เปิดเพจ Facebook ของร้าน'); return false;" aria-label="เพจ Facebook ของร้าน">f</a>
+<a class="line-fab" href="#" onclick="toast('เปิด LINE ของร้าน'); return false;" aria-label="ติดต่อร้านทาง LINE">LINE</a>
+
+<nav class="tabbar" aria-label="เมนูหลัก">
+  <a href="#home" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>หน้าแรก</a>
+  <a href="#home" data-nav="p" onclick="setTimeout(()=>document.getElementById('cat')?.scrollIntoView({behavior:'smooth'}),50)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>สินค้า</a>
+  <a href="#cart" data-nav="cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h12l1 13H5zM9 7a3 3 0 0 1 6 0"/></svg>ตะกร้า<span class="badge" id="cartCount2">1</span></a>
+  <a href="#my" data-nav="my"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 11h12v10H6zM9 11V8a3 3 0 0 1 6 0v3"/></svg>บัญชีของฉัน</a>
+  <a href="#orders" data-nav="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/></svg>ออเดอร์</a>
+</nav>
+
+<script src="assets/app.js"></script>
+<script>
+  let cart = [{ app: 'netflix', plan: 1 }];
+  let pick = 1;
+  let catFilter = 'ทั้งหมด';
+  const cartTotal = () => cart.reduce((s, c) => s + APPS[c.app].plans[c.plan].price, 0);
+  const syncCount = () => { $('#cartCount').textContent = cart.length; $('#cartCount2').textContent = cart.length; $('#cartCount').style.display = $('#cartCount2').style.display = cart.length ? '' : 'none'; };
+
+  function productCard(key) {
+    const a = APPS[key], from = Math.min(...a.plans.map((p) => p.price));
+    return `<a href="#p/${key}" class="card pcard${a.left ? '' : ' out'}" data-name="${a.name.toLowerCase()}">
+      <div class="pcard-img">${logo(key, 'xl')}${a.badge ? `<span class="pill accent plain tag">${a.badge}</span>` : ''}</div>
+      <div class="pcard-body">
+        <span class="pcard-name">${a.name}</span>
+        <span class="pcard-price"><small>เริ่ม </small>${baht(from)}</span>
+        <span class="pcard-meta"><span>${a.left ? `เหลือ ${a.left}` : 'หมด'}</span><span>ขายแล้ว ${a.sold.toLocaleString('th-TH')}</span></span>
+      </div></a>`;
+  }
+  function filterSearch(q) {
+    if (!location.hash.startsWith('#home') && location.hash) location.hash = 'home';
+    setTimeout(() => $$('.pcard').forEach((c) => c.classList.toggle('hide', !c.dataset.name.includes(q.toLowerCase().trim()))), 0);
+  }
+  function setCat(c) { catFilter = c; $('#view').innerHTML = pages.home(); }
+
+  const pages = {
+    home() {
+      const cats = ['ทั้งหมด', ...new Set(Object.values(APPS).map((a) => a.cat))];
+      const keys = Object.keys(APPS).filter((k) => catFilter === 'ทั้งหมด' || APPS[k].cat === catFilter);
+      return `
+      <section class="hero">
+        <div>
+          <span class="pill accent plain">✨ ส่งอัตโนมัติ 24 ชั่วโมง</span>
+          <h1 style="margin-top:12px">แอปพรีเมียมราคาดี<br><em>จ่ายแล้วได้ทันที</em></h1>
+          <p>Netflix, YouTube, Disney+, Spotify และอีกมากมาย สแกนจ่ายพร้อมเพย์ ระบบตรวจสลิปและส่งรหัสให้เองภายในไม่กี่วินาที</p>
+          <div class="hero-acts"><a href="#home" class="btn primary lg" onclick="setTimeout(()=>document.getElementById('cat').scrollIntoView({behavior:'smooth'}),50)">เลือกซื้อเลย</a><a href="#my" class="btn lg">บัญชีของฉัน</a></div>
+          <div class="hero-ticks"><span>ตรวจสลิปอัตโนมัติ</span><span>รับประกันตลอดอายุ</span><span>ดูแลทาง LINE</span></div>
+        </div>
+        <div class="hero-art">${['netflix', 'youtube', 'disney', 'spotify', 'chatgpt', 'canva'].map((k) => logo(k)).join('')}</div>
+      </section>
+      <a href="#p/netflix" class="banner"><div style="aspect-ratio:3/1;display:flex;flex-direction:column;justify-content:center;padding:0 6%;color:#fff;background:radial-gradient(60% 120% at 100% 0%,#e50914aa,transparent 60%),linear-gradient(120deg,#141414,#3a0a0e)"><span style="font-size:clamp(12px,1.6vw,15px);opacity:.8">โปรเดือนนี้ · ตัวอย่างแบนเนอร์</span><b style="font-family:var(--font-head);font-size:clamp(20px,4vw,40px);line-height:1.15">Netflix 4K ลด 25%<br>เหลือ ฿99/เดือน</b></div></a>
+      <div class="live"><span class="live-dot"></span><span><b>@pl***y</b> ซื้อ Netflix 30 วัน · 2 นาทีที่แล้ว</span><span class="faint">•</span><span><b>@no***k</b> สมัครสมาชิก · 5 นาทีที่แล้ว</span></div>
+      <div class="stats">
+        <div class="card stat"><b class="num">2,184</b><span>สมาชิก</span></div>
+        <div class="card stat"><b class="num">4,267</b><span>ขายไปแล้ว</span></div>
+        <div class="card stat"><b class="num">97</b><span>พร้อมส่งตอนนี้</span></div>
+      </div>
+      <section class="sec" id="cat">
+        <div class="sec-head"><h2>สินค้าทั้งหมด</h2><span class="muted" style="font-size:14px">${keys.length} รายการ</span></div>
+        <div class="chips" style="margin-bottom:14px">${cats.map((c) => `<button class="chip${c === catFilter ? ' on' : ''}" onclick="setCat('${c}')">${c}</button>`).join('')}</div>
+        <div class="grid">${keys.map(productCard).join('')}</div>
+      </section>
+      <section class="sec">
+        <div class="sec-head"><h2>ซื้อง่าย 3 ขั้นตอน</h2></div>
+        <div class="how">
+          <div class="card"><span class="how-n">1</span><div><b>เลือกแอปและแพ็กเกจ</b><span>มีให้เลือกตั้งแต่ 7 วันถึง 1 ปี</span></div></div>
+          <div class="card"><span class="how-n">2</span><div><b>สแกนจ่ายพร้อมเพย์</b><span>อัปสลิป ระบบตรวจให้อัตโนมัติ</span></div></div>
+          <div class="card"><span class="how-n">3</span><div><b>ได้รหัสทันที</b><span>ดูได้ที่ "บัญชีของฉัน" ตลอดอายุ</span></div></div>
+        </div>
+      </section>`;
+    },
+
+    p(key) {
+      const a = APPS[key] || APPS.netflix; key = APPS[key] ? key : 'netflix';
+      if (pick >= a.plans.length) pick = 0;
+      const pl = a.plans[pick];
+      return `
+      <div class="crumb"><a href="#home">หน้าแรก</a> › ${a.cat} › ${a.name}</div>
+      <div class="pd">
+        <div class="card pd-media">${logo(key, 'xl')}</div>
+        <div>
+          ${a.badge ? `<span class="pill accent plain">${a.badge}</span>` : ''}
+          <h1>${a.name}</h1>
+          <div class="pd-sub"><span>⭐ 4.9 (312 รีวิว)</span><span>ขายแล้ว ${a.sold.toLocaleString('th-TH')}</span><span>${a.left ? `<span class="pill ok">พร้อมส่ง ${a.left}</span>` : '<span class="pill bad">หมดชั่วคราว</span>'}</span></div>
+          <div class="plans" role="radiogroup" aria-label="แพ็กเกจ">
+            ${a.plans.map((p, i) => `<button class="plan${i === pick ? ' on' : ''}" role="radio" aria-checked="${i === pick}" onclick="pick=${i};location.hash='p/${key}';dispatchEvent(new HashChangeEvent('hashchange'))">
+              <span class="muted" style="font-size:14px">${p.name}</span><b>${baht(p.price)}</b>${p.old ? `<s>${baht(p.old)}</s>` : '<s>&nbsp;</s>'}</button>`).join('')}
+          </div>
+          <div class="buy-bar">
+            <button class="btn lg" ${a.left ? '' : 'disabled'} onclick="cart.push({app:'${key}',plan:${pick}});syncCount();toast('ใส่ตะกร้าแล้ว 🛒')">ใส่ตะกร้า</button>
+            <button class="btn primary lg" ${a.left ? '' : 'disabled'} onclick="cart=[{app:'${key}',plan:${pick}}];syncCount();location.hash='cart'">ซื้อเลย ${baht(pl.price)}</button>
+          </div>
+          <div class="perks">
+            <div class="card perk"><i>⚡</i><span>จ่ายแล้วได้รหัสทันที ไม่ต้องรอแอดมิน</span></div>
+            <div class="card perk"><i>🛡️</i><span>รับประกันตลอดอายุแพ็กเกจ ใช้ไม่ได้เปลี่ยนให้</span></div>
+            <div class="card perk"><i>🔑</i><span>ขอรหัส OTP / ดูรหัสได้เองที่ "บัญชีของฉัน"</span></div>
+          </div>
+          <div class="card desc"><h3>รายละเอียด</h3><p class="muted" style="margin:0">${a.desc}</p></div>
+        </div>
+      </div>`;
+    },
+
+    cart(step) {
+      if (step === 'paid') {
+        return `<div class="card success" style="max-width:520px;margin:0 auto">
+          <div class="success-ic">✓</div><h1 style="font-size:24px">ชำระเงินสำเร็จ!</h1>
+          <p class="muted">ระบบจัดจอให้แล้ว ดูอีเมล รหัส และ PIN ได้ที่หน้า "บัญชีของฉัน"</p>
+          <a href="#my" class="btn primary lg" style="margin-top:8px">ไปที่บัญชีของฉัน</a></div>`;
+      }
+      if (!cart.length) return `<div class="card success"><div class="success-ic" style="background:var(--surface-2);color:var(--muted)">🛒</div><h2>ตะกร้ายังว่าง</h2><p class="muted">เลือกแอปที่ชอบแล้วกดใส่ตะกร้าได้เลย</p><a href="#home" class="btn primary">ไปเลือกสินค้า</a></div>`;
+      const paying = step === 'pay';
+      return `
+      <h1 style="font-size:26px;margin-bottom:16px">${paying ? 'ชำระเงิน' : 'ตะกร้าสินค้า'}</h1>
+      <div class="co">
+        <div class="card">
+          <div class="card-head"><h3>รายการ (${cart.length})</h3>${paying ? '' : '<button class="btn ghost sm" onclick="cart=[];syncCount();location.hash=\'cart\';dispatchEvent(new HashChangeEvent(\'hashchange\'))">ล้างตะกร้า</button>'}</div>
+          ${cart.map((c, i) => { const a = APPS[c.app], p = a.plans[c.plan]; return `
+            <div class="line-item">${logo(c.app)}<div class="grow"><b>${a.name}</b><small>${p.name} · ${c.app === 'youtube' ? 'ร้านเชิญเข้าครอบครัวให้' : 'ระบบจัดจอให้อัตโนมัติ'}</small></div>
+              <b class="num">${baht(p.price)}</b>${!paying && c.app === 'youtube' ? `<label class="field line-info" style="order:9"><span>📝 อีเมลสำหรับเชิญเข้าครอบครัว <b style="color:var(--bad)">*</b></span><input class="input" type="email" placeholder="กรอกอีเมลสำหรับเชิญเข้าครอบครัว"></label>` : ''}${paying ? '' : `<button class="icon-btn" aria-label="ลบ" onclick="cart.splice(${i},1);syncCount();dispatchEvent(new HashChangeEvent('hashchange'))">✕</button>`}</div>`; }).join('')}
+        </div>
+        <div class="card card-pad">
+          ${paying ? `
+            <div class="steps"><span class="step on"></span><span class="step on"></span><span class="step"></span></div>
+            <div class="qr"><div class="qr-head">พร้อมเพย์ · PromptPay</div><div class="qr-box">
+              <svg viewBox="0 0 29 29" width="180" height="180" shape-rendering="crispEdges">${qrDemo()}</svg></div>
+              <div class="qr-amt">${baht(cartTotal())}</div></div>
+            <p class="timer">โอนภายใน <b id="tm">9:59</b> นาที · ยอดต้องตรงตาม QR</p>
+            <label class="drop"><input type="file" accept="image/*" hidden onchange="this.closest('.drop').innerHTML='✅ เลือกสลิปแล้ว — กดยืนยันด้านล่าง'">📎 <b>แตะเพื่อเลือกรูปสลิป</b><br><span class="muted" style="font-size:13px">ระบบตรวจสลิปอัตโนมัติ ใช้เวลาไม่กี่วินาที</span></label>
+            <button class="btn primary lg block" style="margin-top:14px" onclick="location.hash='cart/paid'">ยืนยันสลิป</button>
+            <button class="btn ghost block" style="margin-top:6px" onclick="location.hash='cart'">← กลับ</button>`
+          : `
+            <h3 style="font-size:16px;margin-bottom:10px">สรุปยอด</h3>
+            <div class="sum-row"><span>ราคาสินค้า</span><span class="num">${baht(cartTotal())}</span></div>
+            <label class="field" style="margin-top:10px"><span>โค้ดส่วนลด</span><input class="input" id="cpn" placeholder="ลองพิมพ์ NEW10" style="text-transform:uppercase;letter-spacing:.05em" oninput="applyCoupon(this.value)"></label>
+            <div class="sum-row" id="disc" style="color:var(--ok)"><span>ส่วนลด</span><span>—</span></div>
+            <div class="sum-row total"><span>ยอดชำระ</span><b class="num" id="grand">${baht(cartTotal())}</b></div>
+            <h3 style="font-size:16px;margin:18px 0 10px">วิธีชำระเงิน</h3>
+            <div class="pay-opt on" onclick="$$('.pay-opt').forEach(x=>x.classList.remove('on'));this.classList.add('on')"><span class="pay-ic">📱</span><span class="grow"><b>พร้อมเพย์ (QR)</b><small>สแกนจ่าย ตรวจสลิปอัตโนมัติ</small></span></div>
+            <div class="pay-opt" onclick="$$('.pay-opt').forEach(x=>x.classList.remove('on'));this.classList.add('on')"><span class="pay-ic">💳</span><span class="grow"><b>กระเป๋าเงิน</b><small>คงเหลือ ฿250 · จ่ายทันที</small></span></div>
+            <button class="btn primary lg block" style="margin-top:6px" onclick="location.hash='cart/pay'">ชำระเงิน ${baht(cartTotal())}</button>`}
+        </div>
+      </div>`;
+    },
+
+    my() {
+      const subs = [
+        { app: 'netflix', plan: '30 วัน', left: 27, total: 30, login: 'nf.muay02@gmail.com', pw: 'Mu4y#2026nf', prof: 'Muay-5', pin: '3364' },
+        { app: 'youtube', plan: '30 วัน', left: 2, total: 30, login: 'เชิญเข้าครอบครัวแล้ว (อีเมลของคุณ)', pw: '—', prof: 'Family', pin: '' },
+        { app: 'disney', plan: '30 วัน', left: 0, total: 30 },
+      ];
+      return `
+      <div class="sec-head"><h1 style="font-size:26px">บัญชีของฉัน</h1><span class="muted" style="font-size:14px">แอปที่เช่าอยู่</span></div>
+      <div class="subs">${subs.map((s, i) => {
+        const a = APPS[s.app], tone = s.left === 0 ? 'off' : s.left <= 3 ? 'warn' : '';
+        return `<article class="card sub ${tone}">
+          <div class="sub-top">${logo(s.app)}<div class="grow"><b>${a.name}</b><small>แพ็กเกจ ${s.plan}</small></div>
+            <span class="pill ${tone === 'off' ? '' : tone === 'warn' ? 'warn' : 'ok'}">${tone === 'off' ? 'หมดอายุ' : tone === 'warn' ? 'ใกล้หมด' : 'ใช้งานอยู่'}</span></div>
+          ${s.left ? `<div class="days"><span>เหลือ <b class="num">${s.left}</b> วัน</span><span class="faint" style="font-size:13px">ถึง ${new Date(Date.now() + s.left * 864e5).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span></div>
+            <div class="bar"><i style="width:${Math.max(4, (s.left / s.total) * 100)}%"></i></div>
+            <div class="secret hide" id="sec${i}">
+              <span>อีเมล</span><code>${s.login}</code><button class="copy" onclick="toast('คัดลอกแล้ว')">คัดลอก</button>
+              <span>รหัสผ่าน</span><code>${s.pw}</code><button class="copy" onclick="toast('คัดลอกแล้ว')">คัดลอก</button>
+              <span>โปรไฟล์</span><code>${s.prof}${s.pin ? ` · PIN ${s.pin}` : ''}</code><span></span>
+            </div>
+            <div class="sub-acts">
+              <button class="btn primary sm" onclick="const e=$('#sec${i}');e.classList.toggle('hide');this.textContent=e.classList.contains('hide')?'👁 ดูรหัส':'ซ่อนรหัส'">👁 ดูรหัส</button>
+              <button class="btn sm" onclick="toast('ส่งรหัส OTP แล้ว: 482913')">🔑 ขอ OTP</button>
+              <button class="btn sm ${tone === 'warn' ? 'soft' : ''}" onclick="toast('ต่ออายุ — ได้จอเดิม')">🔄 ต่ออายุ</button>
+              <button class="btn ghost sm" onclick="toast('เปิดฟอร์มแจ้งปัญหา')">⚠️ แจ้งปัญหา</button>
+            </div>` : `<p class="muted" style="margin:0;font-size:14px">หมดอายุแล้ว — รหัสถูกซ่อนเพื่อความปลอดภัย</p><div class="sub-acts"><a href="#p/${s.app}" class="btn soft sm">🛒 ซื้อใหม่</a></div>`}
+        </article>`; }).join('')}</div>
+      <p class="muted" style="text-align:center;font-size:13px;margin-top:20px">ใช้เฉพาะโปรไฟล์ของคุณ ห้ามเปลี่ยนรหัสผ่าน / PIN · มีปัญหาทัก LINE ร้านได้ตลอด</p>`;
+    },
+
+    orders() {
+      const rows = [
+        ['#A8F2K1', 'Netflix Premium · 30 วัน', 99, 'ok', 'สำเร็จ', '2 นาทีที่แล้ว'],
+        ['#7QX0PZ', 'YouTube Premium · 30 วัน', 59, 'ok', 'สำเร็จ', '28 ต.ค.'],
+        ['#K2M9DD', 'Canva Pro · 30 วัน', 39, 'warn', 'รอชำระ', '27 ต.ค.'],
+        ['#Z1LL0B', 'Disney+ · 30 วัน', 69, '', 'ยกเลิก', '1 ต.ค.'],
+      ];
+      return `<h1 style="font-size:26px;margin-bottom:16px">ออเดอร์ของฉัน</h1>
+      <div class="card orders">
+        <div class="row head"><span>เลขออเดอร์</span><span>รายการ</span><span>วันที่</span><span style="text-align:right">ยอด / สถานะ</span></div>
+        ${rows.map((r) => `<div class="row"><span class="num" style="font-weight:600">${r[0]}</span><span>${r[1]}</span><span class="muted" style="font-size:14px">${r[5]}</span>
+          <span style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px"><b class="num">${baht(r[2])}</b><span class="pill ${r[3]}">${r[4]}</span></span></div>`).join('')}
+      </div>`;
+    },
+
+    wallet() {
+      return `<div style="max-width:520px;margin:0 auto">
+        <div class="card card-pad" style="background:var(--grad);color:#fff;border:0;box-shadow:var(--glow)"><span style="opacity:.85;font-size:14px">ยอดเงินคงเหลือ</span><div style="font-family:var(--font-head);font-size:36px;font-weight:700">฿250.00</div></div>
+        <div class="card card-pad" style="margin-top:14px"><h3 style="font-size:16px;margin-bottom:12px">เติมเงินด้วยพร้อมเพย์</h3>
+          <div class="chips" style="flex-wrap:wrap">${[50, 100, 300, 500, 1000].map((v, i) => `<button class="chip${i === 1 ? ' on' : ''}" onclick="$$('.chip').forEach(c=>c.classList.remove('on'));this.classList.add('on')">${baht(v)}</button>`).join('')}</div>
+          <button class="btn primary lg block" style="margin-top:14px" onclick="location.hash='cart/pay'">สร้าง QR พร้อมเพย์</button></div></div>`;
+    },
+  };
+
+  // คูปองตัวอย่าง: NEW10 = ลด 10% (สูงสุด ฿50)
+  function applyCoupon(v) {
+    const code = v.toUpperCase().replace(/[^A-Z0-9]/g, ''), sub = cartTotal();
+    const d = code === 'NEW10' ? Math.min(50, Math.round(sub * 10) / 100) : 0;
+    $('#disc').lastElementChild.textContent = d ? `−${baht(d)} (NEW10)` : code.length >= 3 ? 'โค้ดไม่ถูกต้อง' : '—';
+    $('#grand').textContent = baht(sub - d);
+  }
+
+  // ป๊อปอัปประกาศ (ครั้งเดียวต่อการเปิดเว็บ)
+  function showPopup() {
+    try { if (sessionStorage.getItem('demo-popup')) return; } catch {}
+    const bg = document.createElement('div'); bg.className = 'popup-bg';
+    const close = () => { bg.remove(); try { sessionStorage.setItem('demo-popup', '1'); } catch {} };
+    bg.innerHTML = `<div class="popup card" role="dialog" aria-modal="true" aria-label="ประกาศจากร้าน"><button class="icon-btn popup-x" aria-label="ปิด">✕</button>
+      <div style="aspect-ratio:1;border-radius:20px;display:grid;place-items:center;text-align:center;color:#fff;background:radial-gradient(70% 70% at 0% 0%,var(--accent),transparent 70%),radial-gradient(70% 70% at 100% 100%,var(--accent-2),transparent 70%),var(--ink)"><div><div style="font-size:56px">🎉</div><b style="font-family:var(--font-head);font-size:30px">โปรเปิดร้าน</b><div style="opacity:.8">ตัวอย่างรูปป๊อปอัป</div></div></div>
+      <p class="popup-text">ใส่โค้ด <b>NEW10</b> ลด 10% ทุกแอป<br>ถึงสิ้นเดือนนี้เท่านั้น!</p>
+      <div class="popup-acts"><a href="#home" class="btn primary block">ช้อปเลย</a><button class="btn ghost block">ปิด</button></div></div>`;
+    bg.addEventListener('click', (e) => { if (e.target === bg || e.target.closest('.popup-x, .popup-acts')) close(); });
+    document.body.append(bg);
+  }
+  setTimeout(showPopup, 600);
+
+  // QR ตัวอย่าง (ลายสุ่ม ไม่ใช่ QR จริง)
+  function qrDemo() {
+    let s = '', seed = 7;
+    const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    const finder = (x, y) => `<rect x="${x}" y="${y}" width="7" height="7"/><rect x="${x + 1}" y="${y + 1}" width="5" height="5" fill="#fff"/><rect x="${x + 2}" y="${y + 2}" width="3" height="3"/>`;
+    for (let y = 0; y < 29; y++) for (let x = 0; x < 29; x++) {
+      const inFinder = (x < 8 && y < 8) || (x > 20 && y < 8) || (x < 8 && y > 20);
+      if (!inFinder && r() > .52) s += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+    }
+    return s + finder(0, 0) + finder(22, 0) + finder(0, 22);
+  }
+
+  // นับถอยหลัง QR
+  setInterval(() => { const t = $('#tm'); if (!t) return; let [m, s] = t.textContent.split(':').map(Number); if (m + s === 0) return; s--; if (s < 0) { s = 59; m--; } t.textContent = `${m}:${String(s).padStart(2, '0')}`; }, 1000);
+
+  initTheme();
+  router(pages, 'home');
+  syncCount();
+</script>
 </body>
 </html>

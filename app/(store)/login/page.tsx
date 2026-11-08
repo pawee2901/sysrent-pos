@@ -2,24 +2,27 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/components/Cart';
+import { HumanCheck, humanCheckOn } from '@/components/HumanCheck';
 
 /** เข้าสู่ระบบ / สมัครสมาชิกของร้าน (ชื่อผู้ใช้ + รหัสผ่าน · ไม่ต้องยืนยันอีเมล) */
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const [mode, setMode] = useState<'login' | 'register'>(params.get('m') === 'register' ? 'register' : 'login');
-  const [f, setF] = useState({ username: '', password: '', password2: '', contact: '' });
+  const [f, setF] = useState({ username: '', password: '', password2: '', contact: '', email: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [human, setHuman] = useState('');
+  const [retry, setRetry] = useState(0);
   const next = (() => { const n = params.get('next') ?? '/'; return /^\/(?![/\\])[\w\-/?=&.%]*$/.test(n) ? n : '/'; })();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (mode === 'register' && f.password !== f.password2) { setErr('รหัสผ่านสองช่องไม่ตรงกัน'); return; }
     setBusy(true); setErr('');
-    const r = await api(`/api/auth/${mode}`, { username: f.username.trim().toLowerCase(), password: f.password, contact: f.contact.trim() });
+    const r = await api(`/api/auth/${mode}`, { username: f.username.trim().toLowerCase(), password: f.password, contact: f.contact.trim(), email: f.email.trim(), turnstile: human });
     setBusy(false);
-    if (!r.ok) { setErr(r.error); return; }
+    if (!r.ok) { setErr(r.error); setRetry((n) => n + 1); return; }
     router.replace(next); router.refresh();
   }
 
@@ -37,9 +40,11 @@ function LoginInner() {
           {mode === 'register' && <>
             <label className="field"><span>ยืนยันรหัสผ่าน</span><input className="input" type="password" autoComplete="new-password" value={f.password2} maxLength={72} onChange={(e) => setF({ ...f, password2: e.target.value })} required /></label>
             <label className="field"><span>LINE ID หรือเบอร์โทร (ไว้ให้ร้านติดต่อ)</span><input className="input" value={f.contact} maxLength={60} placeholder="ไม่บังคับ" onChange={(e) => setF({ ...f, contact: e.target.value })} /></label>
+            <label className="field"><span>อีเมล (รับแจ้งเตือนเมื่อร้านส่งสินค้า)</span><input className="input" type="email" autoComplete="email" value={f.email} maxLength={120} placeholder="ไม่บังคับ" onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
           </>}
+          <HumanCheck onToken={setHuman} nonce={retry} />
           {err && <p style={{ color: 'var(--bad)', margin: 0 }} role="alert">{err}</p>}
-          <button type="submit" className="btn primary lg block" disabled={busy}>{busy ? 'กำลังดำเนินการ…' : mode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}</button>
+          <button type="submit" className="btn primary lg block" disabled={busy || (humanCheckOn && !human)}>{busy ? 'กำลังดำเนินการ…' : mode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}</button>
         </form>
       </div>
     </div>

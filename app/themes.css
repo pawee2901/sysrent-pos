@@ -1,0 +1,305 @@
+/* =========================================================
+   ธีมหน้าร้าน — ครอบด้วย <div class="store" data-style="..."> (หลังบ้านไม่โดน)
+   modern = ค่าเริ่มต้นใน globals.css + store.css (ไม่ต้องมีกฎในนี้)
+   ทุกธีมยังใช้สีร้าน (--accent) ที่ร้านเลือกไว้ แค่เปลี่ยนโทน / รูปทรง / ฟอนต์
+   ========================================================= */
+.store { color: var(--text); font-family: var(--font); }
+
+/* ---------- มินิมอล: ขาวสะอาด ปุ่มดำ ไม่มีไล่สี ---------- */
+.store[data-style="minimal"] {
+  --bg: #fafafa; --surface: #ffffff; --surface-2: #f4f4f5; --line: #e7e7ea;
+  --text: #111113; --muted: #5f6068; --faint: #9a9ba3; --ink: #111113;
+  --grad: linear-gradient(#111113, #111113); --glow: none;
+  --radius: 14px; --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .04); --shadow-lg: 0 12px 32px -12px rgba(0, 0, 0, .18);
+}
+.store[data-style="minimal"] .shop-bg[data-bg="default"] { background: var(--bg); }
+.store[data-style="minimal"] .btn { border-radius: 10px; }
+.store[data-style="minimal"] .btn.primary { color: #fff; }
+.store[data-style="minimal"] .input, .store[data-style="minimal"] .search input { border-radius: 10px; }
+.store[data-style="minimal"] .hero { background: var(--surface); color: var(--text); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: 20px; }
+.store[data-style="minimal"] .hero::after { display: none; }
+.store[data-style="minimal"] .hero h1 em { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.store[data-style="minimal"] .hero p, .store[data-style="minimal"] .hero-ticks { color: var(--muted); }
+.store[data-style="minimal"] .hero .pill.accent { background: var(--surface-2); color: var(--text); border-color: var(--line); }
+.store[data-style="minimal"] .hero .btn:not(.primary) { background: var(--surface); color: var(--text); border-color: var(--line); }
+.store[data-style="minimal"] .hero .btn.primary { background: var(--ink); color: #fff; box-shadow: none; }
+.store[data-style="minimal"] .hero-art .applogo { border-radius: 18px; animation: none; box-shadow: var(--shadow); }
+.store[data-style="minimal"] .stat b, .store[data-style="minimal"] .sum-row.total b { background: none; color: var(--text); -webkit-text-fill-color: currentColor; }
+.store[data-style="minimal"] .chip.on { background: var(--ink); color: #fff; box-shadow: none; }
+.store[data-style="minimal"] .pcard { border-radius: 16px; padding: 0; }
+.store[data-style="minimal"] .pcard-img { border-radius: 0; }
+.store[data-style="minimal"] .pcard-body { padding: 12px 14px 14px; }
+.store[data-style="minimal"] .pcard:hover { transform: translateY(-3px); }
+.store[data-style="minimal"] .how-n, .store[data-style="minimal"] .shop-mark, .store[data-style="minimal"] .badge, .store[data-style="minimal"] .avatar { background: var(--ink); box-shadow: none; }
+.store[data-style="minimal"] .announce { background: var(--ink); }
+.store[data-style="minimal"] .banner { border-radius: 20px; }
+
+/* ---------- น่ารักพาสเทล: ทุกโทนผสมจากสีร้าน · ฟอนต์กลม · ปุ่มมนนูน (เงาแข็งด้านล่าง) ---------- */
+.store[data-style="cute"] {
+  --bg: color-mix(in srgb, var(--accent) 6%, #fffafd);
+  --surface: #ffffff;
+  --surface-2: color-mix(in srgb, var(--accent) 8%, #ffffff);
+  --line: color-mix(in srgb, var(--accent) 22%, #ffffff);
+  --text: color-mix(in srgb, var(--accent) 28%, #2b1d2a);
+  --muted: color-mix(in srgb, var(--accent) 35%, #7a6876);
+  --faint: color-mix(in srgb, var(--accent) 30%, #b4a3b0);
+  --ink: var(--text);
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, #ffffff);
+  --grad: linear-gradient(180deg, color-mix(in srgb, var(--accent) 85%, #fff), var(--accent));
+  --press: color-mix(in srgb, var(--accent) 70%, #3a1030);   /* สีขอบล่างปุ่มนูน */
+  --glow: 0 5px 0 var(--press);
+  --radius: 26px; --radius-sm: 18px;
+  --shadow: 0 6px 18px -8px color-mix(in srgb, var(--accent) 35%, transparent);
+  --shadow-lg: 0 22px 44px -18px color-mix(in srgb, var(--accent) 50%, transparent);
+  --font: 'Mali', 'IBM Plex Sans Thai', sans-serif;
+  --font-head: 'Mali', 'Anuphan', sans-serif;
+}
+.store[data-style="cute"] .shop-bg[data-bg="default"] { background:
+  radial-gradient(color-mix(in srgb, var(--accent) 16%, transparent) 1.6px, transparent 2.2px) 0 0 / 26px 26px,
+  radial-gradient(60% 50% at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
+  radial-gradient(50% 50% at 100% 0%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 70%), var(--bg); }
+.store[data-style="cute"] h1, .store[data-style="cute"] h2, .store[data-style="cute"] h3 { letter-spacing: 0; font-weight: 700; }
+.store[data-style="cute"] .card { border-width: 2px; }
+
+/* ปุ่มนูน: ขอบล่างเข้ม กดแล้วยุบ */
+.store[data-style="cute"] .btn { border-width: 2px; border-radius: 99px; font-weight: 700; box-shadow: 0 4px 0 var(--line); transition: transform .12s, box-shadow .12s, background .15s; }
+.store[data-style="cute"] .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--line); }
+.store[data-style="cute"] .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+.store[data-style="cute"] .btn.primary { background: var(--grad); border-color: var(--press); color: #fff; box-shadow: 0 4px 0 var(--press); }
+.store[data-style="cute"] .btn.primary:hover { box-shadow: 0 6px 0 var(--press); }
+.store[data-style="cute"] .btn.primary:active { box-shadow: 0 1px 0 var(--press); }
+.store[data-style="cute"] .btn.ghost { box-shadow: none; border-color: transparent; }
+.store[data-style="cute"] .input { border-width: 2px; border-radius: 18px; }
+.store[data-style="cute"] .search input { border-radius: 99px; }
+.store[data-style="cute"] .pill { font-weight: 700; }
+
+.store[data-style="cute"] .top { background: color-mix(in srgb, #fff 80%, transparent); border-bottom: 2px solid var(--line); }
+.store[data-style="cute"] .shop-mark, .store[data-style="cute"] .avatar, .store[data-style="cute"] .badge { background: var(--accent); box-shadow: none; }
+.store[data-style="cute"] .wallet-chip { border-width: 2px; color: var(--accent); }
+.store[data-style="cute"] .announce { background: var(--accent); }
+
+/* hero สว่าง: พาสเทล + ลายจุด */
+.store[data-style="cute"] .hero { color: var(--text); border: 2px solid var(--line); border-radius: 36px; box-shadow: var(--shadow-lg);
+  background:
+    radial-gradient(60% 90% at 100% 0%, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 65%),
+    radial-gradient(70% 90% at 0% 100%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 65%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, #fff), #fff); }
+.store[data-style="cute"] .hero::after { background-image: radial-gradient(color-mix(in srgb, var(--accent) 30%, transparent) 2px, transparent 2.6px); background-size: 28px 28px; }
+.store[data-style="cute"] .hero h1 em { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.store[data-style="cute"] .hero h1 em::after { content: ' ♡'; font-size: .7em; }
+.store[data-style="cute"] .hero p, .store[data-style="cute"] .hero-ticks { color: var(--muted); }
+.store[data-style="cute"] .hero-ticks span::before { color: var(--accent); }
+.store[data-style="cute"] .hero .pill.accent { background: #fff; color: var(--accent); border: 2px solid var(--line); }
+.store[data-style="cute"] .hero .btn:not(.primary) { background: #fff; color: var(--text); border-color: var(--line); }
+.store[data-style="cute"] .hero .btn.primary { background: var(--grad); color: #fff; border-color: var(--press); box-shadow: 0 4px 0 var(--press); }
+.store[data-style="cute"] .hero-art .applogo { border: 4px solid #fff; border-radius: 28px; box-shadow: var(--shadow-lg); rotate: -4deg; }
+.store[data-style="cute"] .hero-art .applogo:nth-child(2n) { rotate: 4deg; }
+
+.store[data-style="cute"] .live { border-width: 2px; }
+.store[data-style="cute"] .stat b, .store[data-style="cute"] .sum-row.total b { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.store[data-style="cute"] .sec-head h2::after { content: ' ♡'; color: var(--accent); }
+.store[data-style="cute"] .chip { border-width: 2px; font-weight: 600; }
+.store[data-style="cute"] .chip.on { background: var(--accent); border-color: var(--press); box-shadow: 0 3px 0 var(--press); }
+.store[data-style="cute"] .pcard { border-radius: 30px; }
+.store[data-style="cute"] .pcard:hover { transform: translateY(-5px) rotate(-1deg); }
+.store[data-style="cute"] .pcard-img { border-radius: 24px; }
+.store[data-style="cute"] .pcard-img .tag { background: var(--accent); color: #fff; }
+.store[data-style="cute"] .pcard-price { color: var(--accent); }
+.store[data-style="cute"] .how-n { border-radius: 50%; background: var(--accent); box-shadow: 0 3px 0 var(--press); }
+.store[data-style="cute"] .plan, .store[data-style="cute"] .pay-opt { border-width: 2px; border-radius: 22px; }
+.store[data-style="cute"] .banner { border-radius: 36px; border: 3px solid #fff; }
+.store[data-style="cute"] .popup { border-radius: 36px; border: 3px solid #fff; }
+.store[data-style="cute"] .tabbar { border-width: 2px; border-radius: 28px; }
+.store[data-style="cute"] .hero h1 { font-size: clamp(28px, 4.2vw, 48px); line-height: 1.25; }
+
+/* ---------- สีกล่อง (shops.card_style) — ใช้ได้กับทุกธีม ----------
+   --tint = สีพื้นหลังที่ร้านเลือก (ถ้าเลือกแบบ "สี") ไม่งั้นใช้สีร้านอ่อน ๆ */
+.store.store[data-card="tint"] {
+  --tint-c: var(--tint, color-mix(in srgb, var(--accent) 16%, #fff));
+  --surface: color-mix(in srgb, var(--tint-c) 45%, #fff);
+  --surface-2: color-mix(in srgb, var(--tint-c) 80%, #fff);
+  --line: color-mix(in srgb, var(--tint-c) 85%, var(--accent));
+  --accent-soft: color-mix(in srgb, var(--tint-c) 70%, var(--accent));
+}
+.store.store[data-card="glass"] {
+  --surface: rgba(255, 255, 255, .58); --surface-2: rgba(255, 255, 255, .42); --line: rgba(255, 255, 255, .75);
+}
+.store[data-card="glass"] .card, .store[data-card="glass"] .umenu-pop, .store[data-card="glass"] .popup, .store[data-card="glass"] .top {
+  -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4);
+}
+.store[data-card="glass"] .umenu-pop, .store[data-card="glass"] .popup { background: rgba(255, 255, 255, .85); }
+
+/* =========================================================
+   ป๊อปคอมิก (neo-brutalism): ขอบดำหนา · เงาแข็งเยื้อง · สีสด · ฟอนต์ Kanit
+   ========================================================= */
+.store[data-style="pop"] {
+  --bg: #fff6e0; --surface: #ffffff; --surface-2: #fff1cc; --line: #111111;
+  --text: #111111; --muted: #3f3f46; --faint: #71717a; --ink: #111111;
+  --pop-yellow: #ffd23f;
+  --grad: linear-gradient(var(--accent), var(--accent)); --glow: 3px 3px 0 #111;
+  --radius: 14px; --radius-sm: 10px;
+  --shadow: 4px 4px 0 #111; --shadow-lg: 7px 7px 0 #111;
+  --font: 'Kanit', 'IBM Plex Sans Thai', sans-serif; --font-head: 'Kanit', sans-serif;
+}
+.store[data-style="pop"] .shop-bg[data-bg="default"] { background: radial-gradient(rgba(17, 17, 17, .14) 1.3px, transparent 1.8px) 0 0 / 18px 18px, var(--bg); }
+.store[data-style="pop"] h1, .store[data-style="pop"] h2, .store[data-style="pop"] h3 { font-weight: 700; letter-spacing: 0; }
+.store[data-style="pop"] .card { border: 2.5px solid #111; }
+.store[data-style="pop"] .btn { border: 2.5px solid #111; border-radius: 12px; font-weight: 600; box-shadow: 3px 3px 0 #111; transition: transform .1s, box-shadow .1s; }
+.store[data-style="pop"] .btn:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #111; }
+.store[data-style="pop"] .btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #111; }
+.store[data-style="pop"] .btn.primary { background: var(--accent); color: #fff; }
+.store[data-style="pop"] .btn.ghost { box-shadow: none; border-color: transparent; }
+.store[data-style="pop"] .input { border: 2.5px solid #111; border-radius: 12px; }
+.store[data-style="pop"] .top { background: var(--bg); border-bottom: 3px solid #111; }
+.store[data-style="pop"] .announce { background: #111; color: var(--pop-yellow); font-weight: 600; }
+.store[data-style="pop"] .shop-mark, .store[data-style="pop"] .avatar, .store[data-style="pop"] .badge { background: var(--accent); border: 2px solid #111; box-shadow: 2px 2px 0 #111; }
+.store[data-style="pop"] .wallet-chip { border: 2.5px solid #111; box-shadow: 3px 3px 0 #111; color: #111; background: var(--pop-yellow); }
+.store[data-style="pop"] .hero { background: var(--accent); color: #fff; border: 3px solid #111; border-radius: 22px; box-shadow: 9px 9px 0 #111; }
+.store[data-style="pop"] .hero::after { background-image: radial-gradient(rgba(0, 0, 0, .22) 1.6px, transparent 2.1px); background-size: 16px 16px; }
+.store[data-style="pop"] .hero h1 em { display: inline-block; padding: 0 .25em; background: var(--pop-yellow); color: #111; -webkit-text-fill-color: currentColor; border: 3px solid #111; border-radius: 10px; rotate: -2deg; box-shadow: 4px 4px 0 #111; }
+.store[data-style="pop"] .hero p, .store[data-style="pop"] .hero-ticks { color: #fff; }
+.store[data-style="pop"] .hero .pill.accent { background: #fff; color: #111; border: 2px solid #111; }
+.store[data-style="pop"] .hero .btn.primary { background: var(--pop-yellow); color: #111; box-shadow: 4px 4px 0 #111; }
+.store[data-style="pop"] .hero .btn:not(.primary) { background: #fff; color: #111; border-color: #111; }
+.store[data-style="pop"] .hero-art .applogo { border: 3px solid #111; border-radius: 20px; box-shadow: 5px 5px 0 #111; animation: none; }
+.store[data-style="pop"] .hero-art .applogo:nth-child(2n) { rotate: 5deg; }
+.store[data-style="pop"] .hero-art .applogo:nth-child(3n) { rotate: -4deg; }
+.store[data-style="pop"] .sec-head h2 { display: inline; background: linear-gradient(transparent 58%, var(--pop-yellow) 58%); }
+.store[data-style="pop"] .chip { border: 2.5px solid #111; font-weight: 600; }
+.store[data-style="pop"] .chip.on { background: #111; color: #fff; box-shadow: 3px 3px 0 var(--accent); }
+.store[data-style="pop"] .pcard { border-radius: 16px; }
+.store[data-style="pop"] .pcard:hover { transform: translate(-3px, -3px); box-shadow: var(--shadow-lg); border-color: #111; }
+.store[data-style="pop"] .pcard-img { border-radius: 10px; border: 2px solid #111; }
+.store[data-style="pop"] .pcard-img .tag { background: var(--pop-yellow); color: #111; border: 2px solid #111; box-shadow: 2px 2px 0 #111; font-weight: 700; }
+.store[data-style="pop"] .pcard-price { color: #111; }
+.store[data-style="pop"] .stat b, .store[data-style="pop"] .sum-row.total b { background: none; color: #111; -webkit-text-fill-color: currentColor; }
+.store[data-style="pop"] .how-n { background: var(--pop-yellow); color: #111; border: 2px solid #111; box-shadow: 2px 2px 0 #111; }
+.store[data-style="pop"] .plan.on, .store[data-style="pop"] .pay-opt.on { background: var(--pop-yellow); }
+.store[data-style="pop"] .tabbar { border: 2.5px solid #111; box-shadow: 4px 4px 0 #111; }
+.store[data-style="pop"] .banner, .store[data-style="pop"] .popup { border: 3px solid #111; box-shadow: 7px 7px 0 #111; }
+
+/* =========================================================
+   นีออนราตรี: พื้นมืด · ขอบเรืองแสงสีร้าน · ฟอนต์ Chakra Petch
+   ========================================================= */
+.store[data-style="neon"] {
+  color-scheme: dark;
+  --bg: #07060f; --surface: #110f1e; --surface-2: #1a1730; --line: color-mix(in srgb, var(--accent) 26%, #1f1c33);
+  --text: #f1edff; --muted: #a9a4c6; --faint: #6f6a8e; --ink: #07060f;
+  --accent-soft: color-mix(in srgb, var(--accent) 20%, #110f1e);
+  --neon: color-mix(in srgb, var(--accent) 55%, #fff);
+  --glow: 0 0 22px color-mix(in srgb, var(--accent) 65%, transparent);
+  --shadow: 0 10px 30px -14px rgba(0, 0, 0, .9);
+  --shadow-lg: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent), 0 0 34px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+  --radius: 16px; --radius-sm: 10px;
+  --font-head: 'Chakra Petch', 'IBM Plex Sans Thai', sans-serif;
+}
+.store[data-style="neon"] .shop-bg[data-bg="default"] { background:
+  linear-gradient(color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px) 0 0 / 44px 44px,
+  linear-gradient(90deg, color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px) 0 0 / 44px 44px,
+  radial-gradient(60% 45% at 15% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%),
+  radial-gradient(50% 40% at 90% 10%, color-mix(in srgb, var(--accent-2) 26%, transparent), transparent 70%), var(--bg); }
+.store[data-style="neon"] h1, .store[data-style="neon"] h2, .store[data-style="neon"] h3 { letter-spacing: .01em; }
+.store[data-style="neon"] .top { background: rgba(7, 6, 15, .72); border-bottom: 1px solid var(--line); }
+.store[data-style="neon"] .input { background: var(--surface-2); color: var(--text); }
+.store[data-style="neon"] .btn { background: var(--surface-2); color: var(--text); border-color: var(--line); }
+.store[data-style="neon"] .btn:hover { border-color: var(--accent); box-shadow: var(--glow); }
+.store[data-style="neon"] .btn.primary { background: var(--accent); color: #fff; border-color: var(--neon); box-shadow: var(--glow), inset 0 0 12px rgba(255, 255, 255, .25); }
+.store[data-style="neon"] .btn.ghost { background: none; border-color: transparent; box-shadow: none; }
+.store[data-style="neon"] .hero { border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: var(--shadow-lg); border-radius: 22px;
+  background: radial-gradient(70% 90% at 0% 0%, color-mix(in srgb, var(--accent) 40%, transparent), transparent 60%),
+    radial-gradient(60% 80% at 100% 100%, color-mix(in srgb, var(--accent-2) 35%, transparent), transparent 60%), #0c0a19; }
+.store[data-style="neon"] .hero h1 em { background: none; color: var(--neon); -webkit-text-fill-color: currentColor;
+  text-shadow: 0 0 6px var(--accent), 0 0 18px var(--accent), 0 0 42px color-mix(in srgb, var(--accent) 70%, transparent); }
+.store[data-style="neon"] .hero .btn.primary { background: var(--accent); color: #fff; box-shadow: var(--glow); }
+.store[data-style="neon"] .hero-art .applogo { box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent), 0 0 30px -4px color-mix(in srgb, var(--accent) 70%, transparent); }
+.store[data-style="neon"] .sec-head h2 { text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 60%, transparent); }
+.store[data-style="neon"] .chip { background: var(--surface); color: var(--muted); }
+.store[data-style="neon"] .chip.on { background: var(--accent); color: #fff; box-shadow: var(--glow); }
+.store[data-style="neon"] .pcard:hover { border-color: var(--accent); box-shadow: var(--shadow-lg); }
+.store[data-style="neon"] .pcard-img .tag { background: rgba(7, 6, 15, .75); color: var(--neon); border: 1px solid var(--accent); box-shadow: var(--glow); }
+.store[data-style="neon"] .pcard-price, .store[data-style="neon"] .stat b { background: none; color: var(--neon); -webkit-text-fill-color: currentColor; text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 70%, transparent); }
+.store[data-style="neon"] .announce { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.store[data-style="neon"] .tabbar { background: rgba(17, 15, 30, .85); border-color: var(--line); }
+.store[data-style="neon"] .live { background: color-mix(in srgb, var(--surface) 80%, transparent); }
+
+/* =========================================================
+   หรูหรา: พื้นงาช้าง · หัวข้อเซอริฟ · เส้นบาง · มุมคม · hero ดำกรอบคู่
+   ========================================================= */
+.store[data-style="luxe"] {
+  --bg: #f6f2ea; --surface: #fffdf8; --surface-2: #f1ebdf; --line: #e2d8c6;
+  --text: #1c1917; --muted: #6b6257; --faint: #a39a8c; --ink: #17140f;
+  --grad: linear-gradient(#17140f, #17140f); --glow: none;
+  --radius: 6px; --radius-sm: 4px;
+  --shadow: 0 1px 0 rgba(23, 20, 15, .04); --shadow-lg: 0 24px 48px -24px rgba(23, 20, 15, .35);
+  --font-head: 'Noto Serif Thai', Georgia, serif;
+}
+.store[data-style="luxe"] .shop-bg[data-bg="default"] { background: linear-gradient(180deg, #fbf8f2, var(--bg)); }
+.store[data-style="luxe"] h1, .store[data-style="luxe"] h2, .store[data-style="luxe"] h3 { font-weight: 700; letter-spacing: 0; }
+.store[data-style="luxe"] .btn { border-radius: 4px; letter-spacing: .06em; font-weight: 600; }
+.store[data-style="luxe"] .btn.primary { background: var(--ink); color: #f6f2ea; box-shadow: none; transition: background .2s; }
+.store[data-style="luxe"] .btn.primary:hover { background: var(--accent); }
+.store[data-style="luxe"] .input, .store[data-style="luxe"] .search input { border-radius: 4px; }
+.store[data-style="luxe"] .top { background: color-mix(in srgb, var(--bg) 88%, transparent); border-bottom: 1px solid var(--line); }
+.store[data-style="luxe"] .announce { background: var(--ink); color: #e9dcc0; letter-spacing: .08em; }
+.store[data-style="luxe"] .shop-mark, .store[data-style="luxe"] .avatar, .store[data-style="luxe"] .badge { background: var(--ink); color: #e9dcc0; box-shadow: none; }
+.store[data-style="luxe"] .hero { background: var(--ink); color: #f6f2ea; border-radius: 4px; box-shadow: var(--shadow-lg); }
+.store[data-style="luxe"] .hero::after { background: none; inset: 12px; border: 1px solid color-mix(in srgb, var(--accent) 55%, #e9dcc0); -webkit-mask-image: none; mask-image: none; }
+.store[data-style="luxe"] .hero h1 { font-weight: 500; letter-spacing: 0; }
+.store[data-style="luxe"] .hero h1 em { background: none; color: color-mix(in srgb, var(--accent) 45%, #e9dcc0); -webkit-text-fill-color: currentColor; font-style: italic; }
+.store[data-style="luxe"] .hero p, .store[data-style="luxe"] .hero-ticks { color: #cfc4b2; }
+.store[data-style="luxe"] .hero .pill.accent { background: none; color: #e9dcc0; border: 1px solid #6b604f; border-radius: 2px; letter-spacing: .1em; }
+.store[data-style="luxe"] .hero .btn.primary { background: #f6f2ea; color: var(--ink); }
+.store[data-style="luxe"] .hero .btn:not(.primary) { background: none; border-color: #6b604f; color: #f6f2ea; }
+.store[data-style="luxe"] .hero-art .applogo { border-radius: 6px; animation: none; box-shadow: 0 0 0 1px #6b604f, 0 20px 40px -18px #000; }
+.store[data-style="luxe"] .sec-head h2::after { content: ''; display: block; width: 48px; height: 1px; margin-top: 10px; background: var(--accent); }
+.store[data-style="luxe"] .chip { border-radius: 2px; letter-spacing: .04em; }
+.store[data-style="luxe"] .chip.on { background: var(--ink); color: #f6f2ea; box-shadow: none; }
+.store[data-style="luxe"] .pcard { border-radius: 4px; padding: 0; }
+.store[data-style="luxe"] .pcard:hover { transform: translateY(-4px); border-color: var(--accent); }
+.store[data-style="luxe"] .pcard-img { border-radius: 0; }
+.store[data-style="luxe"] .pcard-body { padding: 14px 16px 16px; }
+.store[data-style="luxe"] .pcard-img .tag { background: var(--ink); color: #e9dcc0; border-radius: 2px; letter-spacing: .06em; }
+.store[data-style="luxe"] .pcard-price, .store[data-style="luxe"] .stat b, .store[data-style="luxe"] .sum-row.total b { background: none; color: var(--text); -webkit-text-fill-color: currentColor; font-family: var(--font-head); }
+.store[data-style="luxe"] .how-n { background: none; color: var(--accent); border: 1px solid var(--accent); border-radius: 50%; box-shadow: none; font-family: var(--font-head); }
+.store[data-style="luxe"] .tabbar { border-radius: 6px; }
+.store[data-style="luxe"] .banner, .store[data-style="luxe"] .popup { border-radius: 4px; }
+
+/* =========================================================
+   ออโรร่ากระจก: พื้นไล่สีเคลื่อนไหวช้า ๆ · กล่องกระจกฝ้า · ปุ่มแคปซูล
+   ========================================================= */
+.store[data-style="glass"] {
+  --bg: color-mix(in srgb, var(--accent) 8%, #f5f3ff);
+  --surface: rgba(255, 255, 255, .55); --surface-2: rgba(255, 255, 255, .4); --line: rgba(255, 255, 255, .8);
+  --text: #15132b; --muted: #4f4c6b; --faint: #8a87a6; --ink: #15132b;
+  --radius: 24px; --radius-sm: 16px;
+  --shadow: 0 8px 32px -12px color-mix(in srgb, var(--accent) 40%, rgba(0, 0, 0, .2)), inset 0 1px 0 rgba(255, 255, 255, .7);
+  --shadow-lg: 0 24px 60px -20px color-mix(in srgb, var(--accent) 55%, rgba(0, 0, 0, .3)), inset 0 1px 0 rgba(255, 255, 255, .8);
+}
+.store[data-style="glass"] .shop-bg[data-bg="default"] { background:
+  radial-gradient(40% 50% at 10% 15%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 70%),
+  radial-gradient(45% 55% at 90% 20%, color-mix(in srgb, var(--accent-2) 50%, transparent), transparent 70%),
+  radial-gradient(50% 50% at 60% 95%, color-mix(in srgb, #38bdf8 40%, transparent), transparent 70%), var(--bg);
+  background-size: 140% 140%; animation: aurora-drift 22s ease-in-out infinite alternate; }
+@keyframes aurora-drift { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+@media (prefers-reduced-motion: reduce) { .store[data-style="glass"] .shop-bg { animation: none; } }
+.store[data-style="glass"] .card, .store[data-style="glass"] .top, .store[data-style="glass"] .tabbar, .store[data-style="glass"] .hero {
+  -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5); }
+.store[data-style="glass"] .top { background: rgba(255, 255, 255, .45); border-bottom: 1px solid rgba(255, 255, 255, .7); }
+.store[data-style="glass"] .umenu-pop, .store[data-style="glass"] .popup { background: rgba(255, 255, 255, .88); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.store[data-style="glass"] .input { background: rgba(255, 255, 255, .7); }
+.store[data-style="glass"] .btn:not(.primary) { background: rgba(255, 255, 255, .55); border-color: rgba(255, 255, 255, .85); }
+.store[data-style="glass"] .hero { background: rgba(255, 255, 255, .35); color: var(--text); border: 1px solid rgba(255, 255, 255, .8); box-shadow: var(--shadow-lg); }
+.store[data-style="glass"] .hero::after { display: none; }
+.store[data-style="glass"] .hero h1 em { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.store[data-style="glass"] .hero p, .store[data-style="glass"] .hero-ticks { color: var(--muted); }
+.store[data-style="glass"] .hero .pill.accent { background: rgba(255, 255, 255, .6); color: var(--accent); border-color: rgba(255, 255, 255, .9); }
+.store[data-style="glass"] .hero .btn.primary { background: var(--grad); color: #fff; box-shadow: var(--glow); }
+.store[data-style="glass"] .hero .btn:not(.primary) { color: var(--text); }
+.store[data-style="glass"] .hero-art .applogo { box-shadow: 0 20px 40px -16px color-mix(in srgb, var(--accent) 60%, rgba(0, 0, 0, .4)), 0 0 0 3px rgba(255, 255, 255, .7); }
+.store[data-style="glass"] .chip { background: rgba(255, 255, 255, .5); border-color: rgba(255, 255, 255, .85); }
+.store[data-style="glass"] .pcard-img .tag { background: rgba(255, 255, 255, .8); }
+
+/* สีกล่องบนธีมมืด (นีออน): โปร่งแสง = กระจกสีเข้ม · ตามพื้นหลัง = เข้มอมสีร้าน */
+.store.store[data-style="neon"][data-card="glass"] { --surface: rgba(17, 15, 30, .6); --surface-2: rgba(26, 23, 48, .5); --line: color-mix(in srgb, var(--accent) 30%, transparent); }
+.store.store[data-style="neon"][data-card="tint"] { --surface: color-mix(in srgb, var(--accent) 10%, #110f1e); --surface-2: color-mix(in srgb, var(--accent) 16%, #1a1730); --line: color-mix(in srgb, var(--accent) 40%, #1f1c33); --accent-soft: color-mix(in srgb, var(--accent) 22%, #110f1e); }

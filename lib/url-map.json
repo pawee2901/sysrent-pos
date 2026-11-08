@@ -1,0 +1,26 @@
+{
+  "adminBase": "/backstage",
+  "store": {
+    "/cart": "/basket",
+    "/checkout": "/pay",
+    "/orders": "/history",
+    "/wallet": "/balance",
+    "/login": "/signin",
+    "/my/password": "/security",
+    "/my": "/me",
+    "/p": "/item",
+    "/terms": "/rules"
+  },
+  "admin": {
+    "/accounting": "/ledger",
+    "/accounts": "/pool",
+    "/agents": "/resellers",
+    "/coupons": "/promos",
+    "/customers": "/members",
+    "/orders": "/sales",
+    "/payments": "/gateway",
+    "/products": "/catalog",
+    "/reports": "/tickets",
+    "/settings": "/config"
+  }
+}

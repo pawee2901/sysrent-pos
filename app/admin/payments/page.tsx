@@ -6,7 +6,7 @@ const ST: Record<string, [string, string]> = { paid: ['สำเร็จ', 'ok'
 
 /** การชำระเงิน: รับเงินวันนี้ · โควตาตรวจสลิป · รายการโอนล่าสุด (สลิปที่ไม่ผ่านบอกสาเหตุ) */
 export default async function AdminPayments() {
-  const shop = await adminShop();
+  const shop = await adminShop('payments');
   if (!shop) return null;
   const d = db();
   const [{ data: rows }, { data: usage }, { data: today }] = await Promise.all([

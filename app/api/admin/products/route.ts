@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { body, fail, requireAdmin } from '@/lib/api';
+import { shopCategories } from '@/lib/categories';
 
 const money = z.number().positive('ราคาต้องมากกว่า 0').max(1_000_000);
 const opt = z.object({
@@ -11,6 +12,7 @@ const opt = z.object({
   compare_at: money.nullable().default(null),
   cost: z.number().min(0).max(1_000_000).nullable().default(null),
   duration_days: z.number().int().min(1).max(3650).nullable().default(null),
+  agent_price: money.nullable().default(null), // ราคาตัวแทน (ร้าน Pro) · null = ตัวแทนซื้อราคาปกติ
   active: z.boolean().default(true),
 });
 const prod = z.object({
@@ -21,6 +23,7 @@ const prod = z.object({
   template: z.string().trim().max(20).default(''),
   fulfillment: z.enum(['stock', 'slot', 'manual']),
   badge: z.string().trim().max(16).default(''),
+  ask_info: z.string().trim().max(60).default(''),
   sort: z.number().int().min(-999).max(999).default(0),
   active: z.boolean().default(true),
   options: z.array(opt).min(1, 'ต้องมีอย่างน้อย 1 แพ็กเกจ').max(12),
@@ -29,12 +32,14 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('save'), id: z.string().uuid().optional(), data: prod }),
   z.object({ action: z.literal('toggle'), id: z.string().uuid(), active: z.boolean() }),
   z.object({ action: z.literal('delete'), id: z.string().uuid() }),
-  z.object({ action: z.literal('stock'), optionId: z.string().uuid(), text: z.string().min(1).max(200_000) }),
+  // mode line = 1 บรรทัด 1 ชิ้น · block = ทั้งข้อความ 1 ชิ้น (หลายชิ้นคั่นด้วยบรรทัด ---) · repeat = เพิ่มชิ้นเดิมซ้ำ (เช่น ลิงก์เชิญทีมใช้ได้หลายคน)
+  z.object({ action: z.literal('stock'), optionId: z.string().uuid(), text: z.string().min(1).max(200_000), mode: z.enum(['line', 'block']).default('line'), repeat: z.number().int().min(1).max(500).default(1) }),
+  z.object({ action: z.literal('usage'), id: z.string().uuid(), usage: z.string().max(3000), usage_image: z.string().trim().max(500).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https').optional() }),
 ]);
 
 /** จัดการสินค้า + แพ็กเกจ + เพิ่มสต็อก (ทุกคำสั่งตรวจว่าเป็นของร้านนี้) */
 export async function POST(req: Request) {
-  const a = await requireAdmin();
+  const a = await requireAdmin('products');
   if ('res' in a) return a.res;
   const b = await body(req, schema);
   if ('res' in b) return b.res;
@@ -60,16 +65,29 @@ export async function POST(req: Request) {
     // แพ็กเกจ: แก้ตัวเดิม / เพิ่มตัวใหม่ / ตัวที่หายไป = ลบ (ถ้ามีออเดอร์แล้วปิดขายแทน)
     const { data: cur } = await d.from('shop_options').select('id').eq('product_id', pid);
     const keep = new Set(options.filter((o) => o.id).map((o) => o.id!));
+    const agentRows: { option_id: string; agent_price: number | null; price: number }[] = [];
     for (const [i, o] of options.entries()) {
       const row = { name: o.name, price: o.price, compare_at: o.compare_at, cost: o.cost, duration_days: o.duration_days, active: o.active, sort: i };
+      let oid = o.id;
       if (o.id && (cur ?? []).some((c) => c.id === o.id)) await d.from('shop_options').update(row).eq('id', o.id);
-      else await d.from('shop_options').insert({ ...row, product_id: pid });
+      else oid = (await d.from('shop_options').insert({ ...row, product_id: pid }).select('id').single()).data?.id;
+      if (oid) agentRows.push({ option_id: oid, agent_price: o.agent_price ?? null, price: o.price });
     }
+    // ราคาตัวแทน: มีค่า (และถูกกว่าราคาขาย) = บันทึก · ว่าง = ลบ (ตัวแทนซื้อราคาปกติ) · ยังไม่รัน 0016 = ข้าม
+    const setAp = agentRows.filter((r) => r.agent_price !== null && r.agent_price < r.price);
+    const clearAp = agentRows.filter((r) => !setAp.includes(r)).map((r) => r.option_id);
+    if (setAp.length) await d.from('shop_agent_prices').upsert(setAp.map((r) => ({ option_id: r.option_id, agent_price: r.agent_price })));
+    if (clearAp.length) await d.from('shop_agent_prices').delete().in('option_id', clearAp);
     for (const c of cur ?? []) {
       if (keep.has(c.id)) continue;
       const { count } = await d.from('shop_order_items').select('id', { count: 'exact', head: true }).eq('option_id', c.id);
       if (count) await d.from('shop_options').update({ active: false }).eq('id', c.id);
       else await d.from('shop_options').delete().eq('id', c.id);
+    }
+    // หมวดใหม่ที่พิมพ์ตอนเพิ่มสินค้า → ใส่ท้ายรายการหมวดของร้านให้เอง
+    if (p.category) {
+      const list = await shopCategories(sid);
+      if (!list.includes(p.category) && list.length < 40) await d.from('shops').update({ categories: [...list, p.category] }).eq('id', sid);
     }
     return NextResponse.json({ ok: true, id: pid });
   }
@@ -92,12 +110,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  // เพิ่มสต็อก: 1 บรรทัด = 1 ชิ้น · หลายบรรทัดต่อชิ้นให้คั่นด้วยบรรทัด ---
+  if (x.action === 'usage') {
+    if (!(await own(x.id))) return fail('ไม่พบสินค้า', 404);
+    const upd: Record<string, string> = { usage: x.usage.trim() };
+    if (x.usage_image !== undefined) upd.usage_image = x.usage_image;
+    const { error } = await d.from('shop_products').update(upd).eq('id', x.id);
+    if (!error) return NextResponse.json({ ok: true });
+    return fail(error.message.includes('usage_image') ? 'ยังไม่ได้รัน SQL 0012_usage_image.sql' : error.message.includes('usage') ? 'ยังไม่ได้รัน SQL 0011_product_usage.sql' : 'บันทึกไม่สำเร็จ', 500);
+  }
+
+  // เพิ่มสต็อก: ทีละบรรทัด (1 บรรทัด = 1 ชิ้น) หรือ 1 ชิ้นหลายบรรทัด (คั่นหลายชิ้นด้วยบรรทัด ---)
   const { data: o } = await d.from('shop_options').select('id, shop_products!inner(shop_id, fulfillment)').eq('id', x.optionId).eq('shop_products.shop_id', sid).maybeSingle();
   if (!o) return fail('ไม่พบแพ็กเกจ', 404);
   if ((o.shop_products as unknown as { fulfillment: string }).fulfillment !== 'stock') return fail('สินค้านี้ไม่ได้ใช้คลังโค้ด');
   const t = x.text.replace(/\r\n/g, '\n').trim();
-  const items = [...new Set((/^\s*-{3,}\s*$/m.test(t) ? t.split(/^\s*-{3,}\s*$/m) : t.split('\n')).map((s) => s.trim()).filter(Boolean).map((s) => s.slice(0, 2000)))];
+  const parts = x.mode === 'block' ? t.split(/^\s*-{3,}\s*$/m) : t.split('\n');
+  const uniq = [...new Set(parts.map((s) => (x.mode === 'block' ? s.replace(/^\n+|\s+$/g, '') : s.trim())).filter((s) => s.trim()).map((s) => s.slice(0, 4000)))];
+  const items = uniq.flatMap((c) => Array.from({ length: x.repeat ?? 1 }, () => c));
   if (!items.length) return fail('ไม่มีรายการให้เพิ่ม');
   if (items.length > 2000) return fail('เพิ่มได้ครั้งละไม่เกิน 2,000 ชิ้น');
   const { error } = await d.from('shop_stock').insert(items.map((content) => ({ option_id: x.optionId, content })));
