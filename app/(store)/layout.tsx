@@ -21,9 +21,12 @@ import '../store.css';
 /** โครงหน้าร้าน: หัวเว็บ · เนื้อหา · ท้ายเว็บ · ปุ่ม LINE · เมนูล่าง (มือถือ) */
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const shop = (await getShop())!;
-  const me = await getCustomer();
   // ฟอนต์ / เพลง / เอฟเฟกต์ (แยก query: ยังไม่รัน 0022 = ไม่มี แต่หน้าร้านใช้งานได้)
-  const { data: ap, error: apErr } = await db().from('shops').select('font, effect, loader, music_url').eq('id', shop.id).maybeSingle();
+  const [me, { data: ap, error: apErr }] = await Promise.all([
+    getCustomer(),
+    db().from('shops').select('font, effect, loader, music_url').eq('id', shop.id).maybeSingle(),
+  ]);
+  const [isAdmin, agent, email] = me ? await Promise.all([isShopAdmin(), getAgent(shop, me.id), customerEmail(me.id)]) : [false, null, ''];
   const look = apErr || !can(shop.plan, 'appearance') ? null : ap;
   const font = fontOf(look?.font ?? '');
   const theme = activeTheme(shop.theme ?? 'modern', ownedThemes(shop.plan, shop.themes_owned));
@@ -55,7 +58,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
             {me && <Link href={to('/wallet')} className="wallet-chip" title="เติมเงิน"><Icon name="wallet" size={18} />{baht(me.balance)}</Link>}
             <Link href={to('/cart')} className="icon-btn" aria-label="ตะกร้า"><Icon name="bag" size={22} /><CartCount /></Link>
             {me
-              ? <UserMenu username={me.username} contact={me.contact} balance={baht(me.balance)} isAdmin={await isShopAdmin()} isAgent={!!(await getAgent(shop, me.id))} email={await customerEmail(me.id)} mailOn={can(shop.plan, 'mail')} otpOn={can(shop.plan, 'otp')} />
+              ? <UserMenu username={me.username} contact={me.contact} balance={baht(me.balance)} isAdmin={isAdmin} isAgent={!!agent} email={email} mailOn={can(shop.plan, 'mail')} otpOn={can(shop.plan, 'otp')} />
               : <Link href={to('/login')} className="btn primary sm">เข้าสู่ระบบ</Link>}
           </div>
         </div>
