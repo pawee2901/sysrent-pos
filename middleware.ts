@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 // path จริงของหน้าเว็บ: เข้าตรงไม่ได้ ต้องผ่านลิงก์สาธารณะใน lib/url-map.json
-export const config = { matcher: ['/api/:path*', '/', '/admin/:path*', '/cart/:path*', '/checkout/:path*', '/orders/:path*', '/wallet/:path*', '/login/:path*', '/my/:path*', '/p/:path*', '/terms/:path*'] };
+export const config = { matcher: ['/api/:path*', '/', '/admin/:path*', '/cart/:path*', '/checkout/:path*', '/orders/:path*', '/wallet/:path*', '/login/:path*', '/my/:path*', '/p/:path*', '/terms/:path*', '/otp/:path*'] };
 
 /**
  * กัน CSRF: คำขอที่แก้ข้อมูล (POST/PATCH/DELETE) ต้องมาจากหน้าเว็บร้านเดียวกัน

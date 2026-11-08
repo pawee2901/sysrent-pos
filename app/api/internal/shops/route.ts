@@ -19,7 +19,7 @@ function authorized(req: Request): boolean {
   return timingSafeEqual(Buffer.from(got), Buffer.from(want));
 }
 
-const RESERVED = new Set(['www', 'api', 'admin', 'app', 'mail', 'shop', 'shops', 'otp', 'sysrent', 'static', 'cdn', 'help', 'support', 'status', 'dev', 'test']);
+const RESERVED = new Set(['www', 'api', 'admin', 'app', 'mail', 'shop', 'shops', 'otp', 'sysrent', 'static', 'cdn', 'help', 'support', 'status', 'dev', 'test', 'demo', 'demo-agent']);
 const slug = z.string().trim().toLowerCase().regex(/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])$/, 'ชื่อร้าน (subdomain) ใช้ a-z 0-9 - ยาว 3-30 ตัว');
 const until = z.string().datetime({ offset: true });
 

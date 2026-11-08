@@ -9,12 +9,14 @@ const TABS = [
   ['/', 'หน้าแรก', 'home'], ['/cart', 'ตะกร้า', 'bag'], ['/orders', 'ประวัติ', 'receipt'], ['/wallet', 'กระเป๋าเงิน', 'wallet'],
 ] as const;
 
+const OTP_TAB = ['/otp', 'OTP', 'lock'] as const;
+
 /** เมนูล่างบนมือถือ */
-export function TabBar({ loggedIn }: { loggedIn: boolean }) {
+export function TabBar({ loggedIn, otp = false }: { loggedIn: boolean; otp?: boolean }) {
   const path = fromPublic(usePathname() ?? '/');
   return (
     <nav className="tabbar" aria-label="เมนูหลัก">
-      {TABS.map(([href, label, icon]) => {
+      {(otp ? [...TABS.slice(0, 3), OTP_TAB, ...TABS.slice(3)] : TABS).map(([href, label, icon]) => {
         const on = href === '/' ? path === '/' || path.startsWith('/p/') : path.startsWith(href);
         const dest = !loggedIn && href !== '/' && href !== '/cart' ? loginUrl(href) : to(href);
         return (

@@ -12,6 +12,7 @@ export const PERMS = [
   { key: 'customers', label: 'ลูกค้า', desc: 'ปรับยอดเงิน · ระงับ · ตั้งรหัส · ตั้งยศ', href: '/customers' },
   { key: 'agents', label: 'ตัวแทน', desc: 'ตั้ง / พัก / เอาออกตัวแทน · ดูยอดซื้อ', href: '/agents' },
   { key: 'payments', label: 'การชำระเงิน', desc: 'ประวัติเติมเงิน / สลิป', href: '/payments' },
+  { key: 'otp', label: 'ค้นหา OTP', desc: 'เชื่อมกล่องอีเมล · ตั้งแอปที่ค้นได้', href: '/otp' },
   { key: 'accounting', label: 'บัญชี', desc: 'รายรับ · ต้นทุน · กำไร · จดรายจ่าย', href: '/accounting' },
   { key: 'settings', label: 'ตั้งค่าร้าน', desc: 'หน้าตาร้าน · รับเงิน · แจ้งเตือน', href: '/settings' },
 ] as const;

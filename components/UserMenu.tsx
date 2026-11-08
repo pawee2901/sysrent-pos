@@ -8,7 +8,7 @@ import { api } from '@/components/Cart';
 import { input, notify } from '@/components/dialog';
 
 /** เมนูผู้ใช้ที่หัวเว็บ: กดรูปโปรไฟล์ → กระเป๋าเงิน / บัญชี / ออเดอร์ / ตะกร้า / รหัสผ่าน / (หลังบ้าน) / ออกจากระบบ */
-export function UserMenu({ username, contact, balance, isAdmin, isAgent = false, email = '', mailOn = false }: { username: string; contact: string; balance: string; isAdmin: boolean; isAgent?: boolean; email?: string; mailOn?: boolean }) {
+export function UserMenu({ username, contact, balance, isAdmin, isAgent = false, email = '', mailOn = false, otpOn = false }: { otpOn?: boolean; username: string; contact: string; balance: string; isAdmin: boolean; isAgent?: boolean; email?: string; mailOn?: boolean }) {
   const [mail, setMail] = useState(email);
   async function editMail() {
     setOpen(false);
@@ -47,6 +47,7 @@ export function UserMenu({ username, contact, balance, isAdmin, isAgent = false,
           <Link role="menuitem" href={to('/wallet')}><Icon name="wallet" />กระเป๋าเงิน<b className="umenu-amt">{balance}</b></Link>
           <Link role="menuitem" href={to('/orders')}><Icon name="receipt" />ประวัติการซื้อ · ดูรหัส</Link>
           <Link role="menuitem" href={to('/cart')}><Icon name="bag" />ตะกร้าสินค้า</Link>
+          {otpOn && <Link role="menuitem" href={to('/otp')}><Icon name="lock" />ค้นหา OTP</Link>}
           {mailOn && <button type="button" role="menuitem" onClick={editMail}><Icon name="mail" />{mail ? 'เปลี่ยนอีเมลแจ้งเตือน' : 'เพิ่มอีเมลแจ้งเตือน'}</button>}
           <Link role="menuitem" href={to('/my/password')}><Icon name="lock" />ตั้งรหัสผ่าน</Link>
           {isAdmin && <a role="menuitem" href={to('/admin')}><Icon name="shield" />หลังบ้านร้าน</a>}

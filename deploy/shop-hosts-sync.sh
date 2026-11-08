@@ -13,6 +13,7 @@ JSON=$(curl -fsS --max-time 10 -H "x-internal-key: $KEY" http://127.0.0.1:3002/a
 # ร้านเปิดไม่ได้ (เช่น แอปล่ม) → ไม่แตะ map เดิม
 echo "$JSON" | grep -q '"ok":true' || exit 0
 echo "$JSON" | grep -oE '"slugs":\[[^]]*\]' | grep -oE '"[a-z0-9-]{3,30}"' | tr -d '"' | sort -u \
+  | sed -E '/^(demo|demo-agent)$/d' \
   | while read -r s; do echo "$s.$ROOT 127.0.0.1:3002;"; done > "$TMP"
 
 touch "$MAP"

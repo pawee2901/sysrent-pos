@@ -9,7 +9,8 @@
     "/my/password": "/security",
     "/my": "/me",
     "/p": "/item",
-    "/terms": "/rules"
+    "/terms": "/rules",
+    "/otp": "/code"
   },
   "admin": {
     "/accounting": "/ledger",
@@ -21,6 +22,7 @@
     "/payments": "/gateway",
     "/products": "/catalog",
     "/reports": "/tickets",
-    "/settings": "/config"
+    "/settings": "/config",
+    "/otp": "/codes"
   }
 }

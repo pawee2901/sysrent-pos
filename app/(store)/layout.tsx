@@ -55,7 +55,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
             {me && <Link href={to('/wallet')} className="wallet-chip" title="เติมเงิน"><Icon name="wallet" size={18} />{baht(me.balance)}</Link>}
             <Link href={to('/cart')} className="icon-btn" aria-label="ตะกร้า"><Icon name="bag" size={22} /><CartCount /></Link>
             {me
-              ? <UserMenu username={me.username} contact={me.contact} balance={baht(me.balance)} isAdmin={await isShopAdmin()} isAgent={!!(await getAgent(shop, me.id))} email={await customerEmail(me.id)} mailOn={can(shop.plan, 'mail')} />
+              ? <UserMenu username={me.username} contact={me.contact} balance={baht(me.balance)} isAdmin={await isShopAdmin()} isAgent={!!(await getAgent(shop, me.id))} email={await customerEmail(me.id)} mailOn={can(shop.plan, 'mail')} otpOn={can(shop.plan, 'otp')} />
               : <Link href={to('/login')} className="btn primary sm">เข้าสู่ระบบ</Link>}
           </div>
         </div>
@@ -70,7 +70,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       </footer>
       <ContactFab line={shop.line_url} facebook={shop.facebook_url} />
       {(shop.popup_text || shop.popup_image) && <Popup shop={shop.slug} text={shop.popup_text} image={shop.popup_image} link={shop.popup_link} />}
-      <TabBar loggedIn={!!me} />
+      <TabBar loggedIn={!!me} otp={can(shop.plan, 'otp')} />
     </div>
     </CartProvider>
   );

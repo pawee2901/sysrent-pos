@@ -45,6 +45,7 @@ const nextConfig = {
   // auto-update build ลงโฟลเดอร์แยก (NEXT_DIST_DIR) แล้วค่อยสลับ — เว็บที่รันอยู่ไม่พังระหว่าง build
   distDir: process.env.NEXT_DIST_DIR || '.next',
   poweredByHeader: false,
+  serverExternalPackages: ['imapflow', 'mailparser'],
   productionBrowserSourceMaps: false,
   compiler: { removeConsole: isDev ? false : { exclude: ['error'] } },
   async headers() {
