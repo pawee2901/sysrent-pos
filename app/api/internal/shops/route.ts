@@ -31,6 +31,7 @@ const schema = z.discriminatedUnion('action', [
     admin_password: z.string().min(8).max(72).optional(), // ส่งอย่างใดอย่างหนึ่ง
     admin_pass_hash: z.string().regex(/^s1\$[\w-]+\$[\w-]+$/).optional(),
     plan: z.enum(['starter', 'pro', 'max']).default('starter'),
+    slip_quota: z.number().int().min(0).max(1000).optional(), // ร้านทดลอง: โควตาน้อยกว่าแพ็กเกจ
   }),
   z.object({ action: z.literal('extend'), slug, expires_at: until }),
   z.object({ action: z.enum(['suspend', 'resume']), slug }),
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
     if (!passHash) return fail('ต้องกำหนดรหัสผ่านผู้ดูแล', 400);
     const { data, error } = await d.from('shops').insert({
       slug: x.slug, owner_id: x.owner_id, name: x.name, admin_username: x.admin_username,
-      admin_pass_hash: passHash, expires_at: x.expires_at, plan: x.plan, slip_quota: SLIP_QUOTA[x.plan], slip_overage: 0.45,
+      admin_pass_hash: passHash, expires_at: x.expires_at, plan: x.plan, slip_quota: x.slip_quota ?? SLIP_QUOTA[x.plan], slip_overage: 0.45,
     }).select('id, slug').single();
     if (error) return fail(error.code === '23505' ? 'ชื่อนี้มีคนใช้แล้ว' : 'สร้างร้านไม่สำเร็จ', error.code === '23505' ? 409 : 500);
     return NextResponse.json({ ok: true, shop: data });
