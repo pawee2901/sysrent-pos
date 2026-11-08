@@ -13,11 +13,10 @@ for k in NEXT_PUBLIC_SUPABASE_URL ENC_KEY SHOP_INTERNAL_KEY NEXT_PUBLIC_TURNSTIL
 done
 if grep -qE '^(DEV_SHOP_SLUG=.+|NEXT_PUBLIC_TURNSTILE_SITE_KEY=[123]x0000)' "$ENV_FILE"; then die "remove DEV_SHOP_SLUG and Cloudflare test keys from .env.production.local"; fi
 
-# The auto-update cron also builds this folder: mark this commit as deployed, then wait for any running update
-sudo -iu app git -C "$APP" rev-parse origin/main > /home/app/.deployed-shop
-chown app:app /home/app/.deployed-shop
-for _ in $(seq 1 180); do pgrep -u app -f 'auto-update' >/dev/null || break; sleep 5; done
-pgrep -u app -f 'auto-update' >/dev/null && die "auto-update is still running; try again in a few minutes"
+# Hold the auto-update cron's lock so it cannot reinstall or rebuild this folder during setup
+exec 9>/tmp/sysrent-deploy.lock
+echo ">> waiting for any running update"
+flock -w 900 9 || die "auto-update is still running; try again in a few minutes"
 
 echo ">> build (a few minutes)"
 sudo -iu app bash -c 'cd ~/shop && npm ci --no-audit --no-fund && rm -rf .next-build && NEXT_DIST_DIR=.next-build npm run build && rm -rf .next-old && { [ ! -d .next ] || mv .next .next-old; } && mv .next-build .next && sha1sum package-lock.json | cut -c1-40 > node_modules/.lock-hash'
