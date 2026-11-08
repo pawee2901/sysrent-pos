@@ -32,7 +32,7 @@ sudo -iu app pm2 save >/dev/null
 sudo -iu app git -C "$APP" rev-parse origin/main > /home/app/.deployed-shop
 chown app:app /home/app/.deployed-shop
 
-for _ in $(seq 1 30); do curl -fsS -o /dev/null -m 3 http://127.0.0.1:3002/api/internal/shops -H 'x-internal-key: probe' 2>/dev/null; [ $? -ne 7 ] && break; sleep 1; done
+for _ in $(seq 1 30); do curl -s -o /dev/null -m 3 http://127.0.0.1:3002/ && break; sleep 1; done
 
 echo ">> nginx"
 touch /etc/nginx/shop-hosts.map
