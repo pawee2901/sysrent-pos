@@ -3,8 +3,8 @@
 # รันด้วย root ทุก 1 นาที:  * * * * * /home/app/shop/deploy/shop-hosts-sync.sh >/dev/null 2>&1
 set -euo pipefail
 ENV=/home/app/shop/.env.local
-KEY=$(grep -E '^SHOP_INTERNAL_KEY=' "$ENV" | cut -d= -f2- | tr -d '"'"'"' ')
-ROOT=$(grep -E '^SHOP_ROOT_DOMAIN=' "$ENV" | cut -d= -f2- | tr -d '"'"'"' ' || true); ROOT=${ROOT:-sysrent.shop}
+KEY=$(grep -E '^SHOP_INTERNAL_KEY=' "$ENV" | cut -d= -f2- | tr -d '\r"'"'"' ')
+ROOT=$(grep -E '^SHOP_ROOT_DOMAIN=' "$ENV" | cut -d= -f2- | tr -d '\r"'"'"' ' || true); ROOT=${ROOT:-sysrent.shop}
 MAP=/etc/nginx/shop-hosts.map
 TMP=$(mktemp)
 trap 'rm -f "$TMP"' EXIT
