@@ -89,7 +89,7 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis }: { rea
   const toggleGuide = (g: 'gmail' | 'hotmail' | 'msapp') => setGuide(guide === g ? null : g);
 
   return (
-    <>
+    <div className="otp-page">
       <div className="page-head"><div><h1>ค้นหา OTP</h1><p>ลูกค้าที่ล็อกอินค้นรหัสได้เอง เฉพาะอีเมลในสินค้าที่ยังไม่หมดอายุของตัวเอง</p></div></div>
       {!ready && <div className="card card-pad" style={{ color: 'var(--warn)' }}>⚠️ ต้องรัน SQL <code>0024</code>, <code>0025</code> และ <code>0026</code> ใน Supabase ก่อน</div>}
       <div className="seg" role="tablist" style={{ marginBottom: 14 }}>{TABS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
@@ -121,8 +121,8 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis }: { rea
           <div className="card-head"><h2>อีเมลของร้าน</h2></div>
           {!boxes.length && <p className="muted card-pad" style={{ margin: 0 }}>ยังไม่มีอีเมลของร้าน กดปุ่มด้านบนเพื่อเพิ่ม</p>}
           {boxes.map((b) => (
-            <div key={b.id} className="line-item">
-              <div className="grow"><b>{b.email}</b><small>{LABEL[b.provider] ?? b.provider}{!b.active ? ' · ปิดอยู่' : ''}{b.error ? ` · อ่านไม่ได้: ${b.error}` : ''}</small></div>
+            <div key={b.id} className="otp-row">
+              <div className="grow"><b>{b.email}</b><small>{LABEL[b.provider] ?? b.provider}{!b.active ? ' · ปิดอยู่' : ''}</small>{b.error && <small className="otp-err">อ่านไม่ได้: {b.error}</small>}</div>
               {b.provider === 'graph' && <button type="button" className={`btn sm${b.error ? ' primary' : ''}`} disabled={busy} onClick={() => connectMs(b.email)}>เชื่อมใหม่</button>}
               {b.provider === 'maily' && <button type="button" className="btn sm" disabled={busy} onClick={() => setPin(b)}>PIN</button>}
               <button type="button" className="btn sm" disabled={busy} onClick={() => call({ action: 'toggle_box', id: b.id, active: !b.active })}>{b.active ? 'ปิด' : 'เปิด'}</button>
@@ -133,35 +133,43 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis }: { rea
         <section className="card">
           <div className="card-head"><h2>การค้นหาล่าสุด</h2></div>
           {!logs.length && <p className="muted card-pad" style={{ margin: 0 }}>ยังไม่มีการค้นหา</p>}
-          {logs.map((l) => <div key={l.id} className="line-item"><div className="grow"><b>{l.account}</b><small>@{l.user} · {l.app} · {l.when}</small></div><span className={`pill ${l.found ? 'ok' : 'plain'}`}>{l.found ? 'พบรหัส' : 'ไม่พบ'}</span></div>)}
+          {logs.map((l) => <div key={l.id} className="otp-row"><div className="grow"><b>{l.account}</b><small>@{l.user} · {l.app} · {l.when}</small></div><span className={`pill ${l.found ? 'ok' : 'plain'}`}>{l.found ? 'พบรหัส' : 'ไม่พบ'}</span></div>)}
         </section>
       </>}
 
-      {tab === 'apps' && (
+      {tab === 'apps' && <>
         <section className="card">
-          <div className="card-head"><h2>แอปที่ให้ค้นได้</h2></div>
+          <div className="card-head"><h2>แอปที่ให้ค้นได้</h2><span className="pill plain">{apps.length} แอป</span></div>
+          {!apps.length && <p className="muted card-pad" style={{ margin: 0 }}>ยังไม่มีแอป เพิ่มได้จากด้านล่าง</p>}
           {apps.map((a) => (
-            <div key={a.id} className="line-item">
-              <div className="grow"><b>{a.name}</b><small>คำค้น: {a.keywords}{a.code ? ` · App Code: ${a.code}` : ''}</small></div>
+            <div key={a.id} className="otp-row">
+              <div className="grow"><b>{a.name}</b><small>คำค้น: {a.keywords}</small></div>
+              {a.code && <span className="pill plain">{a.code}</span>}
               <button type="button" className="btn ghost sm" disabled={busy} onClick={() => call({ action: 'delete_app', id: a.id }, 'ลบแล้ว')}>ลบ</button>
             </div>
           ))}
+        </section>
+        <section className="card">
+          <div className="card-head"><h2>เพิ่มแอป</h2></div>
           <div className="form">
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {PRESETS.filter(([n]) => !used.has(n.toLowerCase())).map(([name, keywords, code]) => <button key={name} type="button" className="btn sm" disabled={busy || !ready} onClick={() => call({ action: 'add_app', name, keywords, code })}>+ {name}</button>)}
-            </div>
-            <form onSubmit={addApp} style={{ display: 'grid', gap: 12 }}>
-              <div className="two">
-                <label className="field"><span>ชื่อแอป</span><input className="input" required maxLength={40} value={app.name} onChange={(e) => setApp({ ...app, name: e.target.value })} /></label>
-                <label className="field"><span>คำค้นในผู้ส่งหรือหัวข้อเมล (คั่นด้วย ,)</span><input className="input" required maxLength={200} placeholder="netflix" value={app.keywords} onChange={(e) => setApp({ ...app, keywords: e.target.value })} /></label>
+            {PRESETS.some(([n]) => !used.has(n.toLowerCase())) && <>
+              <span className="otp-sub">เลือกแอปยอดนิยม กดครั้งเดียวเพิ่มได้เลย</span>
+              <div className="otp-chips">{PRESETS.filter(([n]) => !used.has(n.toLowerCase())).map(([name, keywords, code]) => <button key={name} type="button" className="btn sm" disabled={busy || !ready} onClick={() => call({ action: 'add_app', name, keywords, code })}>+ {name}</button>)}</div>
+              <hr className="otp-line" />
+            </>}
+            <span className="otp-sub">หรือเพิ่มแอปอื่นเอง</span>
+            <form onSubmit={addApp} className="otp-form">
+              <div className="otp-app-fields">
+                <label className="field"><span>ชื่อแอป</span><input className="input" required maxLength={40} placeholder="เช่น Netflix" value={app.name} onChange={(e) => setApp({ ...app, name: e.target.value })} /></label>
+                <label className="field"><span>คำค้นในเมล</span><input className="input" required maxLength={200} placeholder="netflix" value={app.keywords} onChange={(e) => setApp({ ...app, keywords: e.target.value })} /></label>
+                <label className="field"><span>App Code (ไม่บังคับ)</span><input className="input" maxLength={40} placeholder="NF" value={app.code} onChange={(e) => setApp({ ...app, code: e.target.value })} /></label>
               </div>
-              <label className="field"><span>App Code (เฉพาะ Cloud Run เช่น NF, DN)</span><input className="input" maxLength={40} value={app.code} onChange={(e) => setApp({ ...app, code: e.target.value })} /></label>
-              <small className="faint">ใส่ -คำ เพื่อข้ามเมลที่มีคำนั้น เช่น netflix, -password</small>
-              <button type="submit" className="btn" disabled={busy || !ready}>เพิ่มแอป</button>
+              <small className="faint">คำค้นคือคำในชื่อผู้ส่งหรือหัวข้อเมล คั่นด้วย , · ใส่ -คำ เพื่อข้ามเมลที่มีคำนั้น · App Code ใช้กับ Cloud Run เท่านั้น</small>
+              <button type="submit" className="btn primary" disabled={busy || !ready}>เพิ่มแอป</button>
             </form>
           </div>
         </section>
-      )}
+      </>}
 
       {tab === 'api' && <>
         <section className="card">
@@ -183,7 +191,7 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis }: { rea
         </section>
         <section className="card">
           <div className="card-head"><h2>API ภายนอก (Maily · Cloud Run)</h2></div>
-          {apis.map((a) => <div key={a.id} className="line-item"><div className="grow"><b>{a.name}</b><small>{a.type === 'maily' ? 'Maily Space API' : 'Cloud Run API'}</small></div><button type="button" className="btn ghost sm" disabled={busy} onClick={async () => { if (await ask(`ลบ ${a.name}?`, { ok: 'ลบ', danger: true })) call({ action: 'delete_api', id: a.id }, 'ลบแล้ว'); }}>ลบ</button></div>)}
+          {apis.map((a) => <div key={a.id} className="otp-row"><div className="grow"><b>{a.name}</b><small>{a.type === 'maily' ? 'Maily Space API' : 'Cloud Run API'}</small></div><button type="button" className="btn ghost sm" disabled={busy} onClick={async () => { if (await ask(`ลบ ${a.name}?`, { ok: 'ลบ', danger: true })) call({ action: 'delete_api', id: a.id }, 'ลบแล้ว'); }}>ลบ</button></div>)}
           <form className="form" onSubmit={addKey}>
             <div className="two">
               <label className="field"><span>ชื่ออ้างอิง</span><input className="input" required maxLength={40} placeholder="เช่น Maily หลัก" value={key.name} onChange={(e) => setKey({ ...key, name: e.target.value })} /></label>
@@ -195,6 +203,6 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis }: { rea
           </form>
         </section>
       </>}
-    </>
+    </div>
   );
 }
