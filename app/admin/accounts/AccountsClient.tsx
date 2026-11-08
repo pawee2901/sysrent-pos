@@ -7,6 +7,9 @@ import { api, baht } from '@/components/Cart';
 import { AppLogo } from '@/components/AppLogo';
 
 type Slot = { id: string; label: string; pin: string; status: string; rent: { user: string; days: number } | null };
+/** วันที่เหลือของบัญชี (เวลาไทย) · ไม่ตั้งวัน = null */
+const daysLeft = (d: string | null) => (d ? Math.round((Date.parse(d) - Date.parse(new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10))) / 86_400_000) : null);
+
 export type Acc = { id: string; login: string; cost: number | null; renewAt: string | null; status: string; slots: Slot[] };
 const ST: Record<string, string> = { free: 'ว่าง', used: 'มีคนเช่า', reset: 'รอเปลี่ยน PIN', broken: 'เสีย' };
 const pin4 = () => String(Math.floor(1000 + Math.random() * 9000));
@@ -47,7 +50,7 @@ export function AccountsClient({ products, current, accounts }: { products: { id
       <div className="page-head"><div><h1>คลังบัญชี</h1><p>บัญชีหลักที่ร้านซื้อมา แบ่งเป็นจอ · ขายแล้วระบบจัดจอให้อัตโนมัติ</p></div>
         <div className="acts"><button type="button" className="btn primary" onClick={() => setAdd(true)}>+ เพิ่มบัญชีหลัก</button></div></div>
       <div className="kpis">
-        <div className="card kpi"><span className="lbl">จอว่าง</span><span className="val num">{cnt('free')}</span><span className="delta mute">พร้อมขายตอนนี้</span></div>
+        <div className="card kpi"><span className="lbl">จอว่าง</span><span className="val num">{accounts.filter((a) => a.status === 'active' && (daysLeft(a.renewAt) ?? 1) > 0).flatMap((a) => a.slots).filter((s) => s.status === 'free').length}</span><span className="delta mute">พร้อมขายตอนนี้</span></div>
         <div className="card kpi"><span className="lbl">มีคนเช่า</span><span className="val num">{cnt('used')}</span><span className="delta mute">{all.length ? Math.round((cnt('used') / all.length) * 100) : 0}% ของทั้งหมด</span></div>
         <div className="card kpi"><span className="lbl">รอเปลี่ยน PIN</span><span className="val num">{cnt('reset')}</span><span className={`delta${cnt('reset') ? ' down' : ' mute'}`}>{cnt('reset') ? 'เปลี่ยน PIN แล้วกด "พร้อมขาย"' : 'ไม่มีค้าง'}</span></div>
         <div className="card kpi"><span className="lbl">ต้นทุนรวม/รอบ</span><span className="val num">{baht(live.reduce((s, a) => s + (a.cost ?? 0), 0))}</span><span className="delta mute">{live.length} บัญชี</span></div>
@@ -61,7 +64,7 @@ export function AccountsClient({ products, current, accounts }: { products: { id
             <div className="two"><label className="field"><span>อีเมล / ชื่อผู้ใช้ของบัญชี</span><input className="input" autoComplete="off" value={f.login} onChange={(e) => setF({ ...f, login: e.target.value })} /></label>
               <label className="field"><span>รหัสผ่าน (เก็บแบบเข้ารหัส)</span><input className="input" type="password" autoComplete="new-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></label></div>
             <div className="two"><label className="field"><span>ต้นทุนต่อรอบ (บาท)</span><input className="input" inputMode="decimal" value={f.cost} onChange={(e) => setF({ ...f, cost: e.target.value.replace(/[^\d.]/g, '') })} /></label>
-              <label className="field"><span>วันจ่ายค่าบัญชีรอบถัดไป</span><input className="input" type="date" value={f.renew_at} onChange={(e) => setF({ ...f, renew_at: e.target.value })} /></label></div>
+              <label className="field"><span>วันหมดอายุบัญชี (ขายได้ถึงวันนี้)</span><input className="input" type="date" value={f.renew_at} onChange={(e) => setF({ ...f, renew_at: e.target.value })} /></label></div>
             <div className="two"><label className="field"><span>จำนวนจอ</span><input className="input" inputMode="numeric" value={f.count} onChange={(e) => setF({ ...f, count: e.target.value.replace(/\D/g, '').slice(0, 2) })} /></label>
               <label className="field"><span>ชื่อโปรไฟล์ขึ้นต้นด้วย (PIN สุ่มให้ แก้ทีหลังได้)</span><input className="input" value={f.prefix} maxLength={20} onChange={(e) => setF({ ...f, prefix: e.target.value })} /></label></div>
             <button type="button" className="btn primary" disabled={busy || f.login.length < 3 || !f.password} onClick={addAccount}>{busy ? 'กำลังบันทึก…' : `บันทึก (${Math.max(1, Math.min(20, Number(f.count) || 1))} จอ)`}</button>
@@ -71,11 +74,11 @@ export function AccountsClient({ products, current, accounts }: { products: { id
 
       {!accounts.length && !add && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีบัญชีของ {current.name} — กด &quot;+ เพิ่มบัญชีหลัก&quot;</p></div>}
       {accounts.map((a) => {
-        const days = a.renewAt ? Math.ceil((new Date(a.renewAt).getTime() - Date.now()) / 86_400_000) : null;
+        const days = daysLeft(a.renewAt);
         return (
           <section key={a.id} className="card acc" style={{ opacity: a.status === 'active' ? 1 : .6 }}>
             <div className="acc-head"><AppLogo image={current.image} template={current.template} name={current.name} />
-              <div className="grow"><b>{a.login}</b><small>{a.cost !== null ? `ต้นทุน ${baht(a.cost)} · ` : ''}{days !== null ? <>จ่ายรอบถัดไป <span style={{ color: days <= 3 ? 'var(--bad)' : 'inherit', fontWeight: days <= 3 ? 600 : 400 }}>{days < 0 ? `เลยมา ${-days} วัน` : `อีก ${days} วัน`}</span></> : 'ไม่ได้ตั้งวันจ่าย'}{a.status !== 'active' ? ` · ${a.status === 'broken' ? 'เสีย' : 'เลิกใช้'}` : ''}</small></div>
+              <div className="grow"><b>{a.login}</b><small>{a.cost !== null ? `ต้นทุน ${baht(a.cost)} · ` : ''}{days !== null ? <span style={{ color: days <= 3 ? 'var(--bad)' : 'inherit', fontWeight: days <= 3 ? 600 : 400 }}>{days < 0 ? 'หมดอายุแล้ว · หยุดขาย' : days === 0 ? 'หมดอายุวันนี้ · หยุดขาย' : `เหลือ ${days} วัน · ขายแพ็กเกจไม่เกิน ${days} วัน`}</span> : 'ไม่ได้ตั้งวันหมดอายุ'}{a.status !== 'active' ? ` · ${a.status === 'broken' ? 'เสีย' : 'เลิกใช้'}` : ''}</small></div>
               <span className="pill ok">ใช้ {a.slots.filter((s) => s.status === 'used').length}/{a.slots.length} จอ</span>
               <button type="button" className="btn sm" onClick={() => reveal(a.id)}>{pw[a.id] ? 'ซ่อนรหัส' : '👁 ดูรหัส'}</button>
               {pw[a.id] && <code style={{ background: 'var(--surface-2)', padding: '4px 8px', borderRadius: 8 }}>{pw[a.id]}</code>}
