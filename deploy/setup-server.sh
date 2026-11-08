@@ -14,7 +14,9 @@ done
 if grep -qE '^(DEV_SHOP_SLUG=.+|NEXT_PUBLIC_TURNSTILE_SITE_KEY=[123]x0000)' "$ENV_FILE"; then die "remove DEV_SHOP_SLUG and Cloudflare test keys from .env.production.local"; fi
 
 # Hold the auto-update cron's lock so it cannot reinstall or rebuild this folder during setup
-exec 9>/tmp/sysrent-deploy.lock
+# /tmp is sticky and the lock belongs to app, so root may not open it for writing: create as app, open read-only
+sudo -u app touch /tmp/sysrent-deploy.lock
+exec 9</tmp/sysrent-deploy.lock
 echo ">> waiting for any running update"
 flock -w 900 9 || die "auto-update is still running; try again in a few minutes"
 
