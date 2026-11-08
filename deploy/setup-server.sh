@@ -23,16 +23,15 @@ echo ">> build (a few minutes)"
 sudo -iu app bash -c 'cd ~/shop && npm ci --no-audit --no-fund && rm -rf .next-build && NEXT_DIST_DIR=.next-build npm run build && rm -rf .next-old && { [ ! -d .next ] || mv .next .next-old; } && mv .next-build .next && sha1sum package-lock.json | cut -c1-40 > node_modules/.lock-hash'
 
 echo ">> pm2"
-if sudo -iu app pm2 describe shop >/dev/null 2>&1; then
-  sudo -iu app pm2 reload shop --update-env >/dev/null
-else
-  sudo -iu app bash -c 'cd ~/shop && NODE_ENV=production pm2 start node_modules/next/dist/bin/next --name shop --max-memory-restart 700M -- start -p 3002 -H 127.0.0.1 >/dev/null'
-fi
-sudo -iu app pm2 save >/dev/null
+sudo -iu app pm2 delete shop >/dev/null 2>&1 || true
+sudo -iu app pm2 start /home/app/web/deploy/ecosystem.config.cjs --only shop --update-env
+sudo -iu app pm2 save
 sudo -iu app git -C "$APP" rev-parse origin/main > /home/app/.deployed-shop
 chown app:app /home/app/.deployed-shop
 
-for _ in $(seq 1 30); do curl -s -o /dev/null -m 3 http://127.0.0.1:3002/ && break; sleep 1; done
+up=0
+for _ in $(seq 1 30); do if curl -s -o /dev/null -m 3 http://127.0.0.1:3002/; then up=1; break; fi; sleep 1; done
+[ "$up" = 1 ] || { sudo -iu app pm2 logs shop --nostream --lines 30 || true; die "shop app did not start on port 3002"; }
 
 echo ">> nginx"
 touch /etc/nginx/shop-hosts.map
