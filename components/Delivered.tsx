@@ -18,8 +18,9 @@ export function Delivered({ content, warranty }: { content: string; warranty?: s
     <button type="button" className={`copy-btn${copied === key ? ' done' : ''}`} onClick={() => copy(key, text)}>{copied === key ? '✓ คัดลอกแล้ว' : `⧉ ${label}`}</button>
   );
 
-  // ไม่มีช่องเลย (ข้อความยาวล้วน) → กล่องข้อความ + ปุ่มคัดลอกทั้งหมด
-  if (!fields) {
+  const notes = lines.filter((l) => l.kind === 'text' && l.text.trim()).length;
+  // ข้อความยาว (เช่น ลิงก์ทีม + วิธีใช้) → แสดงทั้งก้อนตามที่ร้านส่ง ไม่แยกบรรทัดที่บังเอิญมี ":" เป็นช่อง
+  if (!fields || notes > fields || fields + notes > 10) {
     return (
       <div className="dlv">
         <div className="dlv-text">{btn('all', content, 'คัดลอก')}<pre>{content}</pre></div>

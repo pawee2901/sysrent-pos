@@ -202,9 +202,11 @@ textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 .dlv-all { display: flex; justify-content: flex-end; }
 .dlv-all .copy-btn { height: 40px; background: var(--grad); }
 .dlv-note { margin: 0; font-size: 14px; color: var(--muted); white-space: pre-line; }
-.dlv-text { position: relative; }
-.dlv-text pre { margin: 0; padding: 12px 14px; padding-top: 50px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 14px; line-height: 1.7; }
-.dlv-text .copy-btn { position: absolute; top: 8px; right: 8px; height: 34px; }
+.dlv:has(> .dlv-text) { padding: 0; border: 0; background: none; }
+.dlv-text { padding: 14px 16px; border: 1.5px dashed color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.dlv-text pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-family: ui-monospace, Consolas, Menlo, var(--font-body, sans-serif), monospace; font-size: 13.5px; line-height: 1.65; }
+.dlv-text .copy-btn { float: right; height: 34px; margin: 0 0 6px 10px; border-radius: 99px; background: var(--surface); color: var(--accent); }
+.dlv-text .copy-btn.done { background: var(--ok); color: #fff; }
 .dl-btn { height: 40px; }
 .dlv-img { display: grid; gap: 8px; }
 .dlv-img img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
