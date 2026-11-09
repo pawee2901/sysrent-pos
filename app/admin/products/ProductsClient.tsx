@@ -1,6 +1,8 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { to } from '@/lib/routes';
 import { ask, input, notify } from '@/components/dialog';
 import { api, baht } from '@/components/Cart';
 import { AppLogo } from '@/components/AppLogo';
@@ -73,6 +75,15 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   const [q, setQ] = useState('');
   const file = useRef<HTMLInputElement>(null);
   const editing = f?.id ? products.find((p) => p.id === f.id) : undefined;
+  const stockBox = useRef<HTMLDivElement>(null);
+  // เปิดฟอร์มเพิ่มสต็อกแล้วเลื่อนไปหา (แพ็กเกจอาจอยู่นอกจอ โดยเฉพาะบนมือถือ)
+  useEffect(() => { if (stock?.optionId) stockBox.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, [stock?.optionId]);
+
+  /** เปิดแผงแก้ไข · ส่ง optionId มา = เปิดฟอร์มเพิ่มสต็อกของแพ็กเกจนั้นให้เลย */
+  function openProduct(p: Product, stockOptionId?: string) {
+    setF(fromProduct(p, agentPrices)); setUsage(usages[p.id] ?? ''); setUsageImg(usageImages[p.id] ?? ''); setMsg('');
+    setStock(stockOptionId ? newStock(stockOptionId) : null);
+  }
 
   function fromTemplate(key: string) {
     const t = templateOf(key)!;
@@ -142,15 +153,20 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
         <div className="toolbar"><input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 ค้นหาสินค้า" /></div>
         {!products.length ? <div className="card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีสินค้า — กด &quot;✨ เพิ่มจากแม่แบบ&quot; เพื่อเริ่มเร็วที่สุด</p></div> : (
           <table className="tbl ptbl">
-            <thead><tr><th>สินค้า</th><th>วิธีส่งของ</th><th className="r">ราคา</th><th>สต็อก</th><th className="r">ขายแล้ว</th><th>เปิดขาย</th></tr></thead>
+            <thead><tr><th>สินค้า</th><th>วิธีส่งของ</th><th className="r">ราคา</th><th>สต็อก</th><th className="r">ขายแล้ว</th><th>เปิดขาย</th><th className="r">จัดการ</th></tr></thead>
             <tbody>{shown.map((p) => (
-              <tr key={p.id} onClick={() => { setF(fromProduct(p, agentPrices)); setUsage(usages[p.id] ?? ''); setUsageImg(usageImages[p.id] ?? ''); setMsg(''); setStock(null); }} style={{ opacity: p.active ? 1 : .55 }}>
+              <tr key={p.id} onClick={() => openProduct(p)} style={{ opacity: p.active ? 1 : .55 }}>
                 <td className="m-full"><div className="prod"><AppLogo image={p.image} template={p.template} name={p.name} /><div><b>{p.name}</b><small>{p.options.filter((o) => o.active).map((o) => o.name).join(' · ') || 'ยังไม่มีแพ็กเกจ'}</small></div></div></td>
                 <td className="m-hide"><span className="pill plain">{FULFILL_LABEL[p.fulfillment]}</span></td>
                 <td className="r num">{p.from !== null ? baht(p.from) : '—'}</td>
                 <td><div className="stockbar"><span className={`num${p.inStock ? '' : ' faint'}`}>{p.left === null ? 'ไม่จำกัด' : p.left ? `${p.left} ${p.fulfillment === 'slot' ? 'จอ' : 'ชิ้น'}` : 'หมด'}</span>{p.left !== null && <div className={`meter${p.left <= 3 ? ' warn' : ''}`}><i style={{ width: `${Math.min(100, p.left * 5)}%` }} /></div>}</div></td>
                 <td className="r num m-hide">{p.sold.toLocaleString('th-TH')}</td>
                 <td className="m-tog"><button type="button" className={`toggle${p.active ? ' on' : ''}`} aria-label="เปิด/ปิดขาย" onClick={(e) => { e.stopPropagation(); simple({ action: 'toggle', id: p.id, active: !p.active }); }} /></td>
+                <td className="m-acts" onClick={(e) => e.stopPropagation()}><div className="row-acts">
+                  {p.fulfillment === 'slot' && <Link href={to(`/admin/accounts?p=${p.id}`)} className="btn soft sm">+ เพิ่มสต็อก</Link>}
+                  {p.fulfillment === 'stock' && <button type="button" className="btn soft sm" onClick={() => openProduct(p, (p.options.find((o) => o.active) ?? p.options[0])?.id)}>+ เพิ่มสต็อก</button>}
+                  <button type="button" className="btn sm" onClick={() => openProduct(p)}>แก้ไข</button>
+                </div></td>
               </tr>
             ))}</tbody>
           </table>
@@ -249,7 +265,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                   )}
                   {editing && o.id && f.fulfillment === 'stock' && (
                     stock?.optionId === o.id ? (
-                      <div style={{ display: 'grid', gap: 6 }}>
+                      <div ref={stockBox} style={{ display: 'grid', gap: 6 }}>
                         <div className="stock-modes" role="radiogroup" aria-label="รูปแบบสต็อก">
                           {([['fields', '📋 แยกช่อง', 'อีเมล / รหัสผ่าน / โปรไฟล์ · 1 แถว = 1 ชิ้น'], ['block', '📄 ข้อความยาว', 'ลิงก์ทีม / ข้อความหลายบรรทัด · ทั้งก้อน = 1 ชิ้น']] as const).map(([k, l, d]) => (
                             <button key={k} type="button" role="radio" aria-checked={stock.mode === k} className={stock.mode === k ? 'on' : ''} onClick={() => setStock(fillStock({ ...stock, mode: k }))}><b>{l}</b><small>{d}</small></button>

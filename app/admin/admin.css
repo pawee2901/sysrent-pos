@@ -425,8 +425,12 @@ body::before { height: 360px; }
   .drawer.pe-full .drawer-foot .btn { flex: 1; }
 }
 
-/* ตารางสินค้า (จอเล็ก): ชื่อสินค้า + ปุ่มเปิด/ปิดขาย อยู่แถวเดียวกัน · ราคา / สต็อก แถวล่าง */
+.row-acts { display: flex; gap: 6px; justify-content: flex-end; white-space: nowrap; }
+
+/* ตารางสินค้า (จอเล็ก): ชื่อสินค้า + ปุ่มเปิด/ปิดขาย อยู่แถวเดียวกัน · ราคา / สต็อก แถวล่าง · ปุ่มจัดการแถวสุดท้าย */
 @media (max-width: 860px) {
+  .tbl.ptbl td.m-acts { grid-column: 1 / -1; padding-left: 50px; }
+  .tbl.ptbl .row-acts { justify-content: flex-start; }
   .tbl.ptbl tr { grid-template-columns: 1fr auto; align-items: center; }
   .tbl.ptbl td.m-full { grid-column: 1; grid-row: 1; }
   .tbl.ptbl td.m-tog { grid-column: 2; grid-row: 1; justify-self: end; }
