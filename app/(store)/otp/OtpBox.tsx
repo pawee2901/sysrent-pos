@@ -2,12 +2,13 @@
 import { useState } from 'react';
 import { api } from '@/components/Cart';
 import { notify } from '@/components/dialog';
+import { AppLogo } from '@/components/AppLogo';
 import type { OtpAccount } from '@/lib/otp-access';
 
 type Hit = { code: string | null; link: string | null; subject: string; from: string; date: string };
 const time = (s: string) => new Date(s).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' });
 
-export function OtpBox({ accounts, apps }: { accounts: OtpAccount[]; apps: { id: string; name: string }[] }) {
+export function OtpBox({ accounts, apps }: { accounts: OtpAccount[]; apps: { id: string; name: string; image: string; template: string }[] }) {
   const [account, setAccount] = useState(accounts[0]?.email ?? '');
   const [appId, setAppId] = useState(apps[0]?.id ?? '');
   const [busy, setBusy] = useState(false);
@@ -35,10 +36,14 @@ export function OtpBox({ accounts, apps }: { accounts: OtpAccount[]; apps: { id:
           <select className="input" value={account} onChange={(e) => setAccount(e.target.value)}>
             {accounts.map((a) => <option key={a.email} value={a.email}>{a.email}{a.product ? ` · ${a.product}` : ''}</option>)}
           </select></label>
-        <label className="field"><span>แอป</span>
-          <select className="input" value={appId} onChange={(e) => setAppId(e.target.value)}>
-            {apps.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select></label>
+        <div className="field"><span>แอป</span>
+          <div className="otp-apps" role="radiogroup" aria-label="เลือกแอป">
+            {apps.map((a) => (
+              <button key={a.id} type="button" role="radio" aria-checked={a.id === appId} className={`otp-app${a.id === appId ? ' on' : ''}`} onClick={() => setAppId(a.id)}>
+                <AppLogo image={a.image} template={a.template} name={a.name} /><small>{a.name}</small>
+              </button>
+            ))}
+          </div></div>
         {err && <p style={{ color: 'var(--bad)', margin: 0 }} role="alert">{err}</p>}
         <button type="submit" className="btn primary lg block" disabled={busy}>{busy ? 'กำลังค้นหา…' : 'ค้นหารหัส'}</button>
       </form>
