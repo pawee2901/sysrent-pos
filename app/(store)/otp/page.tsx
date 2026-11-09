@@ -35,7 +35,6 @@ export default async function OtpPage() {
   });
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', display: 'grid', gap: 14 }}>
-      <div><h1 style={{ fontSize: 24 }}>ค้นหา OTP</h1><p className="muted" style={{ margin: '4px 0 0' }}>ขอรหัสจากแอปก่อน แล้วกดค้นหาภายใน 15 นาที</p></div>
       <OtpBox accounts={accounts} apps={withLogo} />
     </div>
   );
