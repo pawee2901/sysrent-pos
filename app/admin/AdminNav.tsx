@@ -56,7 +56,7 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
     document.addEventListener('keydown', key);
     return () => { document.removeEventListener('pointerdown', down); document.removeEventListener('keydown', key); };
   }, [more]);
-  const logout = async () => { await Promise.all([api('/api/admin/login', { logout: true }), api('/api/auth/logout')]); window.location.href = '/admin'; };
+  const logout = async () => { await Promise.all([api('/api/admin/login', { logout: true }), api('/api/auth/logout')]); window.location.href = to('/admin'); }; // /admin ตรง ๆ ถูกซ่อนไว้ ต้องใช้ลิงก์สาธารณะ
   return (
     <div className="shell">
       <aside className="side">
