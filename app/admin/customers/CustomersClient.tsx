@@ -15,6 +15,16 @@ const ROLE_LABEL: Record<Role, string> = { customer: '👤 ลูกค้าท
 export function CustomersClient({ rows, total, q, owner, agentsOn, rolesReady, staffOn, exportOn }: { rows: C[]; total: number; q: string; owner: boolean; agentsOn: boolean; rolesReady: boolean; staffOn: boolean; exportOn: boolean }) {
   const router = useRouter();
   const [permFor, setPermFor] = useState<{ c: C; isNew: boolean } | null>(null);
+  const [add, setAdd] = useState<{ username: string; password: string; contact: string; email: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  async function createCustomer(e: React.FormEvent) {
+    e.preventDefault();
+    if (!add) return;
+    setSaving(true);
+    const ok = await run({ action: 'create', ...add }, `เพิ่ม @${add.username} แล้ว แจ้งชื่อผู้ใช้และรหัสผ่านให้ลูกค้าได้เลย`);
+    setSaving(false);
+    if (ok) setAdd(null);
+  }
   async function run(body: object, ok: string): Promise<boolean> {
     const r = await api('/api/admin/customers', body);
     if (!r.ok) { notify(r.error, 'error'); return false; }
@@ -50,7 +60,7 @@ export function CustomersClient({ rows, total, q, owner, agentsOn, rolesReady, s
   return (
     <>
       <div className="page-head"><div><h1>ลูกค้า</h1><p>{total.toLocaleString('th-TH')} คน · ปรับยศ · ปรับยอดเงิน · ระงับ · ตั้งรหัสผ่านใหม่{rolesReady ? '' : ' · ⚠️ รัน SQL 0017 เพื่อเปิดการตั้งยศ'}</p>{agentsOn && <p className="faint" style={{ fontSize: 13, marginTop: 2 }}>🤝 ตั้งยศเป็นตัวแทนแล้ว จะย้ายไปอยู่ในเมนู <a href={to('/admin/agents')} style={{ color: 'var(--accent)', fontWeight: 600 }}>ตัวแทน</a></p>}</div>
-        <div className="acts">{exportOn ? <a href="/api/admin/export?type=customers" className="btn">⬇ ส่งออก Excel</a> : <a href="https://sysrent.shop" target="_blank" rel="noopener noreferrer" className="btn">🔒 Excel (Max)</a>}</div></div>
+        <div className="acts"><button type="button" className="btn primary" onClick={() => setAdd({ username: '', password: '', contact: '', email: '' })}>+ เพิ่มลูกค้า</button>{exportOn ? <a href="/api/admin/export?type=customers" className="btn">⬇ ส่งออก Excel</a> : <a href="https://sysrent.shop" target="_blank" rel="noopener noreferrer" className="btn">🔒 Excel (Max)</a>}</div></div>
       <section className="card">
         <form className="toolbar" action={to('/admin/customers')}><input className="input" name="q" defaultValue={q} placeholder="🔍 ชื่อผู้ใช้ / LINE / เบอร์" /></form>
         {!rows.length ? <p className="muted card-pad" style={{ margin: 0 }}>ไม่พบลูกค้า</p> : (
@@ -79,6 +89,22 @@ export function CustomersClient({ rows, total, q, owner, agentsOn, rolesReady, s
           </table>
         )}
       </section>
+      {add && (
+        <div className="cmd-bg open" onClick={(e) => { if (e.target === e.currentTarget && !saving) setAdd(null); }}>
+          <form className="card cmd" role="dialog" aria-label="เพิ่มลูกค้า" onSubmit={createCustomer} style={{ padding: 18, display: 'grid', gap: 12 }}>
+            <h2 style={{ margin: 0, fontSize: 18 }}>เพิ่มลูกค้า</h2>
+            <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>สมัครสมาชิกให้ลูกค้า ลูกค้าใช้ชื่อผู้ใช้และรหัสผ่านนี้เข้าสู่ระบบได้ทันที</p>
+            <label className="field"><span>ชื่อผู้ใช้</span><input className="input" required autoFocus autoComplete="off" maxLength={20} placeholder="a-z, 0-9, _ ยาว 3–20 ตัว" value={add.username} onChange={(e) => setAdd({ ...add, username: e.target.value.toLowerCase() })} /></label>
+            <label className="field"><span>รหัสผ่าน</span><input className="input" required autoComplete="new-password" minLength={6} maxLength={72} placeholder="อย่างน้อย 6 ตัว" value={add.password} onChange={(e) => setAdd({ ...add, password: e.target.value })} /></label>
+            <label className="field"><span>ช่องทางติดต่อ (ไม่บังคับ)</span><input className="input" autoComplete="off" maxLength={60} placeholder="LINE / เบอร์โทร" value={add.contact} onChange={(e) => setAdd({ ...add, contact: e.target.value })} /></label>
+            <label className="field"><span>อีเมล (ไม่บังคับ)</span><input className="input" type="email" autoComplete="off" maxLength={120} placeholder="ใช้แจ้งเตือนเมื่อร้านส่งของ" value={add.email} onChange={(e) => setAdd({ ...add, email: e.target.value })} /></label>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button type="button" className="btn ghost" disabled={saving} onClick={() => setAdd(null)}>ยกเลิก</button>
+              <button type="submit" className="btn primary" disabled={saving || !/^[a-z0-9_]{3,20}$/.test(add.username.trim()) || add.password.length < 6}>{saving ? 'กำลังเพิ่ม…' : 'เพิ่มลูกค้า'}</button>
+            </div>
+          </form>
+        </div>
+      )}
       {permFor && (
         <PermDialog username={permFor.c.username} initial={permFor.c.perms} isNew={permFor.isNew} onClose={() => setPermFor(null)}
           onSave={(perms) => permFor.isNew

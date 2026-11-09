@@ -5,8 +5,17 @@ import { body, fail, requireAdmin } from '@/lib/api';
 import { adminKind, hashPassword } from '@/lib/auth';
 import { can } from '@/lib/plan';
 import { cleanPerms } from '@/lib/perms';
+import { notifySignup } from '@/lib/notify';
 
 const schema = z.discriminatedUnion('action', [
+  // ร้านสมัครให้ลูกค้า: กฎเดียวกับหน้าสมัครสมาชิก
+  z.object({
+    action: z.literal('create'),
+    username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,20}$/, 'ชื่อผู้ใช้ใช้ได้แค่ a-z, 0-9, _ ยาว 3–20 ตัว'),
+    password: z.string().min(6, 'รหัสผ่านอย่างน้อย 6 ตัว').max(72),
+    contact: z.string().trim().max(60).default(''),
+    email: z.union([z.literal(''), z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120)]).default(''),
+  }),
   z.object({ action: z.literal('adjust'), id: z.string().uuid(), amount: z.number().refine((n) => n !== 0 && Math.abs(n) <= 100000, 'จำนวนไม่ถูกต้อง'), note: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal('block'), id: z.string().uuid(), blocked: z.boolean() }),
   z.object({ action: z.literal('password'), id: z.string().uuid(), password: z.string().min(6, 'รหัสผ่านอย่างน้อย 6 ตัว').max(72) }),
@@ -22,6 +31,13 @@ export async function POST(req: Request) {
   const b = await body(req, schema);
   if ('res' in b) return b.res;
   const d = db(), x = b.data;
+  if (x.action === 'create') {
+    const { data, error } = await d.from('shop_customers').insert({ shop_id: a.shop.id, username: x.username, pass_hash: await hashPassword(x.password), contact: x.contact }).select('id').single();
+    if (error) return error.code === '23505' ? fail('ชื่อผู้ใช้นี้มีคนใช้แล้ว', 409) : fail('เพิ่มลูกค้าไม่สำเร็จ กรุณาลองใหม่', 500);
+    if (x.email) await d.from('shop_customers').update({ email: x.email }).eq('id', data.id); // แยกคำสั่ง: ยังไม่รัน 0020 ก็เพิ่มได้
+    notifySignup(a.shop, x.username, x.contact);
+    return NextResponse.json({ ok: true });
+  }
   if (x.action === 'adjust') {
     const { error } = await d.rpc('shop_adjust_balance', { p_shop: a.shop.id, p_customer: x.id, p_amount: Math.round(x.amount * 100) / 100, p_note: x.note });
     if (error) return fail(/INSUFFICIENT/.test(error.message) ? 'ยอดเงินลูกค้าไม่พอให้หัก' : 'ปรับยอดไม่สำเร็จ', 400);
