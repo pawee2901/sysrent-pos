@@ -24,4 +24,4 @@ export const TEMPLATES: Template[] = [
 ];
 
 export const templateOf = (key: string) => TEMPLATES.find((t) => t.key === key);
-export const FULFILL_LABEL: Record<string, string> = { stock: 'คลังโค้ด / บัญชี', slot: 'แบ่งจอ (คลังบัญชี)', manual: 'สั่งทำ (ร้านส่งเอง)' };
+export const FULFILL_LABEL: Record<string, string> = { stock: 'ส่งอัตโนมัติ', slot: 'แบ่งจอ (คลังบัญชี)', manual: 'สั่งทำ (ร้านส่งเอง)' };

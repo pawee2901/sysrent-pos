@@ -122,7 +122,7 @@ export async function POST(req: Request) {
   // เพิ่มสต็อก: ทีละบรรทัด (1 บรรทัด = 1 ชิ้น) หรือ 1 ชิ้นหลายบรรทัด (คั่นหลายชิ้นด้วยบรรทัด ---)
   const { data: o } = await d.from('shop_options').select('id, shop_products!inner(shop_id, fulfillment)').eq('id', x.optionId).eq('shop_products.shop_id', sid).maybeSingle();
   if (!o) return fail('ไม่พบแพ็กเกจ', 404);
-  if ((o.shop_products as unknown as { fulfillment: string }).fulfillment !== 'stock') return fail('สินค้านี้ไม่ได้ใช้คลังโค้ด');
+  if ((o.shop_products as unknown as { fulfillment: string }).fulfillment !== 'stock') return fail('สินค้านี้ไม่ได้เป็นแบบส่งอัตโนมัติ');
   const t = x.text.replace(/\r\n/g, '\n').trim();
   const parts = x.mode === 'block' ? t.split(/^\s*-{3,}\s*$/m) : t.split('\n');
   const uniq = [...new Set(parts.map((s) => (x.mode === 'block' ? s.replace(/^\n+|\s+$/g, '') : s.trim())).filter((s) => s.trim()).map((s) => s.slice(0, 4000)))];

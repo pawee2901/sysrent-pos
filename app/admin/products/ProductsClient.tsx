@@ -46,7 +46,7 @@ function stockCount(st: StockForm) {
   const n = new Set(t.split(/^\s*-{3,}\s*$/m).map((s) => s.replace(/^\n+|\s+$/g, '')).filter((s) => s.trim())).size * Math.max(1, Number(st.repeat) || 1);
   return `จะเพิ่ม ${n.toLocaleString('th-TH')} ชิ้น`;
 }
-const blank = (): Form => ({ name: '', category: '', description: '', image: '', template: '', fulfillment: 'slot', badge: '', askInfo: '', active: true, options: [{ name: '30 วัน', price: '', compare_at: '', cost: '', duration_days: '30', agent_price: '', active: true }] });
+const blank = (): Form => ({ name: '', category: '', description: '', image: '', template: '', fulfillment: 'stock', badge: '', askInfo: '', active: true, options: [{ name: '30 วัน', price: '', compare_at: '', cost: '', duration_days: '30', agent_price: '', active: true }] });
 const fromProduct = (p: Product, ap: Record<string, number> = {}): Form => ({
   id: p.id, name: p.name, category: p.category, description: p.description, image: p.image, template: p.template, fulfillment: p.fulfillment, badge: p.badge, askInfo: p.askInfo, active: p.active,
   options: p.options.map((o) => ({ id: o.id, name: o.name, price: String(o.price), compare_at: o.compareAt?.toString() ?? '', cost: o.cost?.toString() ?? '', duration_days: o.durationDays?.toString() ?? '', agent_price: ap[o.id]?.toString() ?? '', active: o.active })),
@@ -220,10 +220,12 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
             </div>
             <label className="field"><span>วิธีส่งของ</span>
               <select className="input" value={f.fulfillment} onChange={(e) => setF({ ...f, fulfillment: e.target.value as Form['fulfillment'] })} disabled={!!editing}>
-                <option value="slot">แบ่งจอ — เพิ่มบัญชีหลักที่เมนู &quot;คลังบัญชี&quot; ระบบจัดจอให้เอง</option>
-                <option value="stock">คลังโค้ด / บัญชี — วางเป็นรายการ ขายแล้วส่งทันที</option>
+                {/* แบ่งจอสร้างจากแม่แบบเท่านั้น · สินค้าแบ่งจอเดิมยังต้องแสดงค่าของมัน */}
+                {(f.template || f.fulfillment === 'slot') && <option value="slot">แบ่งจอ — เพิ่มบัญชีหลักที่เมนู &quot;คลังบัญชี&quot; ระบบจัดจอให้เอง</option>}
+                <option value="stock">ส่งอัตโนมัติ — เตรียมบัญชี / รหัสไว้ก่อน ลูกค้าจ่ายแล้วได้ของทันที</option>
                 <option value="manual">สั่งทำ — ลูกค้าจ่ายแล้วรอร้านทำให้ ส่งของที่หน้าออเดอร์ (แท็บ รอส่ง)</option>
-              </select></label>
+              </select>
+              {!f.id && !f.template && <small className="faint" style={{ fontSize: 12 }}>ต้องการขายแบบแบ่งจอ ให้ปิดหน้านี้แล้วกด &quot;✨ เพิ่มจากแม่แบบ&quot;</small>}</label>
             <label className="field"><span>ขอข้อมูลจากลูกค้าตอนสั่ง (ไม่บังคับ)</span><input className="input" value={f.askInfo} maxLength={60} placeholder="เช่น อีเมลสำหรับเชิญเข้าครอบครัว" onChange={(e) => setF({ ...f, askInfo: e.target.value })} />
               <small className="faint" style={{ fontSize: 12 }}>ใส่หัวข้อแล้วลูกค้าต้องกรอกในตะกร้าก่อนจ่าย · ดูได้ในหน้าออเดอร์</small></label>
             <label className="field"><span>รายละเอียด (ลูกค้าเห็นก่อนซื้อ)</span><textarea className="input" rows={4} value={f.description} maxLength={3000} onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
