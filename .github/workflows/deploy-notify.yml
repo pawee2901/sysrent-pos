@@ -1,0 +1,59 @@
+# Tells Discord whether a push to main actually went live on the server.
+# The server's auto-update cron does the deploy; this only watches /api/version for the new commit.
+# Repo secrets needed:
+#   DISCORD_DEPLOY_WEBHOOK  Discord webhook URL for the deploy channel
+#   DEPLOY_CHECK_URL        https://<any-live-shop>.sysrent.shop/api/version
+name: Deploy notify
+
+on:
+  push:
+    branches: [main]
+
+# A newer push replaces the running check, otherwise the older one would time out and report a false failure
+concurrency:
+  group: deploy-notify
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Wait for the new commit and report to Discord
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_DEPLOY_WEBHOOK }}
+          CHECK_URL: ${{ secrets.DEPLOY_CHECK_URL }}
+          SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+        run: |
+          if [ -z "$WEBHOOK" ] || [ -z "$CHECK_URL" ]; then
+            echo "::warning::Set DISCORD_DEPLOY_WEBHOOK and DEPLOY_CHECK_URL to get deploy notifications"
+            exit 0
+          fi
+
+          live=""
+          deadline=$(( $(date +%s) + 1200 ))
+          while [ "$(date +%s)" -lt "$deadline" ]; do
+            live=$(curl -fsS -m 10 "$CHECK_URL?t=$(date +%s)" | jq -r '.sha // empty' 2>/dev/null || true)
+            [ "$live" = "$SHA" ] && break
+            sleep 20
+          done
+
+          if [ "$live" = "$SHA" ]; then
+            title="✅ อัปเดตเว็บสำเร็จ"; color=2278750; status=0
+            detail="เซิร์ฟเวอร์รันโค้ดเวอร์ชันนี้แล้ว"
+          else
+            title="❌ อัปเดตเว็บไม่สำเร็จ"; color=15680580; status=1
+            running=${live:0:7}
+            detail="รอ 20 นาทีแล้วเซิร์ฟเวอร์ยังไม่รันเวอร์ชันนี้ (ที่รันอยู่: ${running:-ตรวจไม่ได้}) ดู log การ build บนเซิร์ฟเวอร์"
+          fi
+
+          jq -n --arg title "$title" --argjson color "$color" --arg detail "$detail" \
+            --arg commit "${COMMIT_MESSAGE%%$'\n'*}" --arg sha "${SHA:0:7}" --arg url "$COMMIT_URL" \
+            --arg now "$(date -u +%FT%TZ)" \
+            '{username: "SysRent Deploy", allowed_mentions: {parse: []}, embeds: [{title: $title, color: $color, url: $url, description: $detail,
+              fields: [{name: "Commit", value: ("`" + $sha + "` " + ($commit | .[0:900]))}], timestamp: $now}]}' \
+            | curl -fsS -m 10 -H 'Content-Type: application/json' -d @- "$WEBHOOK"
+
+          exit "$status"

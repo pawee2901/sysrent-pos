@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 /** @type {import('next').NextConfig} */
@@ -40,8 +41,11 @@ const aliases = [
   ...Object.entries(urls.store),
 ];
 
+// commit ที่ build (ฝังตอน build ไม่อ่านสด: ระหว่าง build ใหม่ เว็บยังรันโค้ดเก่าอยู่) — ดู app/api/version
+const buildSha = (() => { try { return execSync('git rev-parse HEAD', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return ''; } })();
+
 const nextConfig = {
-  env: { NEXT_PUBLIC_ADMIN_PATH: adminBase },
+  env: { NEXT_PUBLIC_ADMIN_PATH: adminBase, BUILD_SHA: buildSha },
   // auto-update build ลงโฟลเดอร์แยก (NEXT_DIST_DIR) แล้วค่อยสลับ — เว็บที่รันอยู่ไม่พังระหว่าง build
   distDir: process.env.NEXT_DIST_DIR || '.next',
   poweredByHeader: false,
