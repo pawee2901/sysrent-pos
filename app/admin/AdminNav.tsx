@@ -7,6 +7,7 @@ import { Icon } from '@/components/Icon';
 import { api } from '@/components/Cart';
 import { PLAN_LABEL, PLAN_PRICE, can, isPlan, type Feature } from '@/lib/plan';
 import { PERMS } from '@/lib/perms';
+import { TutorialButton } from './TutorialButton';
 
 const LOCKS: Record<string, Feature> = { '/otp': 'otp', '/accounting': 'accounting', '/agents': 'agents', '/reports': 'report' };
 const PERM_OF: Record<string, string> = Object.fromEntries(PERMS.map((p) => [p.href, p.key]));
@@ -80,6 +81,7 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
             <b>{TITLE[cur] ?? 'ภาพรวม'}</b>
           </nav>
           <div className="acts">
+            <TutorialButton page={cur} />
             <a href="/" className="btn sm" target="_blank" rel="noopener noreferrer">ดูหน้าร้าน ↗</a>
             <button type="button" className={`btn ghost sm${extra.length ? ' m-logout' : ''}`} onClick={logout}>ออกจากระบบ</button>
             {extra.length > 0 && (
