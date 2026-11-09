@@ -431,6 +431,12 @@ body::before { height: 360px; }
 .acc-sell { padding: 10px 20px; border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
 .acc-sell b { color: var(--text); font-weight: 600; }
 .acc-sell.none { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--bad); font-weight: 500; }
+.short-plans { display: grid; gap: 10px; padding: 18px; }
+.short-plans h2 { margin: 0; font-size: 18px; }
+.short-plans p { margin: 0; font-size: 13.5px; }
+.short-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.short-row label { display: flex; align-items: center; gap: 6px; }
+.short-acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 
 /* ปุ่มสามจุดที่แถบบน (จอเล็ก): เมนูที่ไม่อยู่ในแถบล่าง · จอมือถือย้ายปุ่มออกจากระบบมาไว้ในนี้ด้วย ไม่งั้นแถบบนล้น */
 .top-more { display: none; position: relative; flex: none; }

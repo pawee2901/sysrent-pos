@@ -35,8 +35,8 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('delete'), id: z.string().uuid() }),
   // mode line = 1 บรรทัด 1 ชิ้น · block = ทั้งข้อความ 1 ชิ้น (หลายชิ้นคั่นด้วยบรรทัด ---) · repeat = เพิ่มชิ้นเดิมซ้ำ (เช่น ลิงก์เชิญทีมใช้ได้หลายคน)
   z.object({ action: z.literal('stock'), optionId: z.string().uuid(), text: z.string().min(1).max(200_000), mode: z.enum(['line', 'block']).default('line'), repeat: z.number().int().min(1).max(500).default(1) }),
-  // แบ่งจอ: เพิ่มแพ็กเกจสั้นให้เอง เมื่อบัญชีเหลือวันไม่พอขายแพ็กเกจที่มี · days = วันที่บัญชีเหลือ
-  z.object({ action: z.literal('short_plans'), id: z.string().uuid(), days: z.number().int().min(1).max(3650) }),
+  // แบ่งจอ: เพิ่มแพ็กเกจสั้น เมื่อบัญชีเหลือวันไม่พอขายแพ็กเกจที่มี · days = วันที่บัญชีเหลือ · ไม่ส่ง plans = ขอรายการพร้อมราคาแนะนำ · ส่ง plans = บันทึกตามราคาที่แอดมินยืนยัน
+  z.object({ action: z.literal('short_plans'), id: z.string().uuid(), days: z.number().int().min(1).max(3650), plans: z.array(z.object({ days: z.number().int().min(1).max(3650), price: money })).min(1).max(12).optional() }),
   z.object({ action: z.literal('usage'), id: z.string().uuid(), usage: z.string().max(3000), usage_image: z.string().trim().max(500).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https').optional() }),
 ]);
 
@@ -130,17 +130,24 @@ export async function POST(req: Request) {
     const reopen = opts.filter((o) => !o.active && want.includes(len(o)) && !opts.some((c) => c.active && len(c) === len(o)));
     const room = 12 - opts.length, fresh = room > 0 ? missing.slice(-room) : [];
     const lastSort = Math.max(0, ...opts.map((o) => o.sort));
-    const priced = fresh.map((n, i) => ({ product_id: x.id, name: `${n} วัน`, price: Math.max(1, Math.ceil((Number(base.price) * n) / len(base))), duration_days: n, sort: lastSort + i + 1, active: true }));
-    if (reopen.length) {
-      const { error: e } = await d.from('shop_options').update({ active: true }).in('id', reopen.map((o) => o.id));
+    if (!x.plans) {
+      const suggested = [...fresh.map((n) => ({ days: n, price: Math.max(1, Math.ceil((Number(base.price) * n) / len(base))) })), ...reopen.map((o) => ({ days: len(o), price: Number(o.price) }))].sort((a, b) => b.days - a.days);
+      return NextResponse.json({ ok: true, plans: suggested });
+    }
+    // บันทึกเฉพาะแพ็กเกจที่ระบบเสนอ ด้วยราคาที่แอดมินยืนยัน
+    const price = new Map(x.plans.map((o) => [o.days, o.price]));
+    const rows2 = fresh.filter((n) => price.has(n)).map((n, i) => ({ product_id: x.id, name: `${n} วัน`, price: price.get(n)!, duration_days: n, sort: lastSort + i + 1, active: true }));
+    const back = reopen.filter((o) => price.has(len(o)));
+    for (const o of back) {
+      const { error: e } = await d.from('shop_options').update({ active: true, price: price.get(len(o)) }).eq('id', o.id);
       if (e) return fail('บันทึกไม่สำเร็จ', 500);
     }
-    if (priced.length) {
-      const { error: e } = await d.from('shop_options').insert(priced);
+    if (rows2.length) {
+      const { error: e } = await d.from('shop_options').insert(rows2);
       if (e) return fail('บันทึกไม่สำเร็จ', 500);
     }
-    const added = [...priced.map((o) => `${o.name} ฿${o.price}`), ...reopen.map((o) => `${len(o)} วัน ฿${Number(o.price)}`)];
-    return NextResponse.json({ ok: true, notice: added.length ? `เพิ่มแพ็กเกจแล้ว: ${added.join(' · ')} — แก้ราคาได้ที่หน้าสินค้า` : 'ไม่มีแพ็กเกจให้เพิ่ม สินค้านี้มีแพ็กเกจสั้นครบแล้ว' });
+    const added = [...rows2.map((o) => `${o.name} ฿${o.price}`), ...back.map((o) => `${len(o)} วัน ฿${price.get(len(o))}`)];
+    return NextResponse.json({ ok: true, notice: added.length ? `เพิ่มแพ็กเกจแล้ว: ${added.join(' · ')}` : 'ไม่มีแพ็กเกจให้เพิ่ม' });
   }
 
   if (x.action === 'usage') {
