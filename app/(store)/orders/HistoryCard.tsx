@@ -26,6 +26,8 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
   const router = useRouter();
   const [show, setShow] = useState(false);
   const [reporting, setReporting] = useState(false);
+  const [howto, setHowto] = useState(false);
+  const guides = o.items.filter((i) => (i.usage || i.usageImage) && (i.delivered || i.sub));
   const pending = o.status === 'pending';
   const paid = o.status === 'completed' || o.status === 'processing';
   const waiting = o.items.filter((i) => i.queued).length;
@@ -90,6 +92,7 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
       <div className="hcard-acts">
         {pending ? <Link href={to(`/checkout/${o.code}`)} className="btn primary">ไปจ่ายเงิน</Link>
           : paid && ready && <button type="button" className="btn hcard-show" onClick={() => setShow(!show)}>{show ? 'ซ่อนไอดี' : 'แสดงไอดี'}</button>}
+        {paid && guides.length > 0 && <button type="button" className="btn" aria-expanded={howto} onClick={() => setHowto(!howto)}>{howto ? 'ซ่อนวิธีใช้งาน' : '📖 ดูวิธีการใช้งาน'}</button>}
         {paid && canReport && (!o.report || o.report.status === 'resolved') && <button type="button" className="btn hcard-report-btn" onClick={report}>⚠️ แจ้งปัญหา</button>}
       </div>
 
@@ -101,12 +104,17 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
               {i.sub ? <SubCard s={{ ...i.sub, name: i.name }} />
                 : i.delivered ? <Delivered content={i.delivered} warranty={i.warranty} />
                 : <p className="muted" style={{ margin: 0 }}>ร้านกำลังดำเนินการ จะแสดงที่นี่เมื่อส่งแล้ว</p>}
-              {(i.usage || i.usageImage) && (i.delivered || i.sub) && (
-                <details className="usage-box"><summary>📖 วิธีการใช้งาน</summary>
-                  {i.usage && <p>{i.usage}</p>}
-                  {i.usageImage && <div className="dlv-img"><img src={i.usageImage} alt={`วิธีใช้งาน ${i.name}`} loading="lazy" /><DownloadImage src={i.usageImage} name={`วิธีใช้งาน ${i.name}`} /></div>}
-                </details>
-              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {howto && (
+        <div className="hcard-detail">
+          {guides.map((i) => (
+            <div key={i.id} className="hcard-item usage-box">
+              <b>📖 วิธีการใช้งาน{guides.length > 1 ? ` · ${i.name}` : ''}</b>
+              {i.usage && <p>{i.usage}</p>}
+              {i.usageImage && <div className="dlv-img"><img src={i.usageImage} alt={`วิธีใช้งาน ${i.name}`} loading="lazy" /><DownloadImage src={i.usageImage} name={`วิธีใช้งาน ${i.name}`} /></div>}
             </div>
           ))}
         </div>
