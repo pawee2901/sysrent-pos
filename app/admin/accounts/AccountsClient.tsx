@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, baht } from '@/components/Cart';
+import { notify } from '@/components/dialog';
 import { AppLogo } from '@/components/AppLogo';
 
 type Slot = { id: string; label: string; pin: string; status: string; rent: { user: string; days: number } | null };
@@ -39,6 +40,13 @@ export function AccountsClient({ products, current, accounts, plans }: { product
     const ok = await call({ action: 'add', productId: current.id, login: f.login, password: f.password, cost: f.cost ? Number(f.cost) : null, renew_at: f.renew_at || null,
       slots: Array.from({ length: n }, (_, i) => ({ label: `${f.prefix || 'จอ'}-${i + 1}`, pin: pin4() })) });
     if (ok) { setAdd(false); setF({ ...f, login: '', password: '' }); router.refresh(); }
+  }
+  async function addShortPlans(days: number) {
+    setBusy(true); setErr('');
+    const r = await api<{ notice: string }>('/api/admin/products', { action: 'short_plans', id: current.id, days });
+    setBusy(false);
+    if (!r.ok) { setErr(r.error); return; }
+    notify(r.data.notice, 'info'); router.refresh();
   }
   async function saveEdit() {
     if (!edit) return;
@@ -111,7 +119,7 @@ export function AccountsClient({ products, current, accounts, plans }: { product
               <div className={`acc-sell${fits.length ? '' : ' none'}`}>
                 {fits.length
                   ? <>ขายได้ตอนนี้: <b>{fits.map((p) => p.name).join(' · ')}</b></>
-                  : <>⚠️ จอว่างยังขายไม่ได้ เพราะทุกแพ็กเกจยาวกว่าวันที่เหลือ · <Link href={to('/admin/products')}>เพิ่มแพ็กเกจสั้น เช่น {Math.max(1, days ?? 1)} วัน</Link></>}
+                  : <><span>⚠️ จอว่างยังขายไม่ได้ เพราะทุกแพ็กเกจยาวกว่าวันที่เหลือ</span><button type="button" className="btn primary sm" disabled={busy} onClick={() => addShortPlans(days ?? 1)}>เพิ่มแพ็กเกจสั้นให้อัตโนมัติ</button></>}
               </div>
             )}
             <div className="slots">{a.slots.map((s) => (

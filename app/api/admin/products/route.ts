@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { body, fail, requireAdmin } from '@/lib/api';
 import { shopCategories } from '@/lib/categories';
 
+const SHORT_PLANS = [25, 15, 7, 3];
 const money = z.number().positive('ราคาต้องมากกว่า 0').max(1_000_000);
 const opt = z.object({
   id: z.string().uuid().optional(),
@@ -34,6 +35,8 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('delete'), id: z.string().uuid() }),
   // mode line = 1 บรรทัด 1 ชิ้น · block = ทั้งข้อความ 1 ชิ้น (หลายชิ้นคั่นด้วยบรรทัด ---) · repeat = เพิ่มชิ้นเดิมซ้ำ (เช่น ลิงก์เชิญทีมใช้ได้หลายคน)
   z.object({ action: z.literal('stock'), optionId: z.string().uuid(), text: z.string().min(1).max(200_000), mode: z.enum(['line', 'block']).default('line'), repeat: z.number().int().min(1).max(500).default(1) }),
+  // แบ่งจอ: เพิ่มแพ็กเกจสั้นให้เอง เมื่อบัญชีเหลือวันไม่พอขายแพ็กเกจที่มี · days = วันที่บัญชีเหลือ
+  z.object({ action: z.literal('short_plans'), id: z.string().uuid(), days: z.number().int().min(1).max(3650) }),
   z.object({ action: z.literal('usage'), id: z.string().uuid(), usage: z.string().max(3000), usage_image: z.string().trim().max(500).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https').optional() }),
 ]);
 
@@ -108,6 +111,36 @@ export async function POST(req: Request) {
     }
     await d.from('shop_products').delete().eq('id', x.id);
     return NextResponse.json({ ok: true });
+  }
+
+  if (x.action === 'short_plans') {
+    const p = await own(x.id);
+    if (!p) return fail('ไม่พบสินค้า', 404);
+    if (p.fulfillment !== 'slot') return fail('เพิ่มแพ็กเกจสั้นอัตโนมัติได้เฉพาะสินค้าแบบแบ่งจอ');
+    const { data: rows, error } = await d.from('shop_options').select('id, price, duration_days, sort, active').eq('product_id', x.id);
+    if (error) return fail('บันทึกไม่สำเร็จ', 500);
+    const opts = rows ?? [], len = (o: { duration_days: number | null }) => o.duration_days ?? 30; // ไม่ตั้งวัน = 30 เหมือนตอนขาย
+    const base = opts.filter((o) => o.active).sort((a, b) => len(b) - len(a))[0];
+    if (!base) return fail('ยังไม่มีแพ็กเกจที่เปิดขาย เพิ่มแพ็กเกจหลักที่หน้าสินค้าก่อน');
+
+    const want = SHORT_PLANS.filter((n) => n < len(base));
+    if (!want.some((n) => n <= x.days) && x.days < len(base)) want.push(x.days);
+    // แพ็กเกจที่เคยปิดไว้เปิดกลับมาใช้ราคาเดิม · ที่เหลือสร้างใหม่ (ได้สูงสุด 12 แพ็กเกจเท่าหน้าสินค้า เก็บตัวสั้นไว้ก่อน)
+    const missing = want.filter((n) => !opts.some((o) => len(o) === n));
+    const reopen = opts.filter((o) => !o.active && want.includes(len(o)) && !opts.some((c) => c.active && len(c) === len(o)));
+    const room = 12 - opts.length, fresh = room > 0 ? missing.slice(-room) : [];
+    const lastSort = Math.max(0, ...opts.map((o) => o.sort));
+    const priced = fresh.map((n, i) => ({ product_id: x.id, name: `${n} วัน`, price: Math.max(1, Math.ceil((Number(base.price) * n) / len(base))), duration_days: n, sort: lastSort + i + 1, active: true }));
+    if (reopen.length) {
+      const { error: e } = await d.from('shop_options').update({ active: true }).in('id', reopen.map((o) => o.id));
+      if (e) return fail('บันทึกไม่สำเร็จ', 500);
+    }
+    if (priced.length) {
+      const { error: e } = await d.from('shop_options').insert(priced);
+      if (e) return fail('บันทึกไม่สำเร็จ', 500);
+    }
+    const added = [...priced.map((o) => `${o.name} ฿${o.price}`), ...reopen.map((o) => `${len(o)} วัน ฿${Number(o.price)}`)];
+    return NextResponse.json({ ok: true, notice: added.length ? `เพิ่มแพ็กเกจแล้ว: ${added.join(' · ')} — แก้ราคาได้ที่หน้าสินค้า` : 'ไม่มีแพ็กเกจให้เพิ่ม สินค้านี้มีแพ็กเกจสั้นครบแล้ว' });
   }
 
   if (x.action === 'usage') {

@@ -430,8 +430,7 @@ body::before { height: 360px; }
 /* คลังบัญชี: แพ็กเกจที่บัญชีขายได้ตอนนี้ */
 .acc-sell { padding: 10px 20px; border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
 .acc-sell b { color: var(--text); font-weight: 600; }
-.acc-sell.none { color: var(--bad); font-weight: 500; }
-.acc-sell a { color: var(--accent); font-weight: 600; text-decoration: underline; }
+.acc-sell.none { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--bad); font-weight: 500; }
 
 /* ปุ่มสามจุดที่แถบบน (จอเล็ก): เมนูที่ไม่อยู่ในแถบล่าง · จอมือถือย้ายปุ่มออกจากระบบมาไว้ในนี้ด้วย ไม่งั้นแถบบนล้น */
 .top-more { display: none; position: relative; flex: none; }
