@@ -22,9 +22,10 @@ export default async function AdminAccounts({ searchParams }: { searchParams: Pr
     );
   }
   const cur = products.find((x) => x.id === p) ?? products[0];
-  const [{ data: accs }, { data: subs }] = await Promise.all([
+  const [{ data: accs }, { data: subs }, { data: opts }] = await Promise.all([
     d.from('shop_accounts').select('id, login, cost, renew_at, status, shop_slots(id, label, pin, sort, status)').eq('product_id', cur.id).eq('shop_id', shop.id).order('created_at'),
     d.from('shop_subscriptions').select('slot_id, ends_at, shop_customers(username)').eq('product_id', cur.id).eq('status', 'active'),
+    d.from('shop_options').select('name, duration_days').eq('product_id', cur.id).eq('active', true).order('sort'),
   ]);
   type S = { slot_id: string; ends_at: string; shop_customers: { username: string } | null };
   const rent = new Map(((subs ?? []) as unknown as S[]).map((s) => [s.slot_id, { user: s.shop_customers?.username ?? '-', days: Math.ceil((new Date(s.ends_at).getTime() - Date.now()) / 86_400_000) }]));
@@ -33,5 +34,5 @@ export default async function AdminAccounts({ searchParams }: { searchParams: Pr
     id: a.id, login: a.login, cost: a.cost === null ? null : Number(a.cost), renewAt: a.renew_at, status: a.status,
     slots: [...a.shop_slots].sort((x, y) => x.sort - y.sort).map((s) => ({ ...s, rent: rent.get(s.id) ?? null })),
   }));
-  return <AccountsClient products={products.map((x) => ({ id: x.id, name: x.name }))} current={{ id: cur.id, name: cur.name, image: cur.image, template: cur.template }} accounts={accounts} />;
+  return <AccountsClient products={products.map((x) => ({ id: x.id, name: x.name }))} current={{ id: cur.id, name: cur.name, image: cur.image, template: cur.template }} accounts={accounts} plans={(opts ?? []).map((o) => ({ name: o.name as string, days: (o.duration_days as number | null) ?? 30 }))} />;
 }

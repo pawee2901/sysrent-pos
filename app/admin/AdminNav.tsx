@@ -1,6 +1,6 @@
 'use client';
 import { fromPublic, to } from '@/lib/routes';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon } from '@/components/Icon';
@@ -42,6 +42,20 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
       <Icon name={i} />{l}{LOCKS[h] && !can(plan, LOCKS[h]) && <span className="nav-lock" title="อัปเกรดแพ็กเกจเพื่อใช้งาน">🔒</span>}{badge(h) > 0 && <span className="count">{badge(h)}</span>}
     </Link>
   );
+  // จอเล็ก: เมนูที่ไม่อยู่ในแถบล่าง รวมไว้ในปุ่มสามจุดที่แถบบน
+  const extra = MENU.flatMap((m) => m.items).filter(allowed).filter(([h]) => !MOBILE.some(([x]) => x === h));
+  const extraWaiting = extra.some(([h]) => badge(h) > 0);
+  const [more, setMore] = useState(false);
+  const moreBox = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!more) return;
+    const down = (e: PointerEvent) => { if (!moreBox.current?.contains(e.target as Node)) setMore(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setMore(false); };
+    document.addEventListener('pointerdown', down);
+    document.addEventListener('keydown', key);
+    return () => { document.removeEventListener('pointerdown', down); document.removeEventListener('keydown', key); };
+  }, [more]);
+  const logout = async () => { await Promise.all([api('/api/admin/login', { logout: true }), api('/api/auth/logout')]); window.location.href = '/admin'; };
   return (
     <div className="shell">
       <aside className="side">
@@ -67,7 +81,21 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
           </nav>
           <div className="acts">
             <a href="/" className="btn sm" target="_blank" rel="noopener noreferrer">ดูหน้าร้าน ↗</a>
-            <button type="button" className="btn ghost sm" onClick={async () => { await Promise.all([api('/api/admin/login', { logout: true }), api('/api/auth/logout')]); window.location.href = '/admin'; }}>ออกจากระบบ</button>
+            <button type="button" className={`btn ghost sm${extra.length ? ' m-logout' : ''}`} onClick={logout}>ออกจากระบบ</button>
+            {extra.length > 0 && (
+              <div className="top-more" ref={moreBox}>
+                <button type="button" className="icon-btn" aria-label="เมนูเพิ่มเติม" aria-haspopup="true" aria-expanded={more} onClick={() => setMore(!more)}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
+                  {extraWaiting && !more && <span className="top-more-dot" />}
+                </button>
+                {more && (
+                  <nav className="nav top-more-menu" aria-label="เมนูเพิ่มเติม" onClick={() => setMore(false)}>
+                    {extra.map(link)}
+                    <button type="button" className="top-more-logout" onClick={logout}>ออกจากระบบ</button>
+                  </nav>
+                )}
+              </div>
+            )}
           </div>
         </header>
         <div className="content">{children}</div>

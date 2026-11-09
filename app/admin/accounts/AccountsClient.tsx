@@ -14,9 +14,10 @@ export type Acc = { id: string; login: string; cost: number | null; renewAt: str
 const ST: Record<string, string> = { free: 'ว่าง', used: 'มีคนเช่า', reset: 'รอเปลี่ยน PIN', broken: 'เสีย' };
 const pin4 = () => String(Math.floor(1000 + Math.random() * 9000));
 
-export function AccountsClient({ products, current, accounts }: { products: { id: string; name: string }[]; current: { id: string; name: string; image: string; template: string }; accounts: Acc[] }) {
+export function AccountsClient({ products, current, accounts, plans }: { products: { id: string; name: string }[]; current: { id: string; name: string; image: string; template: string }; accounts: Acc[]; plans: { name: string; days: number }[] }) {
   const router = useRouter();
   const [add, setAdd] = useState(false);
+  const [edit, setEdit] = useState<{ id: string; login: string; password: string; cost: string; renew_at: string } | null>(null);
   const [f, setF] = useState({ login: '', password: '', cost: '', renew_at: '', count: '5', prefix: 'จอ' });
   const [slot, setSlot] = useState<(Slot & { accId: string }) | null>(null);
   const [pw, setPw] = useState<Record<string, string>>({});
@@ -38,6 +39,11 @@ export function AccountsClient({ products, current, accounts }: { products: { id
     const ok = await call({ action: 'add', productId: current.id, login: f.login, password: f.password, cost: f.cost ? Number(f.cost) : null, renew_at: f.renew_at || null,
       slots: Array.from({ length: n }, (_, i) => ({ label: `${f.prefix || 'จอ'}-${i + 1}`, pin: pin4() })) });
     if (ok) { setAdd(false); setF({ ...f, login: '', password: '' }); router.refresh(); }
+  }
+  async function saveEdit() {
+    if (!edit) return;
+    const ok = await call({ action: 'edit', id: edit.id, login: edit.login, password: edit.password, cost: edit.cost ? Number(edit.cost) : null, renew_at: edit.renew_at || null });
+    if (ok) { setPw({ ...pw, [edit.id]: '' }); setEdit(null); router.refresh(); }
   }
   async function reveal(id: string) {
     if (pw[id]) { setPw({ ...pw, [id]: '' }); return; }
@@ -75,6 +81,9 @@ export function AccountsClient({ products, current, accounts }: { products: { id
       {!accounts.length && !add && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีบัญชีของ {current.name} — กด &quot;+ เพิ่มบัญชีหลัก&quot;</p></div>}
       {accounts.map((a) => {
         const days = daysLeft(a.renewAt);
+        // แพ็กเกจที่บัญชีนี้ขายได้ตอนนี้ (เกณฑ์เดียวกับ shop_account_fits) · โชว์เฉพาะบัญชีที่ยังมีจอว่างและยังไม่หมดอายุ
+        const fits = plans.filter((p) => days === null || p.days <= days);
+        const showSell = a.status === 'active' && a.slots.some((s) => s.status === 'free') && (days === null || days > 0);
         return (
           <section key={a.id} className="card acc" style={{ opacity: a.status === 'active' ? 1 : .6 }}>
             <div className="acc-head"><AppLogo image={current.image} template={current.template} name={current.name} />
@@ -82,8 +91,29 @@ export function AccountsClient({ products, current, accounts }: { products: { id
               <span className="pill ok">ใช้ {a.slots.filter((s) => s.status === 'used').length}/{a.slots.length} จอ</span>
               <button type="button" className="btn sm" onClick={() => reveal(a.id)}>{pw[a.id] ? 'ซ่อนรหัส' : '👁 ดูรหัส'}</button>
               {pw[a.id] && <code style={{ background: 'var(--surface-2)', padding: '4px 8px', borderRadius: 8 }}>{pw[a.id]}</code>}
+              <button type="button" className="btn sm" onClick={() => setEdit({ id: a.id, login: a.login, password: '', cost: a.cost?.toString() ?? '', renew_at: a.renewAt ?? '' })}>✏️ แก้ไข</button>
               <button type="button" className="btn ghost sm" onClick={async () => { if (await call({ action: 'status', id: a.id, status: a.status === 'active' ? 'broken' : 'active' })) router.refresh(); }}>{a.status === 'active' ? 'ตั้งเป็นเสีย' : 'กลับมาใช้'}</button>
             </div>
+            {edit?.id === a.id && (
+              <div className="form">
+                <div className="two"><label className="field"><span>อีเมล / ชื่อผู้ใช้ของบัญชี</span><input className="input" autoComplete="off" value={edit.login} onChange={(e) => setEdit({ ...edit, login: e.target.value })} /></label>
+                  <label className="field"><span>รหัสผ่านใหม่</span><input className="input" type="password" autoComplete="new-password" placeholder="เว้นว่าง = ใช้รหัสเดิม" value={edit.password} onChange={(e) => setEdit({ ...edit, password: e.target.value })} /></label></div>
+                <div className="two"><label className="field"><span>ต้นทุนต่อรอบ (บาท)</span><input className="input" inputMode="decimal" value={edit.cost} onChange={(e) => setEdit({ ...edit, cost: e.target.value.replace(/[^\d.]/g, '') })} /></label>
+                  <label className="field"><span>วันหมดอายุบัญชี (เว้นว่าง = ไม่จำกัด)</span><input className="input" type="date" value={edit.renew_at} onChange={(e) => setEdit({ ...edit, renew_at: e.target.value })} /></label></div>
+                <small style={{ color: 'var(--warn)' }}>⚠️ อีเมลและรหัสผ่านใช้ร่วมกันทุกจอ แก้แล้วลูกค้าทุกคนในบัญชีนี้จะเห็นของใหม่</small>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button type="button" className="btn ghost sm" disabled={busy} onClick={() => setEdit(null)}>ยกเลิก</button>
+                  <button type="button" className="btn primary sm" disabled={busy || edit.login.trim().length < 3} onClick={saveEdit}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button>
+                </div>
+              </div>
+            )}
+            {showSell && (
+              <div className={`acc-sell${fits.length ? '' : ' none'}`}>
+                {fits.length
+                  ? <>ขายได้ตอนนี้: <b>{fits.map((p) => p.name).join(' · ')}</b></>
+                  : <>⚠️ จอว่างยังขายไม่ได้ เพราะทุกแพ็กเกจยาวกว่าวันที่เหลือ · <Link href={to('/admin/products')}>เพิ่มแพ็กเกจสั้น เช่น {Math.max(1, days ?? 1)} วัน</Link></>}
+              </div>
+            )}
             <div className="slots">{a.slots.map((s) => (
               <button key={s.id} type="button" className={`slot ${s.status}`} onClick={() => setSlot({ ...s, accId: a.id })} style={{ textAlign: 'left', font: 'inherit' }}>
                 <b>{s.label}{s.pin ? ` · ${s.pin}` : ''}</b><span className="who">{s.rent ? `@${s.rent.user} · ${s.rent.days} วัน` : ST[s.status]}</span>
