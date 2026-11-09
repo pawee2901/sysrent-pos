@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, baht } from '@/components/Cart';
 import { Delivered } from '@/components/Delivered';
+import { stripPlain } from '@/lib/fields';
 import { DownloadImage } from '@/components/DownloadImage';
 import { notify } from '@/components/dialog';
 import { ReportDialog } from './ReportDialog';
@@ -38,7 +39,7 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
   async function idsText(): Promise<string> {
     const parts: string[] = [];
     for (const i of o.items) {
-      let body = i.delivered ?? '';
+      let body = stripPlain(i.delivered ?? '');
       if (!body && i.sub) {
         const r = await api<{ login: string; password: string; profile: string; pin: string }>(`/api/my/${i.sub.id}`);
         if (r.ok) body = `อีเมล: ${r.data.login}\nรหัสผ่าน: ${r.data.password}\nโปรไฟล์: ${r.data.profile}${r.data.pin ? `\nPIN: ${r.data.pin}` : ''}`;

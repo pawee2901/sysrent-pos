@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { fieldIcon, parseDelivered } from '@/lib/fields';
+import { fieldIcon, isPlain, parseDelivered, stripPlain } from '@/lib/fields';
 
 /** รหัส / บัญชีที่ลูกค้าได้ — แยกเป็นช่อง มีปุ่มคัดลอกทีละช่อง + คัดลอกทั้งหมด */
-export function Delivered({ content, warranty }: { content: string; warranty?: string | null }) {
+export function Delivered({ content: raw, warranty }: { content: string; warranty?: string | null }) {
+  const content = stripPlain(raw);
   const [copied, setCopied] = useState<string | null>(null);
   const lines = parseDelivered(content);
   const fields = lines.filter((l) => l.kind === 'field').length;
@@ -20,7 +21,7 @@ export function Delivered({ content, warranty }: { content: string; warranty?: s
 
   const notes = lines.filter((l) => l.kind === 'text' && l.text.trim()).length;
   // ข้อความยาว (เช่น ลิงก์ทีม + วิธีใช้) → แสดงทั้งก้อนตามที่ร้านส่ง ไม่แยกบรรทัดที่บังเอิญมี ":" เป็นช่อง
-  if (!fields || notes > fields || fields + notes > 10) {
+  if (isPlain(raw) || !fields || notes > fields || fields + notes > 10) {
     return (
       <div className="dlv">
         <div className="dlv-text">{btn('all', content, 'คัดลอก')}<pre>{content}</pre></div>

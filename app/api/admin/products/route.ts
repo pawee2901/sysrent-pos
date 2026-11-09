@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { body, fail, requireAdmin } from '@/lib/api';
 import { shopCategories } from '@/lib/categories';
+import { markPlain } from '@/lib/fields';
 
 const SHORT_PLANS = [25, 15, 7, 3];
 const money = z.number().positive('ราคาต้องมากกว่า 0').max(1_000_000);
@@ -34,7 +35,7 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('toggle'), id: z.string().uuid(), active: z.boolean() }),
   z.object({ action: z.literal('delete'), id: z.string().uuid() }),
   // mode line = 1 บรรทัด 1 ชิ้น · block = ทั้งข้อความ 1 ชิ้น (หลายชิ้นคั่นด้วยบรรทัด ---) · repeat = เพิ่มชิ้นเดิมซ้ำ (เช่น ลิงก์เชิญทีมใช้ได้หลายคน)
-  z.object({ action: z.literal('stock'), optionId: z.string().uuid(), text: z.string().min(1).max(200_000), mode: z.enum(['line', 'block']).default('line'), repeat: z.number().int().min(1).max(500).default(1) }),
+  z.object({ action: z.literal('stock'), optionId: z.string().uuid(), text: z.string().min(1).max(200_000), mode: z.enum(['line', 'block']).default('line'), repeat: z.number().int().min(1).max(500).default(1), plain: z.boolean().default(false) }),
   // แบ่งจอ: เพิ่มแพ็กเกจสั้น เมื่อบัญชีเหลือวันไม่พอขายแพ็กเกจที่มี · days = วันที่บัญชีเหลือ · ไม่ส่ง plans = ขอรายการพร้อมราคาแนะนำ · ส่ง plans = บันทึกตามราคาที่แอดมินยืนยัน
   z.object({ action: z.literal('short_plans'), id: z.string().uuid(), days: z.number().int().min(1).max(3650), plans: z.array(z.object({ days: z.number().int().min(1).max(3650), price: money })).min(1).max(12).optional() }),
   z.object({ action: z.literal('usage'), id: z.string().uuid(), usage: z.string().max(3000), usage_image: z.string().trim().max(500).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https').optional() }),
@@ -169,7 +170,7 @@ export async function POST(req: Request) {
   const items = uniq.flatMap((c) => Array.from({ length: x.repeat ?? 1 }, () => c));
   if (!items.length) return fail('ไม่มีรายการให้เพิ่ม');
   if (items.length > 2000) return fail('เพิ่มได้ครั้งละไม่เกิน 2,000 ชิ้น');
-  const { error } = await d.from('shop_stock').insert(items.map((content) => ({ option_id: x.optionId, content })));
+  const { error } = await d.from('shop_stock').insert(items.map((content) => ({ option_id: x.optionId, content: x.plain ? markPlain(content) : content })));
   if (error) return fail('เพิ่มสต็อกไม่สำเร็จ', 500);
   return NextResponse.json({ ok: true, notice: `เพิ่มสต็อกแล้ว ${items.length} ชิ้น` });
 }

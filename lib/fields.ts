@@ -6,7 +6,13 @@
  *   a@b.com | pass1234 | 2     → แบบเดิม 1 บรรทัดคั่นด้วย | (ตั้งชื่อช่องให้เอง)
  *   บรรทัดอื่น ๆ                → ข้อความธรรมดา
  */
-export type DeliveredLine = { kind: 'field'; label: string; value: string } | { kind: 'text'; text: string };
+/** ตัวอักษรล่องหนหน้าข้อความ = ร้านเลือกโหมด "ข้อความยาว" → แสดงทั้งก้อน ไม่แยกช่อง · ลบออกก่อนแสดง / คัดลอก */
+const PLAIN = '⁠';
+export const markPlain = (s: string) => (s.trim() ? PLAIN + s : '');
+export const isPlain = (s: string) => s.includes(PLAIN);
+export const stripPlain = (s: string) => s.split(PLAIN).join('');
+
+export type DeliveredLine ={ kind: 'field'; label: string; value: string } | { kind: 'text'; text: string };
 
 const FIELD = /^\s*([^:：\n]{1,40}?)\s*[:：]\s*(\S.*)$/;
 const PIPE_NAMES = ['บัญชี / อีเมล', 'รหัสผ่าน', 'โปรไฟล์', 'PIN'];

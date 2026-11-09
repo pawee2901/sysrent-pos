@@ -10,6 +10,7 @@ import { FULFILL_LABEL, TEMPLATES, templateOf } from '@/lib/templates';
 import type { Product } from '@/lib/catalog';
 import { CategoriesCard } from './CategoriesCard';
 import { Delivered } from '@/components/Delivered';
+import { markPlain } from '@/lib/fields';
 
 type OptF = { id?: string; name: string; price: string; compare_at: string; cost: string; duration_days: string; agent_price: string; active: boolean };
 type Form = { id?: string; name: string; category: string; description: string; image: string; template: string; fulfillment: 'stock' | 'slot' | 'manual'; badge: string; askInfo: string; active: boolean; options: OptF[] };
@@ -36,7 +37,7 @@ function previewOf(st: StockForm): string {
   if (st.mode === 'fields') return fieldsToText(st).split('\n---\n')[0] ?? '';
   const t = (st.text ?? '').replace(/\r\n/g, '\n').trim();
   if (!t) return '';
-  return (t.split(/^\s*-{3,}\s*$/m).find((s) => s.trim()) ?? '').replace(/^\n+|\s+$/g, '');
+  return markPlain((t.split(/^\s*-{3,}\s*$/m).find((s) => s.trim()) ?? '').replace(/^\n+|\s+$/g, ''));
 }
 /** นับจำนวนชิ้นที่จะเพิ่ม (ให้ตรงกับที่เซิร์ฟเวอร์แยก) */
 function stockCount(st: StockForm) {
@@ -129,7 +130,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
     setBusy(true);
     const text = stock.mode === 'fields' ? fieldsToText(stock) : stock.text;
     if (!text.trim()) { setBusy(false); setMsg('ยังไม่ได้กรอกข้อมูล'); return; }
-    const r = await api<{ notice: string }>('/api/admin/products', { action: 'stock', optionId: stock.optionId, text, mode: 'block', repeat: stock.mode === 'block' ? Math.max(1, Number(stock.repeat) || 1) : 1 });
+    const r = await api<{ notice: string }>('/api/admin/products', { action: 'stock', optionId: stock.optionId, text, mode: 'block', plain: stock.mode === 'block', repeat: stock.mode === 'block' ? Math.max(1, Number(stock.repeat) || 1) : 1 });
     setBusy(false);
     setMsg(r.ok ? r.data.notice : r.error);
     if (r.ok) { setStock(null); router.refresh(); }

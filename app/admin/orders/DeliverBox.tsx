@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { baht } from '@/components/Cart';
 import { Delivered } from '@/components/Delivered';
 import { input } from '@/components/dialog';
+import { markPlain } from '@/lib/fields';
 
 type Field = { label: string; value: string };
 
@@ -13,7 +14,7 @@ export function DeliverBox({ busy, refund, mailOn, onDeliver, onRefund }: { busy
   const [fields, setFields] = useState<Field[]>([{ label: 'อีเมล', value: '' }, { label: 'รหัสผ่าน', value: '' }, { label: 'โปรไฟล์', value: '' }]);
   const [text, setText] = useState('');
   const setF = (i: number, p: Partial<Field>) => setFields(fields.map((f, k) => (k === i ? { ...f, ...p } : f)));
-  const content = mode === 'text' ? text.trim() : fields.filter((f) => f.value.trim()).map((f) => `${f.label.trim() || 'ข้อมูล'}: ${f.value.trim()}`).join('\n');
+  const content = mode === 'text' ? markPlain(text.trim()) : fields.filter((f) => f.value.trim()).map((f) => `${f.label.trim() || 'ข้อมูล'}: ${f.value.trim()}`).join('\n');
 
   async function refundNow() {
     const why = await input(`คืนเงิน ${baht(refund)} เข้ากระเป๋าลูกค้า`, { text: 'ใส่เหตุผล (ลูกค้าเห็นข้อความนี้)', placeholder: 'เช่น ของหมดชั่วคราว', ok: 'คืนเงิน', max: 300 });
