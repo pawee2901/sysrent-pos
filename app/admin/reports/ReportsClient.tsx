@@ -9,8 +9,9 @@ import { Delivered } from '@/components/Delivered';
 
 export type ReportItem = {
   id: string; name: string; fulfillment: string; status: string; delivered: string;
-  slot: { login: string; password: string; profile: string; pin: string; active: boolean } | null;
+  slot: SlotInfo | null;
 };
+type SlotInfo = { slotId: string; login: string; password: string; profile: string; pin: string; active: boolean };
 export type AdminReport = { id: string; topic: string; message: string; image: string; status: string; reply: string; when: string; code: string; user: string; contact: string; items: ReportItem[] };
 
 /** ลูกค้าแจ้งปัญหา: อ่าน · ดู / แก้ไอดีที่ส่งให้ลูกค้า · ตอบกลับ (ลูกค้าเห็นในหน้าประวัติ) · ปิดเรื่อง */
@@ -66,7 +67,48 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
   );
 }
 
-/** 1 รายการในออเดอร์: ดูไอดี · แก้ไอดี (คลังโค้ด / สั่งทำ) · แบ่งจอ = ลิงก์ไปคลังบัญชี */
+/** แบ่งจอ: ดู / แก้อีเมล รหัส โปรไฟล์ PIN ของจอที่ลูกค้าเช่าอยู่ */
+function SlotBox({ item, slot: s, onSaved }: { item: ReportItem; slot: SlotInfo; onSaved: () => void }) {
+  const [v, setV] = useState<Pick<SlotInfo, 'login' | 'password' | 'profile' | 'pin'> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const changed = !!v && (v.login.trim() !== s.login || v.password !== s.password || v.profile.trim() !== s.profile || v.pin.trim() !== s.pin);
+
+  async function save() {
+    if (!v) return;
+    setBusy(true);
+    // ส่งรหัสเฉพาะตอนแก้จริง — ค่าที่โชว์อาจเป็นข้อความ "(ถอดรหัสไม่ได้)"
+    const r = await api('/api/admin/reports', { action: 'edit_slot', itemId: item.id, slotId: s.slotId, login: v.login, password: v.password === s.password ? '' : v.password, label: v.profile, pin: v.pin });
+    setBusy(false);
+    if (!r.ok) { notify(r.error, 'error'); return; }
+    setV(null); notify('แก้ข้อมูลแล้ว ลูกค้าเห็นของใหม่ทันที'); onSaved();
+  }
+
+  return (
+    <div className="report-item">
+      <div className="report-item-head"><b>{item.name}</b>
+        <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span className={`pill ${s.active ? 'ok' : 'plain'}`}>{s.active ? 'ใช้งานอยู่' : 'หมดอายุ'}</span>
+          {s.active && !v && <button type="button" className="btn sm" onClick={() => setV({ login: s.login, password: s.password, profile: s.profile, pin: s.pin })}>✏️ แก้ไข</button>}
+        </span>
+      </div>
+      {v ? (
+        <div className="report-edit">
+          {([['login', 'อีเมล', 120], ['password', 'รหัสผ่าน', 200], ['profile', 'โปรไฟล์', 40], ['pin', 'PIN', 12]] as const).map(([k, label, max]) => (
+            <label key={k} className="field"><span>{label}</span><input className="input" autoComplete="off" maxLength={max} value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} /></label>
+          ))}
+          <small style={{ color: 'var(--warn)' }}>⚠️ อีเมลและรหัสผ่านใช้ร่วมกันทุกจอในบัญชีนี้ แก้แล้วลูกค้าทุกคนในบัญชีนี้จะเห็นของใหม่ · โปรไฟล์และ PIN เปลี่ยนเฉพาะจอนี้</small>
+          <div className="report-acts">
+            <button type="button" className="btn ghost sm" disabled={busy} onClick={() => setV(null)}>ยกเลิก</button>
+            <button type="button" className="btn primary sm" disabled={busy || !changed || v.login.trim().length < 3 || !v.password || !v.profile.trim()} onClick={save}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button>
+          </div>
+        </div>
+      ) : <Delivered content={`อีเมล: ${s.login}\nรหัสผ่าน: ${s.password}\nโปรไฟล์: ${s.profile}${s.pin ? `\nPIN: ${s.pin}` : ''}`} />}
+      <small className="faint">{s.active ? 'แบ่งจอ: รหัสใช้ร่วมกันทุกจอในบัญชีนี้ · ย้ายจอที่ ' : 'การเช่านี้หมดอายุแล้ว จอนี้อาจเป็นของลูกค้าคนอื่น · จัดการที่ '}<Link href={to('/admin/accounts')} style={{ color: 'var(--accent)', fontWeight: 600 }}>คลังบัญชี</Link></small>
+    </div>
+  );
+}
+
+/** 1 รายการในออเดอร์: ดูไอดี · แก้ไอดี (คลังโค้ด / สั่งทำ) · แบ่งจอ = SlotBox */
 function ItemBox({ item, onSaved }: { item: ReportItem; onSaved: () => void }) {
   const [edit, setEdit] = useState(false);
   const [val, setVal] = useState(item.delivered);
@@ -80,16 +122,7 @@ function ItemBox({ item, onSaved }: { item: ReportItem; onSaved: () => void }) {
     setEdit(false); notify('แก้ไอดีแล้ว ลูกค้าเห็นของใหม่ทันที'); onSaved();
   }
 
-  if (item.slot) {
-    const s = item.slot;
-    return (
-      <div className="report-item">
-        <div className="report-item-head"><b>{item.name}</b><span className={`pill ${s.active ? 'ok' : 'plain'}`}>{s.active ? 'ใช้งานอยู่' : 'หมดอายุ'}</span></div>
-        <Delivered content={`อีเมล: ${s.login}\nรหัสผ่าน: ${s.password}\nโปรไฟล์: ${s.profile}${s.pin ? `\nPIN: ${s.pin}` : ''}`} />
-        <small className="faint">แบ่งจอ: รหัสใช้ร่วมกันทุกจอในบัญชีนี้ · แก้รหัส / ย้ายจอที่ <Link href={to('/admin/accounts')} style={{ color: 'var(--accent)', fontWeight: 600 }}>คลังบัญชี</Link></small>
-      </div>
-    );
-  }
+  if (item.slot) return <SlotBox item={item} slot={item.slot} onSaved={onSaved} />;
   return (
     <div className="report-item">
       <div className="report-item-head"><b>{item.name}</b>

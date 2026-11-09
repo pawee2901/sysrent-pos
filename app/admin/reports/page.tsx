@@ -21,15 +21,15 @@ export default async function AdminReports() {
   // แบบแบ่งจอ: บัญชีหลัก + โปรไฟล์ที่ลูกค้าได้ (ถอดรหัสฝั่งเซิร์ฟเวอร์ · ร้านเห็นคนเดียว)
   const itemIds = list.flatMap((r) => r.shop_orders?.shop_order_items.filter((i) => i.fulfillment === 'slot').map((i) => i.id) ?? []);
   const { data: subs } = itemIds.length
-    ? await d.from('shop_subscriptions').select('order_item_id, status, ends_at, shop_slots(label, pin, shop_accounts(id, login, secret_enc))').in('order_item_id', itemIds)
+    ? await d.from('shop_subscriptions').select('order_item_id, status, ends_at, shop_slots(id, label, pin, shop_accounts(id, login, secret_enc))').in('order_item_id', itemIds)
     : { data: [] };
-  type Sub = { order_item_id: string; status: string; ends_at: string; shop_slots: { label: string; pin: string; shop_accounts: { id: string; login: string; secret_enc: string } } | null };
+  type Sub = { order_item_id: string; status: string; ends_at: string; shop_slots: { id: string; label: string; pin: string; shop_accounts: { id: string; login: string; secret_enc: string } } | null };
   const slotOf = (itemId: string) => {
     const s = ((subs ?? []) as unknown as Sub[]).find((x) => x.order_item_id === itemId);
     if (!s?.shop_slots) return null;
     let password = '';
     try { password = decrypt(s.shop_slots.shop_accounts.secret_enc); } catch { password = '(ถอดรหัสไม่ได้)'; }
-    return { login: s.shop_slots.shop_accounts.login, password, profile: s.shop_slots.label, pin: s.shop_slots.pin, active: s.status === 'active' && new Date(s.ends_at).getTime() > Date.now() };
+    return { slotId: s.shop_slots.id, login: s.shop_slots.shop_accounts.login, password, profile: s.shop_slots.label, pin: s.shop_slots.pin, active: s.status === 'active' && new Date(s.ends_at).getTime() > Date.now() };
   };
 
   const rows: AdminReport[] = list.map((r) => ({
