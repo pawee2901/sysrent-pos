@@ -17,6 +17,7 @@ export function BuyBox({ product, options, open, children }: { product: P; optio
   const [pick, setPick] = useState(first);
   const [msg, setMsg] = useState('');
   const [buying, setBuying] = useState(false);
+  const [coupon, setCoupon] = useState('');
   const o = options[pick];
   const max = !o ? 0 : product.fulfillment === 'stock' ? Math.min(20, o.stock ?? 0) : o.stock === 0 ? 0 : 1;
 
@@ -38,7 +39,7 @@ export function BuyBox({ product, options, open, children }: { product: P; optio
       info = v;
     }
     setBuying(true); setMsg('');
-    const r = await api<{ code: string }>('/api/orders', { lines: [{ optionId: o.id, qty: 1, info }] });
+    const r = await api<{ code: string }>('/api/orders', { lines: [{ optionId: o.id, qty: 1, info }], coupon: coupon.trim() || undefined });
     if (r.status === 401) { router.push(loginUrl(`/p/${product.id}`)); return; }
     if (!r.ok) { setBuying(false); setMsg(r.error); return; }
     router.push(to(`/checkout/${r.data.code}`));
@@ -56,6 +57,9 @@ export function BuyBox({ product, options, open, children }: { product: P; optio
         })}
       </div>
       {children}
+      <label className="field" style={{ marginTop: 12 }}><span>โค้ดส่วนลด</span>
+        <input className="input" value={coupon} maxLength={20} placeholder="ถ้ามี เช่น NEW10" style={{ textTransform: 'uppercase', letterSpacing: '.05em' }} onChange={(e) => { setCoupon(e.target.value); setMsg(''); }} />
+        {coupon.trim() && <small className="faint" style={{ fontSize: 12 }}>ใช้กับปุ่ม &quot;ซื้อเลย&quot; · ถ้าใส่ตะกร้า ให้กรอกโค้ดอีกครั้งที่หน้าตะกร้า</small>}</label>
       <div className="buy-bar">
         <button type="button" className="btn lg" disabled={max < 1} onClick={() => { if (put()) setMsg('ใส่ตะกร้าแล้ว 🛒'); }}>ใส่ตะกร้า</button>
         <button type="button" className="btn primary lg" disabled={max < 1 || buying} onClick={buyNow}>{buying ? 'กำลังสร้างออเดอร์…' : `ซื้อเลย ${o ? baht(o.price) : ''}`}</button>
