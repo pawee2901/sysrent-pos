@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { SLIP_QUOTA } from '@/lib/plan';
 import { fail } from '@/lib/api';
+import { authorized } from '@/lib/internal';
 import { hashPassword } from '@/lib/auth';
 import { THEMES } from '@/lib/themes';
 
@@ -12,12 +12,6 @@ import { THEMES } from '@/lib/themes';
  *  GET  → รายชื่อ slug ร้านที่เปิดอยู่ (ใช้สร้าง nginx map)
  *  POST → create / extend / suspend / resume / check / themes (ปลดล็อกธีมพิเศษที่ซื้อจาก sysrent.shop)
  */
-function authorized(req: Request): boolean {
-  const want = process.env.SHOP_INTERNAL_KEY ?? '';
-  const got = req.headers.get('x-internal-key') ?? '';
-  if (want.length < 32 || got.length !== want.length) return false;
-  return timingSafeEqual(Buffer.from(got), Buffer.from(want));
-}
 
 const RESERVED = new Set(['www', 'api', 'admin', 'app', 'mail', 'shop', 'shops', 'otp', 'sysrent', 'static', 'cdn', 'help', 'support', 'status', 'dev', 'test', 'demo', 'demo-agent']);
 const slug = z.string().trim().toLowerCase().regex(/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])$/, 'ชื่อร้าน (subdomain) ใช้ a-z 0-9 - ยาว 3-30 ตัว');

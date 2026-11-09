@@ -22,3 +22,13 @@ if ! cmp -s "$TMP" "$MAP"; then
   cp "$TMP" "$MAP"
   if nginx -t >/dev/null 2>&1; then systemctl reload nginx; else cp "$MAP.bak" "$MAP"; fi
 fi
+
+# สรุปยอดรายวันเข้า Discord: วันละครั้งหลัง 00:05 เวลาไทย · เรียกไม่สำเร็จ = ลองใหม่นาทีถัดไป
+# TZ=ICT-7 เป็นรูปแบบ POSIX ไม่ต้องพึ่ง tzdata บนเครื่อง
+DAILY=/var/lib/shop-daily-summary
+DAY=$(TZ=ICT-7 date +%F)
+if [ "$((10#$(TZ=ICT-7 date +%H%M)))" -ge 5 ] && [ "$(cat "$DAILY" 2>/dev/null || true)" != "$DAY" ]; then
+  if curl -fsS --max-time 20 -X POST -H "x-internal-key: $KEY" http://127.0.0.1:3002/api/internal/daily-summary >/dev/null; then
+    echo "$DAY" > "$DAILY"
+  fi
+fi

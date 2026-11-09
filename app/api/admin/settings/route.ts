@@ -35,7 +35,7 @@ const schema = z.discriminatedUnion('action', [
   // Discord: url ว่าง = ไม่เปลี่ยนลิงก์เดิม (หน้าเว็บไม่ได้รับลิงก์เต็มกลับไป) · clear = ล้างลิงก์
   z.object({
     action: z.literal('discord'), url: z.string().trim().max(300).refine((u) => !u || DISCORD_URL.test(u), 'ลิงก์ Webhook ต้องเป็น https://discord.com/api/webhooks/...'),
-    clear: z.boolean().default(false), events: z.array(z.enum(['order', 'manual', 'topup', 'stock', 'signup', 'report'])).max(6),
+    clear: z.boolean().default(false), events: z.array(z.enum(['order', 'manual', 'topup', 'stock', 'signup', 'report', 'daily'])).max(7),
   }),
   z.object({ action: z.literal('discord_test') }),
   // Gmail ของร้าน: ลองล็อกอินก่อนบันทึก · App Password ไม่ส่งกลับหน้าเว็บ

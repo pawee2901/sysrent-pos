@@ -9,9 +9,9 @@ import type { Shop } from '@/lib/shop';
  * ส่งหลังตอบลูกค้าแล้ว (after) · ส่งไม่สำเร็จ = แค่ log ไม่ทำให้การจ่ายเงิน/ออเดอร์ล้ม
  * ยังไม่รัน 0009 / ร้านไม่ได้ตั้ง = ไม่ส่ง
  */
-export type NotifyEvent = 'order' | 'manual' | 'topup' | 'stock' | 'signup' | 'report';
+export type NotifyEvent = 'order' | 'manual' | 'topup' | 'stock' | 'signup' | 'report' | 'daily';
 export const NOTIFY_EVENTS: [NotifyEvent, string][] = [
-  ['order', 'ออเดอร์ใหม่ (จ่ายแล้ว)'], ['manual', 'ออเดอร์ที่ร้านต้องทำเอง (แท็ก @here)'], ['topup', 'ลูกค้าเติมเงิน'], ['stock', 'ของใกล้หมด (เหลือ ≤ 3)'], ['signup', 'สมาชิกใหม่'],
+  ['order', 'ออเดอร์ใหม่ (จ่ายแล้ว)'], ['manual', 'ออเดอร์ที่ร้านต้องทำเอง (แท็ก @here)'], ['topup', 'ลูกค้าเติมเงิน'], ['stock', 'ของใกล้หมด (เหลือ ≤ 3)'], ['signup', 'สมาชิกใหม่'], ['daily', 'สรุปยอดทุกวัน'],
 ];
 export const DISCORD_URL = /^https:\/\/(ptb\.|canary\.)?(discord|discordapp)\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 
@@ -20,7 +20,7 @@ const baht = (n: number) => `฿${n.toLocaleString('th-TH', { minimumFractionDig
 
 type Embed = { title: string; description?: string; color: number; fields?: { name: string; value: string; inline?: boolean }[]; url?: string; image?: { url: string } };
 
-function adminUrl(shop: Pick<Shop, 'slug'>, path: string) {
+export function adminUrl(shop: Pick<Shop, 'slug'>, path: string) {
   const root = process.env.SHOP_ROOT_DOMAIN || 'sysrent.shop';
   return `https://${shop.slug}.${root}${path}`;
 }
