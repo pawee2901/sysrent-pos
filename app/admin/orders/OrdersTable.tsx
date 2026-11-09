@@ -27,10 +27,12 @@ export function OrdersTable({ rows, mailOn }: { rows: AdminOrder[]; mailOn: bool
   }
   async function act(itemId: string, action: 'deliver' | 'refund', content: string, mail = true) {
     setBusy(true); setErr('');
-    const r = await api(`/api/admin/items/${itemId}`, { action, content, mail });
+    const r = await api<{ mail: { sent: boolean; message: string } | null }>(`/api/admin/items/${itemId}`, { action, content, mail });
     setBusy(false);
     if (!r.ok) { setErr(r.error); return; }
-    notify(action === 'deliver' ? 'ส่งให้ลูกค้าแล้ว ลูกค้ารับได้ที่หน้าประวัติการซื้อ' : 'คืนเงินเข้ากระเป๋าลูกค้าแล้ว');
+    const done = action === 'deliver' ? 'ส่งให้ลูกค้าแล้ว ลูกค้ารับได้ที่หน้าประวัติการซื้อ' : 'คืนเงินเข้ากระเป๋าลูกค้าแล้ว';
+    if (r.data.mail && !r.data.mail.sent) notify(`${done} แต่อีเมลไม่ออก: ${r.data.mail.message}`, 'error');
+    else notify(r.data.mail ? `${done} · ส่งอีเมลแล้ว` : done);
     setOpen(null); router.refresh();
   }
 

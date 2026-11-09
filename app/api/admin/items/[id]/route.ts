@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { can } from '@/lib/plan';
-import { mailItemResult, sendItemMail } from '@/lib/customer-mail';
+import { MAIL_RESULT, sendItemMail } from '@/lib/customer-mail';
 import { body, fail, isUuid, requireAdmin } from '@/lib/api';
 
 const schema = z.discriminatedUnion('action', [
@@ -26,14 +26,14 @@ export async function POST(req: Request, { params }: Ctx) {
     if (!it) return fail('ไม่พบรายการ', 404);
     if (it.fulfillment !== 'manual' || it.status !== 'delivered') return fail('ส่งอีเมลแจ้งได้เฉพาะสินค้าสั่งทำที่ส่งของแล้ว', 400);
     const r = await sendItemMail(a.shop, id, 'deliver', '');
-    if (r === 'no_email') return fail('ลูกค้ายังไม่ได้ใส่อีเมลในบัญชี', 409);
-    return r === 'sent' ? NextResponse.json({ ok: true }) : fail('ส่งอีเมลไม่สำเร็จ ตรวจการตั้งค่า Gmail ของร้าน', 502);
+    return r === 'sent' ? NextResponse.json({ ok: true }) : fail(MAIL_RESULT[r], r === 'failed' ? 502 : 409);
   }
 
   const fn = b.data.action === 'deliver' ? 'shop_deliver_item' : 'shop_refund_item';
   const args = b.data.action === 'deliver' ? { p_shop: a.shop.id, p_item: id, p_content: b.data.content } : { p_shop: a.shop.id, p_item: id, p_reason: b.data.content.slice(0, 300) };
   const { error } = await db().rpc(fn, args);
   if (error) return /NOT_OPEN/.test(error.message) ? fail('รายการนี้ถูกจัดการไปแล้ว', 409) : /NOT_FOUND/.test(error.message) ? fail('ไม่พบรายการ', 404) : fail('บันทึกไม่สำเร็จ', 500);
-  if (b.data.mail) mailItemResult(a.shop, id, b.data.action, b.data.content);
-  return NextResponse.json({ ok: true });
+  // รอผลอีเมลเพื่อบอกแอดมินทันที · ส่งไม่ได้ก็ยังถือว่าส่งของ / คืนเงินสำเร็จ
+  const mail = b.data.mail && can(a.shop.plan, 'mail') ? await sendItemMail(a.shop, id, b.data.action, b.data.content) : null;
+  return NextResponse.json({ ok: true, mail: mail && { sent: mail === 'sent', message: MAIL_RESULT[mail] } });
 }
