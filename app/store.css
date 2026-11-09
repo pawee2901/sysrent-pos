@@ -425,8 +425,8 @@ a.hist-row:hover .hist-go:not(.primary) { background: var(--accent-soft); color:
 .hcard-acts .btn { min-width: 128px; }
 .hcard-show { background: var(--ink, #1f2937); color: #fff; border-color: transparent; }
 .hcard-report-btn { background: var(--bad); color: #fff; border-color: transparent; }
-.hcard-report { padding: 10px 14px; border-radius: 12px; background: var(--warn-soft, #fdf3e2); font-size: 14px; }
-.hcard-report.resolved { background: var(--ok-soft, #e7f7ed); }
+.hcard-report { padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, var(--warn) 14%, var(--surface)); font-size: 14px; } /* ผสมกับ --surface: ธีมมืดพื้นต้องเข้ม ตัวอักษรถึงอ่านออก */
+.hcard-report.resolved { background: color-mix(in srgb, var(--ok) 14%, var(--surface)); }
 .hcard-report span { color: var(--muted); }
 .hcard-report p { margin: 6px 0 0; white-space: pre-line; }
 .hcard-detail { display: grid; gap: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
