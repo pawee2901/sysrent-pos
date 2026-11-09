@@ -19,7 +19,9 @@ export function AccountsClient({ products, current, accounts, plans }: { product
   const router = useRouter();
   const [add, setAdd] = useState(false);
   const [edit, setEdit] = useState<{ id: string; login: string; password: string; cost: string; renew_at: string } | null>(null);
-  const [short, setShort] = useState<{ days: number; rows: { days: number; price: string }[] } | null>(null);
+  const [short, setShort] = useState<{ days: number; rows: { days: number; price: string; on: boolean }[] } | null>(null);
+  const picked = short?.rows.filter((p) => p.on) ?? [];
+  const setRow = (d: number, patch: Partial<{ price: string; on: boolean }>) => short && setShort({ ...short, rows: short.rows.map((x) => (x.days === d ? { ...x, ...patch } : x)) });
   const [f, setF] = useState({ login: '', password: '', cost: '', renew_at: '', count: '5', prefix: 'จอ' });
   const [slot, setSlot] = useState<(Slot & { accId: string }) | null>(null);
   const [pw, setPw] = useState<Record<string, string>>({});
@@ -49,12 +51,12 @@ export function AccountsClient({ products, current, accounts, plans }: { product
     setBusy(false);
     if (!r.ok) { setErr(r.error); return; }
     if (!r.data.plans.length) { notify('สินค้านี้มีแพ็กเกจสั้นครบแล้ว', 'info'); return; }
-    setShort({ days, rows: r.data.plans.map((p) => ({ days: p.days, price: String(p.price) })) });
+    setShort({ days, rows: r.data.plans.map((p) => ({ days: p.days, price: String(p.price), on: false })) });
   }
   async function saveShortPlans() {
     if (!short) return;
     setBusy(true);
-    const r = await api<{ notice: string }>('/api/admin/products', { action: 'short_plans', id: current.id, days: short.days, plans: short.rows.map((p) => ({ days: p.days, price: Number(p.price) })) });
+    const r = await api<{ notice: string }>('/api/admin/products', { action: 'short_plans', id: current.id, days: short.days, plans: short.rows.filter((p) => p.on).map((p) => ({ days: p.days, price: Number(p.price) })) });
     setBusy(false);
     if (!r.ok) { notify(r.error, 'error'); return; }
     setShort(null); notify(r.data.notice, 'info'); router.refresh();
@@ -130,7 +132,7 @@ export function AccountsClient({ products, current, accounts, plans }: { product
               <div className={`acc-sell${fits.length ? '' : ' none'}`}>
                 {fits.length
                   ? <>ขายได้ตอนนี้: <b>{fits.map((p) => p.name).join(' · ')}</b></>
-                  : <><span>⚠️ จอว่างยังขายไม่ได้ เพราะทุกแพ็กเกจยาวกว่าวันที่เหลือ</span><button type="button" className="btn primary sm" disabled={busy} onClick={() => openShortPlans(days ?? 1)}>เพิ่มแพ็กเกจสั้นให้อัตโนมัติ</button></>}
+                  : <><span>⚠️ จอว่างยังขายไม่ได้ เพราะทุกแพ็กเกจยาวกว่าวันที่เหลือ</span><button type="button" className="btn primary sm" disabled={busy} onClick={() => openShortPlans(days ?? 1)}>เลือกแพ็กเกจสั้น</button></>}
               </div>
             )}
             <div className="slots">{a.slots.map((s) => (
@@ -145,18 +147,17 @@ export function AccountsClient({ products, current, accounts, plans }: { product
       {short && (
         <div className="cmd-bg open" onClick={(e) => { if (e.target === e.currentTarget && !busy) setShort(null); }}>
           <div className="card cmd short-plans" role="dialog" aria-label="เพิ่มแพ็กเกจสั้น">
-            <h2>เพิ่มแพ็กเกจสั้น · {current.name}</h2>
-            <p className="muted">ราคาคำนวณตามสัดส่วนจากแพ็กเกจหลัก แก้ได้ตามต้องการ ลูกค้าจะเห็นหลังกดยืนยัน</p>
+            <h2>เลือกแพ็กเกจสั้น · {current.name}</h2>
+            <p className="muted">ติ๊กเฉพาะแพ็กเกจที่ต้องการขาย ราคาคำนวณตามสัดส่วนจากแพ็กเกจหลัก แก้ได้ก่อนยืนยัน</p>
             {short.rows.map((p) => (
               <div key={p.days} className="short-row">
-                <b>{p.days} วัน</b>
-                <label><span>฿</span><input className="input" inputMode="decimal" aria-label={`ราคาแพ็กเกจ ${p.days} วัน`} value={p.price} onChange={(e) => setShort({ ...short, rows: short.rows.map((x) => (x.days === p.days ? { ...x, price: e.target.value.replace(/[^\d.]/g, '') } : x)) })} /></label>
-                <button type="button" className="btn ghost sm" aria-label={`ไม่เพิ่มแพ็กเกจ ${p.days} วัน`} onClick={() => setShort({ ...short, rows: short.rows.filter((x) => x.days !== p.days) })}>✕</button>
+                <label><input type="checkbox" checked={p.on} onChange={(e) => setRow(p.days, { on: e.target.checked })} /><b>{p.days} วัน</b></label>
+                <label><span>฿</span><input className="input" inputMode="decimal" disabled={!p.on} aria-label={`ราคาแพ็กเกจ ${p.days} วัน`} value={p.price} onChange={(e) => setRow(p.days, { price: e.target.value.replace(/[^\d.]/g, '') })} /></label>
               </div>
             ))}
             <div className="short-acts">
               <button type="button" className="btn ghost" disabled={busy} onClick={() => setShort(null)}>ยกเลิก</button>
-              <button type="button" className="btn primary" disabled={busy || !short.rows.length || short.rows.some((p) => !(Number(p.price) > 0))} onClick={saveShortPlans}>{busy ? 'กำลังบันทึก…' : `ยืนยันเพิ่ม ${short.rows.length} แพ็กเกจ`}</button>
+              <button type="button" className="btn primary" disabled={busy || !picked.length || picked.some((p) => !(Number(p.price) > 0))} onClick={saveShortPlans}>{busy ? 'กำลังบันทึก…' : picked.length ? `ยืนยันเพิ่ม ${picked.length} แพ็กเกจ` : 'เลือกอย่างน้อย 1 แพ็กเกจ'}</button>
             </div>
           </div>
         </div>

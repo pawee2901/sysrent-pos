@@ -434,7 +434,7 @@ body::before { height: 360px; }
 .short-plans { display: grid; gap: 10px; padding: 18px; }
 .short-plans h2 { margin: 0; font-size: 18px; }
 .short-plans p { margin: 0; font-size: 13.5px; }
-.short-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.short-row { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: 8px; }
 .short-row label { display: flex; align-items: center; gap: 6px; }
 .short-acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 
