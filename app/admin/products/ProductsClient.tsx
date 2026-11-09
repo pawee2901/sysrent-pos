@@ -87,7 +87,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
 
   function fromTemplate(key: string) {
     const t = templateOf(key)!;
-    setF({ ...blank(), name: t.name, category: t.category, description: t.description, template: t.key, fulfillment: t.fulfillment,
+    setF({ ...blank(), name: t.name, category: t.category, description: t.description, template: t.key, fulfillment: 'slot',
       options: t.plans.map(([n, price, days]) => ({ name: n, price: String(price), compare_at: '', cost: '', duration_days: String(days), agent_price: '', active: true })) });
     setPick(false); setMsg(''); setUsage(''); setUsageImg('');
   }
@@ -141,7 +141,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   return (
     <>
       <div className="page-head"><div><h1>สินค้า</h1><p>สินค้าและแพ็กเกจที่ขายในร้าน · กดแถวเพื่อแก้ไข</p></div>
-        <div className="acts"><button type="button" className="btn" onClick={() => setPick(true)}>✨ เพิ่มจากแม่แบบ</button><button type="button" className="btn primary" onClick={() => { setF(blank()); setUsage(''); setUsageImg(''); setMsg(''); }}>+ เพิ่มสินค้า</button></div></div>
+        <div className="acts"><button type="button" className="btn" onClick={() => setPick(true)}>ระบบแบ่งจอ</button><button type="button" className="btn primary" onClick={() => { setF(blank()); setUsage(''); setUsageImg(''); setMsg(''); }}>+ เพิ่มสินค้า</button></div></div>
       <div className="kpis">
         <div className="card kpi"><span className="lbl">เปิดขาย</span><span className="val num">{live.length}</span><span className="delta mute">จาก {products.length} สินค้า</span></div>
         <div className="card kpi"><span className="lbl">ของหมด</span><span className="val num">{live.filter((p) => !p.inStock).length}</span><span className="delta mute">{live.filter((p) => !p.inStock).map((p) => p.name).slice(0, 2).join(', ') || 'ไม่มี 👍'}</span></div>
@@ -151,7 +151,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
       <CategoriesCard categories={categories} counts={counts} />
       <section className="card">
         <div className="toolbar"><input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 ค้นหาสินค้า" /></div>
-        {!products.length ? <div className="card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีสินค้า — กด &quot;✨ เพิ่มจากแม่แบบ&quot; เพื่อเริ่มเร็วที่สุด</p></div> : (
+        {!products.length ? <div className="card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีสินค้า — กด &quot;ระบบแบ่งจอ&quot; หรือ &quot;+ เพิ่มสินค้า&quot; เพื่อเริ่มต้น</p></div> : (
           <table className="tbl ptbl">
             <thead><tr><th>สินค้า</th><th>วิธีส่งของ</th><th className="r">ราคา</th><th>สต็อก</th><th className="r">ขายแล้ว</th><th>เปิดขาย</th><th className="r">จัดการ</th></tr></thead>
             <tbody>{shown.map((p) => (
@@ -175,12 +175,12 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
 
       {pick && (
         <div className="cmd-bg open" onClick={(e) => { if (e.target === e.currentTarget) setPick(false); }}>
-          <div className="card cmd" role="dialog" aria-label="เลือกแม่แบบ" style={{ padding: 18 }}>
-            <h2 style={{ fontSize: 18, marginBottom: 12 }}>เลือกแม่แบบสินค้า</h2>
+          <div className="card cmd" role="dialog" aria-label="ระบบแบ่งจอ เลือกแอป" style={{ padding: 18 }}>
+            <h2 style={{ fontSize: 18, marginBottom: 12 }}>ระบบแบ่งจอ · เลือกแอป</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
               {TEMPLATES.map((t) => (
                 <button key={t.key} type="button" className="btn" style={{ height: 'auto', padding: 12, flexDirection: 'column', gap: 6 }} onClick={() => fromTemplate(t.key)}>
-                  <AppLogo template={t.key} name={t.name} /><b style={{ fontSize: 13 }}>{t.name}</b><small className="muted" style={{ fontSize: 11 }}>{FULFILL_LABEL[t.fulfillment]}</small>
+                  <AppLogo template={t.key} name={t.name} /><b style={{ fontSize: 13 }}>{t.name}</b>
                 </button>
               ))}
             </div>
@@ -225,7 +225,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                 <option value="stock">ส่งอัตโนมัติ — เตรียมบัญชี / รหัสไว้ก่อน ลูกค้าจ่ายแล้วได้ของทันที</option>
                 <option value="manual">สั่งทำ — ลูกค้าจ่ายแล้วรอร้านทำให้ ส่งของที่หน้าออเดอร์ (แท็บ รอส่ง)</option>
               </select>
-              {!f.id && !f.template && <small className="faint" style={{ fontSize: 12 }}>ต้องการขายแบบแบ่งจอ ให้ปิดหน้านี้แล้วกด &quot;✨ เพิ่มจากแม่แบบ&quot;</small>}</label>
+              {!f.id && !f.template && <small className="faint" style={{ fontSize: 12 }}>ต้องการขายแบบแบ่งจอ ให้ปิดหน้านี้แล้วกด &quot;ระบบแบ่งจอ&quot;</small>}</label>
             <label className="field"><span>ขอข้อมูลจากลูกค้าตอนสั่ง (ไม่บังคับ)</span><input className="input" value={f.askInfo} maxLength={60} placeholder="เช่น อีเมลสำหรับเชิญเข้าครอบครัว" onChange={(e) => setF({ ...f, askInfo: e.target.value })} />
               <small className="faint" style={{ fontSize: 12 }}>ใส่หัวข้อแล้วลูกค้าต้องกรอกในตะกร้าก่อนจ่าย · ดูได้ในหน้าออเดอร์</small></label>
             <label className="field"><span>รายละเอียด (ลูกค้าเห็นก่อนซื้อ)</span><textarea className="input" rows={4} value={f.description} maxLength={3000} onChange={(e) => setF({ ...f, description: e.target.value })} /></label>

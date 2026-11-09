@@ -439,7 +439,11 @@ body::before { height: 360px; }
 .top-more-menu { position: absolute; top: calc(100% + 8px); right: 0; width: 220px; max-height: calc(100dvh - 170px); overflow-y: auto; padding: 6px; display: grid; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
 .top-more-logout { display: none; align-items: center; width: 100%; height: 42px; padding: 0 12px; border: 0; border-radius: 12px; background: none; color: var(--muted); font: inherit; font-weight: 500; cursor: pointer; }
 .top-more-logout:hover { background: var(--surface-2); color: var(--text); }
-@media (max-width: 860px) { .top-more { display: block; } }
+@media (max-width: 860px) {
+  .top-more { display: block; }
+  /* จอเล็กช่องตารางเรียงเป็นการ์ดมีระยะห่าง พื้นเทาตอน hover จะขึ้นเป็นหย่อม ๆ */
+  .tbl tbody tr:hover td { background: none; }
+}
 @media (max-width: 620px) {
   .topbar .acts .m-logout { display: none; }
   .top-more-logout { display: flex; }

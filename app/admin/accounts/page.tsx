@@ -17,7 +17,7 @@ export default async function AdminAccounts({ searchParams }: { searchParams: Pr
     return (
       <>
         <div className="page-head"><div><h1>คลังบัญชี</h1><p>บัญชีหลักที่ร้านซื้อมา แบ่งเป็นจอ · ขายแล้วระบบจัดจอให้อัตโนมัติ</p></div></div>
-        <div className="card card-pad"><p style={{ margin: 0 }}>ยังไม่มีสินค้าแบบ <b>แบ่งจอ</b> — ไปที่ <Link href={to('/admin/products')}>สินค้า</Link> → เพิ่มจากแม่แบบ เช่น Netflix (ตั้งวิธีส่งของเป็นแบ่งจอให้แล้ว) แล้วกลับมาเพิ่มบัญชีที่นี่</p></div>
+        <div className="card card-pad"><p style={{ margin: 0 }}>ยังไม่มีสินค้าแบบ <b>แบ่งจอ</b> — ไปที่ <Link href={to('/admin/products')}>สินค้า</Link> → ระบบแบ่งจอ แล้วเลือกแอป เช่น Netflix จากนั้นกลับมาเพิ่มบัญชีที่นี่</p></div>
       </>
     );
   }
