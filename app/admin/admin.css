@@ -426,6 +426,10 @@ body::before { height: 360px; }
 }
 
 .row-acts { display: flex; gap: 6px; justify-content: flex-end; white-space: nowrap; }
+.deliver-mail { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.deliver-mail input { margin-top: 4px; }
+.deliver-mail b { display: block; font-size: 14px; }
+.deliver-mail small { display: block; font-size: 12px; }
 
 /* คลังบัญชี: แพ็กเกจที่บัญชีขายได้ตอนนี้ */
 .acc-sell { padding: 10px 20px; border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }

@@ -13,15 +13,21 @@ export type AdminOrder = { id: string; code: string; status: string; total: numb
 const refundOf = (o: AdminOrder, i: Item) => (o.subtotal ? Math.round((i.total * o.total / o.subtotal) * 100) / 100 : i.total);
 
 /** ตารางออเดอร์ + แผงรายละเอียดเลื่อนจากขวา (ส่งของ / คืนเงิน) */
-export function OrdersTable({ rows }: { rows: AdminOrder[] }) {
+export function OrdersTable({ rows, mailOn }: { rows: AdminOrder[]; mailOn: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState<AdminOrder | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  async function act(itemId: string, action: 'deliver' | 'refund', content: string) {
+  async function resendMail(itemId: string) {
     setBusy(true); setErr('');
-    const r = await api(`/api/admin/items/${itemId}`, { action, content });
+    const r = await api(`/api/admin/items/${itemId}`, { action: 'notify' });
+    setBusy(false);
+    if (r.ok) notify('ส่งอีเมลแจ้งลูกค้าแล้ว'); else setErr(r.error);
+  }
+  async function act(itemId: string, action: 'deliver' | 'refund', content: string, mail = true) {
+    setBusy(true); setErr('');
+    const r = await api(`/api/admin/items/${itemId}`, { action, content, mail });
     setBusy(false);
     if (!r.ok) { setErr(r.error); return; }
     notify(action === 'deliver' ? 'ส่งให้ลูกค้าแล้ว ลูกค้ารับได้ที่หน้าประวัติการซื้อ' : 'คืนเงินเข้ากระเป๋าลูกค้าแล้ว');
@@ -69,7 +75,8 @@ export function OrdersTable({ rows }: { rows: AdminOrder[] }) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><b>{i.name} ×{i.qty}</b><span className={`pill ${is.tone}`}>{is.label}</span></div>
                   {i.customer_info && <div className="delivered" style={{ background: 'var(--accent-soft)' }}>📝 ลูกค้ากรอก: {i.customer_info}</div>}
                   {i.delivered && <div className="delivered">{i.delivered}</div>}
-                  {i.status === 'queued' && <DeliverBox key={i.id} busy={busy} refund={refundOf(open, i)} onDeliver={(c) => act(i.id, 'deliver', c)} onRefund={(why) => act(i.id, 'refund', why)} />}
+                  {i.status === 'queued' && <DeliverBox key={i.id} busy={busy} refund={refundOf(open, i)} mailOn={mailOn} onDeliver={(c, mail) => act(i.id, 'deliver', c, mail)} onRefund={(why) => act(i.id, 'refund', why)} />}
+                  {mailOn && i.fulfillment === 'manual' && i.status === 'delivered' && <button type="button" className="btn sm" style={{ justifySelf: 'start' }} disabled={busy} onClick={() => resendMail(i.id)}>📧 แจ้งลูกค้าทางอีเมล</button>}
                 </div>
               );
             })}

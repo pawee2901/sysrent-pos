@@ -7,7 +7,8 @@ import { input } from '@/components/dialog';
 type Field = { label: string; value: string };
 
 /** สินค้าสั่งทำ: ร้านทำบัญชีเสร็จแล้วกรอก → ส่งให้ลูกค้า (ลูกค้ารับที่หน้าประวัติการซื้อ) · แยกช่อง หรือข้อความยาว */
-export function DeliverBox({ busy, refund, onDeliver, onRefund }: { busy: boolean; refund: number; onDeliver: (content: string) => void; onRefund: (reason: string) => void }) {
+export function DeliverBox({ busy, refund, mailOn, onDeliver, onRefund }: { busy: boolean; refund: number; mailOn: boolean; onDeliver: (content: string, mail: boolean) => void; onRefund: (reason: string) => void }) {
+  const [mail, setMail] = useState(true);
   const [mode, setMode] = useState<'fields' | 'text'>('fields');
   const [fields, setFields] = useState<Field[]>([{ label: 'อีเมล', value: '' }, { label: 'รหัสผ่าน', value: '' }, { label: 'โปรไฟล์', value: '' }]);
   const [text, setText] = useState('');
@@ -40,9 +41,12 @@ export function DeliverBox({ busy, refund, onDeliver, onRefund }: { busy: boolea
         <textarea className="input" rows={5} maxLength={4000} value={text} onChange={(e) => setText(e.target.value)} placeholder={'เช่น เชิญอีเมลเข้าครอบครัวแล้ว\nลิงก์เข้าร่วม: https://...'} />
       )}
       {content && <div className="deliver-preview"><small className="faint">👀 ลูกค้าจะเห็นแบบนี้ในหน้าประวัติการซื้อ</small><Delivered content={content} /></div>}
+      {mailOn
+        ? <label className="deliver-mail"><input type="checkbox" checked={mail} onChange={(e) => setMail(e.target.checked)} /><span><b>📧 แจ้งลูกค้าทางอีเมล</b><small className="faint">ส่งให้เมื่อกดทำเสร็จแล้ว · ลูกค้าต้องใส่อีเมลในบัญชีไว้</small></span></label>
+        : <small className="faint">🔒 แจ้งลูกค้าทางอีเมลใช้ได้กับแพ็กเกจ Pro ขึ้นไป</small>}
       <div className="deliver-acts">
         <button type="button" className="btn danger" disabled={busy} onClick={refundNow}>คืนเงิน {baht(refund)}</button>
-        <button type="button" className="btn primary" disabled={busy || !content} onClick={() => onDeliver(content)}>{busy ? 'กำลังส่ง…' : 'ทำเสร็จแล้ว ส่งให้ลูกค้า'}</button>
+        <button type="button" className="btn primary" disabled={busy || !content} onClick={() => onDeliver(content, mailOn && mail)}>{busy ? 'กำลังส่ง…' : 'ทำเสร็จแล้ว ส่งให้ลูกค้า'}</button>
       </div>
     </div>
   );
