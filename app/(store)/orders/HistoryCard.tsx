@@ -9,6 +9,7 @@ import { stripPlain } from '@/lib/fields';
 import { DownloadImage } from '@/components/DownloadImage';
 import { notify } from '@/components/dialog';
 import { ReportDialog } from './ReportDialog';
+import { Layer } from '@/components/Layer';
 import { SubCard } from '../my/SubCard';
 import { OtpButton } from '@/components/OtpButton';
 import type { OtpButton as OtpInfo } from '@/lib/otp-button';
@@ -127,7 +128,7 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
           ))}
         </div>
       )}
-      {reporting && <ReportDialog code={o.code} onClose={() => setReporting(false)} onSent={() => { setReporting(false); notify('ส่งเรื่องให้ร้านแล้ว ร้านจะตอบกลับในหน้านี้'); router.refresh(); }} />}
+      {reporting && <Layer><ReportDialog code={o.code} onClose={() => setReporting(false)} onSent={() => { setReporting(false); notify('ส่งเรื่องให้ร้านแล้ว ร้านจะตอบกลับในหน้านี้'); router.refresh(); }} /></Layer>}
     </article>
   );
 }

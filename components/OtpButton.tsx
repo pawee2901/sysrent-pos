@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { api } from '@/components/Cart';
 import { notify } from '@/components/dialog';
 import type { OtpButton as Btn } from '@/lib/otp-button';
+import { Layer } from '@/components/Layer';
 
 type Hit = { code: string | null; link: string | null; subject: string; date: string };
 const time = (s: string) => new Date(s).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' });
@@ -35,7 +36,7 @@ export function OtpButton({ otp, label }: { otp: Btn; label?: string }) {
   return (
     <>
       <button type="button" className="btn otp-btn" onClick={() => setOpen(true)}>🔐 {label ?? 'รับรหัส OTP'}</button>
-      {open && (
+      {open && (<Layer>
         <div className="rd-bg" onClick={(e) => { if (e.target === e.currentTarget) close(); }}>
           <div className="rd" role="dialog" aria-modal="true" aria-labelledby="otpb-title">
             <div className="rd-head">
@@ -68,7 +69,7 @@ export function OtpButton({ otp, label }: { otp: Btn; label?: string }) {
             <div className="rd-foot"><button type="button" className="btn" onClick={close} disabled={busy}>ปิด</button></div>
           </div>
         </div>
-      )}
+      </Layer>)}
     </>
   );
 }

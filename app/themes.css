@@ -303,3 +303,12 @@
 /* สีกล่องบนธีมมืด (นีออน): โปร่งแสง = กระจกสีเข้ม · ตามพื้นหลัง = เข้มอมสีร้าน */
 .store.store[data-style="neon"][data-card="glass"] { --surface: rgba(17, 15, 30, .6); --surface-2: rgba(26, 23, 48, .5); --line: color-mix(in srgb, var(--accent) 30%, transparent); }
 .store.store[data-style="neon"][data-card="tint"] { --surface: color-mix(in srgb, var(--accent) 10%, #110f1e); --surface-2: color-mix(in srgb, var(--accent) 16%, #1a1730); --line: color-mix(in srgb, var(--accent) 40%, #1f1c33); --accent-soft: color-mix(in srgb, var(--accent) 22%, #110f1e); }
+
+/* การ์ดกระจก + ธีมพื้นมืด (นีออน): กระจกโทนมืดแทนกระจกขาว (ตัวหนังสือธีมนี้สีอ่อน · กระจกขาว = อ่านไม่ออก) */
+.store.store[data-style="neon"][data-card="glass"] {
+  --surface: rgba(17, 15, 30, .66); --surface-2: rgba(26, 23, 48, .55); --line: color-mix(in srgb, var(--accent) 30%, rgba(255, 255, 255, .14));
+}
+.store[data-style="neon"][data-card="glass"] .umenu-pop, .store[data-style="neon"][data-card="glass"] .popup { background: rgba(17, 15, 30, .95); }
+/* หน้าต่างลอย (รับรหัส OTP / แจ้งปัญหา) บนการ์ดกระจก = พื้นทึบ อ่านง่าย ไม่เห็นของข้างหลังทะลุ */
+.store[data-card="glass"] .rd { background: rgba(255, 255, 255, .97); }
+.store[data-style="neon"][data-card="glass"] .rd { background: #110f1e; }
