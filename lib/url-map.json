@@ -23,6 +23,7 @@
     "/products": "/catalog",
     "/reports": "/tickets",
     "/settings": "/config",
-    "/otp": "/codes"
+    "/otp": "/codes",
+    "/renewals": "/renew"
   }
 }

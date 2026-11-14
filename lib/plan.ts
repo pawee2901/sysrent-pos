@@ -13,11 +13,11 @@ export const SLIP_QUOTA: Record<Plan, number> = { starter: 50, pro: 200, max: 50
 /** จำนวนคูปองสูงสุด (null = ไม่จำกัด) */
 export const COUPON_LIMIT: Record<Plan, number | null> = { starter: 3, pro: null, max: null };
 
-export type Feature = 'report' | 'agents' | 'appearance' | 'mail' | 'otp' | 'accounting' | 'staff' | 'export' | 'premium_themes';
-const PRO: Feature[] = ['report', 'agents', 'appearance', 'mail'];
+export type Feature = 'report' | 'agents' | 'appearance' | 'mail' | 'renewals' | 'otp' | 'accounting' | 'staff' | 'export' | 'premium_themes';
+const PRO: Feature[] = ['report', 'agents', 'appearance', 'mail', 'renewals'];
 const FEATURES: Record<Plan, Feature[]> = { starter: [], pro: PRO, max: [...PRO, 'otp', 'accounting', 'staff', 'export', 'premium_themes'] };
 export const FEATURE_LABEL: Record<Feature, string> = {
-  report: 'ปุ่มแจ้งปัญหา', agents: 'ระบบตัวแทนราคาส่ง', appearance: 'ฟอนต์ · เอฟเฟกต์ · เพลง', mail: 'อีเมลแจ้งลูกค้า',
+  report: 'ปุ่มแจ้งปัญหา', agents: 'ระบบตัวแทนราคาส่ง', appearance: 'ฟอนต์ · เอฟเฟกต์ · เพลง', mail: 'อีเมลแจ้งลูกค้า', renewals: 'ต่อเมลอัตโนมัติผ่าน LINE',
   otp: 'ค้นหา OTP', accounting: 'บัญชี รายรับ ต้นทุน กำไร', staff: 'แอดมินพนักงาน', export: 'ส่งออก Excel', premium_themes: 'ธีมพิเศษทุกแบบ',
 };
 

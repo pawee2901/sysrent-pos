@@ -22,7 +22,8 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || req.nextUrl.pathname.startsWith('/api/internal/')) return NextResponse.next();
+  // /api/line/ = Webhook ที่ LINE ส่งมา (ไม่มี Origin) — ตรวจลายเซ็น Channel secret ของร้านแทน
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || req.nextUrl.pathname.startsWith('/api/internal/') || req.nextUrl.pathname.startsWith('/api/line/')) return NextResponse.next();
   const origin = req.headers.get('origin');
   const host = req.headers.get('host');
   let from = '';

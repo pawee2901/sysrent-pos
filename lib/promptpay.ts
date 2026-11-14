@@ -38,6 +38,12 @@ function crc16(s: string) {
   return crc.toString(16).toUpperCase().padStart(4, '0');
 }
 
+/** รูป QR (PNG) สำหรับส่งเข้าแชท LINE (ต่อเมล) */
+export async function promptPayQrPng(id: string, amount: number): Promise<Buffer> {
+  const { default: QRCode } = await import('qrcode');
+  return QRCode.toBuffer(promptPayPayload(id, amount), { type: 'png', width: 720, margin: 3, errorCorrectionLevel: 'M' });
+}
+
 /** รูป QR (SVG) ของร้าน — เลขพร้อมเพย์ของร้านนั้น (ไม่ใช่ของ SysRent) */
 export async function promptPayQrSvg(id: string, amount: number): Promise<string> {
   const { default: QRCode } = await import('qrcode');

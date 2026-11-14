@@ -9,11 +9,11 @@ import { PLAN_LABEL, PLAN_PRICE, can, isPlan, type Feature } from '@/lib/plan';
 import { PERMS } from '@/lib/perms';
 import { TutorialButton } from './TutorialButton';
 
-const LOCKS: Record<string, Feature> = { '/otp': 'otp', '/accounting': 'accounting', '/agents': 'agents', '/reports': 'report' };
+const LOCKS: Record<string, Feature> = { '/otp': 'otp', '/accounting': 'accounting', '/agents': 'agents', '/reports': 'report', '/renewals': 'renewals' };
 const PERM_OF: Record<string, string> = Object.fromEntries(PERMS.map((p) => [p.href, p.key]));
 
 const MENU: { g: string; items: [string, string, string][] }[] = [
-  { g: 'ร้านค้า', items: [['', 'ภาพรวม', 'home'], ['/orders', 'ออเดอร์', 'orders'], ['/reports', 'แจ้งปัญหา', 'alert'], ['/products', 'สินค้า', 'products'], ['/accounts', 'คลังบัญชี', 'accounts'], ['/coupons', 'คูปอง', 'coupons']] },
+  { g: 'ร้านค้า', items: [['', 'ภาพรวม', 'home'], ['/orders', 'ออเดอร์', 'orders'], ['/reports', 'แจ้งปัญหา', 'alert'], ['/products', 'สินค้า', 'products'], ['/accounts', 'คลังบัญชี', 'accounts'], ['/renewals', 'ต่อเมล', 'mail'], ['/coupons', 'คูปอง', 'coupons']] },
   { g: 'ลูกค้าและเงิน', items: [['/customers', 'ลูกค้า', 'customers'], ['/agents', 'ตัวแทน', 'agents'], ['/otp', 'ค้นหา OTP', 'lock'], ['/payments', 'การชำระเงิน', 'payments'], ['/accounting', 'บัญชี', 'chart']] },
   // ซ่อนไว้ก่อน (ยังไม่มีหน้า): Smart Stock (/smart-stock)
   { g: 'ร้านของฉัน', items: [['/settings', 'ตั้งค่าร้าน', 'settings']] },

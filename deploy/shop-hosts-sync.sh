@@ -32,3 +32,6 @@ if [ "$((10#$(TZ=ICT-7 date +%H%M)))" -ge 5 ] && [ "$(cat "$DAILY" 2>/dev/null |
     echo "$DAY" > "$DAILY"
   fi
 fi
+
+# ต่อเมลผ่าน LINE: เตือนลูกค้าก่อนหมด / แจ้งร้านเมื่อเลยกำหนด (ทุก 1 นาที · ไม่สำเร็จ = รอบหน้าทำใหม่)
+curl -fsS --max-time 50 -X POST -H "x-internal-key: $KEY" http://127.0.0.1:3002/api/internal/renewals >/dev/null || true

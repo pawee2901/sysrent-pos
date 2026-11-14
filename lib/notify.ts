@@ -61,6 +61,18 @@ function fire(shop: Pick<Shop, 'id' | 'name'>, event: NotifyEvent, build: () => 
   });
 }
 
+/**
+ * ต่อเมล (LINE): ลูกค้าต่อแล้ว / ต้องเพิ่มเมลกลับ / เลยกำหนดให้ลบเมล / เตือนลูกค้าไม่ได้ / สลิปต้องตรวจเอง
+ * เป็นงานที่ร้านต้องทำ → ส่งเสมอเมื่อร้านตั้ง Discord ไว้ (ไม่ขึ้นกับการติ๊กเลือกเรื่องที่แจ้ง)
+ * รอผล (await) เพราะเรียกจาก cron / webhook ที่ทำงานหลังตอบแล้ว
+ */
+export async function notifyRenewal(shop: Pick<Shop, 'id' | 'name'>, title: string, lines: string[], color = 0x6366f1, here = false) {
+  const s = await settings(shop.id);
+  if (!s) return;
+  const r = await postDiscord(s.url, shop.name, [{ title: title.slice(0, 256), description: lines.join('\n').slice(0, 4000), color }], here ? '@here' : undefined);
+  if (!r.ok) console.error('[discord] renewal', shop.id, r.error);
+}
+
 /** ออเดอร์จ่ายแล้ว → แจ้งออเดอร์ · มีรายการสั่งทำ = แจ้งแยก (แท็ก @here) · ของใกล้หมด = แจ้งแยก */
 export function notifyOrderPaid(shop: Pick<Shop, 'id' | 'name' | 'slug'>, orderId: string) {
   const load = async () => {
