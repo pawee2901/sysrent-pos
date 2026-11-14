@@ -4,9 +4,11 @@ import { db } from '@/lib/db';
 import { body, fail, requireAdmin } from '@/lib/api';
 import { shopCategories } from '@/lib/categories';
 import { markPlain } from '@/lib/fields';
+import { can } from '@/lib/plan';
 
 const SHORT_PLANS = [25, 15, 7, 3];
 const httpsUrl = z.string().trim().max(500).refine((u) => /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https');
+const otpEmail = z.string().trim().toLowerCase().max(120).refine((e) => !e || /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(e), 'เมลรับ OTP ไม่ถูกต้อง');
 const money = z.number().positive('ราคาต้องมากกว่า 0').max(1_000_000);
 const opt = z.object({
   id: z.string().uuid().optional(),
@@ -36,12 +38,16 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('toggle'), id: z.string().uuid(), active: z.boolean() }),
   z.object({ action: z.literal('delete'), id: z.string().uuid() }),
   // mode line = 1 บรรทัด 1 ชิ้น · block = ทั้งข้อความ 1 ชิ้น (หลายชิ้นคั่นด้วยบรรทัด ---) · repeat = เพิ่มชิ้นเดิมซ้ำ (เช่น ลิงก์เชิญทีมใช้ได้หลายคน)
-  z.object({ action: z.literal('stock'), optionId: z.string().uuid(), text: z.string().min(1).max(200_000), mode: z.enum(['line', 'block']).default('line'), repeat: z.number().int().min(1).max(500).default(1), plain: z.boolean().default(false) }),
+  z.object({ action: z.literal('stock'), optionId: z.string().uuid(), text: z.string().min(1).max(200_000), mode: z.enum(['line', 'block']).default('line'), repeat: z.number().int().min(1).max(500).default(1), plain: z.boolean().default(false),
+    // เมลรับ OTP (ปุ่มรับรหัส OTP): otp_emails = ทีละชิ้นตามลำดับใน text · otp_email = ใช้กับทุกชิ้นที่เพิ่มครั้งนี้ · '' = ชิ้นนั้นไม่มีปุ่ม
+    otp_emails: z.array(otpEmail).max(2000).optional(), otp_email: otpEmail.optional() }),
   // แบ่งจอ: เพิ่มแพ็กเกจสั้น เมื่อบัญชีเหลือวันไม่พอขายแพ็กเกจที่มี · days = วันที่บัญชีเหลือ · ไม่ส่ง plans = ขอรายการพร้อมราคาแนะนำ · ส่ง plans = บันทึกตามราคาที่แอดมินยืนยัน
   z.object({ action: z.literal('short_plans'), id: z.string().uuid(), days: z.number().int().min(1).max(3650), plans: z.array(z.object({ days: z.number().int().min(1).max(3650), price: money })).min(1).max(12).optional() }),
   // usage_images / images = หลายรูป (ต้องรัน 0029) · usage_image = รูปวิธีใช้รูปเดียวแบบเดิม (0012)
   z.object({ action: z.literal('usage'), id: z.string().uuid(), usage: z.string().max(3000),
     usage_images: z.array(httpsUrl).max(20).optional(), images: z.array(httpsUrl).max(20).optional(), usage_image: z.string().trim().max(500).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https').optional() }),
+  // ปุ่มรับ OTP ในหน้าประวัติการซื้อ: app_id = แอป OTP ที่ปุ่มค้น · null = ปิดปุ่ม (ต้องรัน 0032)
+  z.object({ action: z.literal('otp'), id: z.string().uuid(), app_id: z.string().uuid().nullable() }),
 ]);
 
 /** จัดการสินค้า + แพ็กเกจ + เพิ่มสต็อก (ทุกคำสั่งตรวจว่าเป็นของร้านนี้) */
@@ -154,6 +160,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, notice: added.length ? `เพิ่มแพ็กเกจแล้ว: ${added.join(' · ')}` : 'ไม่มีแพ็กเกจให้เพิ่ม' });
   }
 
+  if (x.action === 'otp') {
+    if (!(await own(x.id))) return fail('ไม่พบสินค้า', 404);
+    if (x.app_id) {
+      if (!can(a.shop.plan, 'otp')) return fail('ปุ่มรับ OTP ใช้ได้ในแพ็กเกจที่มีระบบค้นหา OTP', 403);
+      const { data: app } = await d.from('shop_otp_apps').select('id').eq('id', x.app_id).eq('shop_id', sid).maybeSingle();
+      if (!app) return fail('ไม่พบแอป OTP นี้', 404);
+    }
+    const { error } = await d.from('shop_products').update({ otp_app_id: x.app_id }).eq('id', x.id);
+    return error ? fail(error.message.includes('otp_app_id') ? 'ยังไม่ได้รัน SQL 0032_product_otp_button.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
+
   if (x.action === 'usage') {
     if (!(await own(x.id))) return fail('ไม่พบสินค้า', 404);
     const upd: Record<string, unknown> = { usage: x.usage.trim() };
@@ -172,11 +189,18 @@ export async function POST(req: Request) {
   if ((o.shop_products as unknown as { fulfillment: string }).fulfillment !== 'stock') return fail('สินค้านี้ไม่ได้เป็นแบบส่งอัตโนมัติ');
   const t = x.text.replace(/\r\n/g, '\n').trim();
   const parts = x.mode === 'block' ? t.split(/^\s*-{3,}\s*$/m) : t.split('\n');
-  const uniq = [...new Set(parts.map((s) => (x.mode === 'block' ? s.replace(/^\n+|\s+$/g, '') : s.trim())).filter((s) => s.trim()).map((s) => s.slice(0, 4000)))];
+  // จับคู่ชิ้น ↔ เมลรับ OTP ก่อนตัดชิ้นซ้ำ (ซ้ำ = ใช้เมลของชิ้นแรก)
+  const pairs = new Map<string, string>();
+  parts.forEach((s, k) => {
+    const c = (x.mode === 'block' ? s.replace(/^\n+|\s+$/g, '') : s.trim()).slice(0, 4000);
+    if (c.trim() && !pairs.has(c)) pairs.set(c, x.otp_emails?.[k] || x.otp_email || '');
+  });
+  const uniq = [...pairs.keys()];
   const items = uniq.flatMap((c) => Array.from({ length: x.repeat ?? 1 }, () => c));
   if (!items.length) return fail('ไม่มีรายการให้เพิ่ม');
   if (items.length > 2000) return fail('เพิ่มได้ครั้งละไม่เกิน 2,000 ชิ้น');
-  const { error } = await d.from('shop_stock').insert(items.map((content) => ({ option_id: x.optionId, content: x.plain ? markPlain(content) : content })));
-  if (error) return fail('เพิ่มสต็อกไม่สำเร็จ', 500);
+  const withOtp = items.some((c) => pairs.get(c));
+  const { error } = await d.from('shop_stock').insert(items.map((content) => ({ option_id: x.optionId, content: x.plain ? markPlain(content) : content, ...(withOtp ? { otp_email: pairs.get(content) || null } : {}) })));
+  if (error) return fail(withOtp && error.message.includes('otp_email') ? 'ยังไม่ได้รัน SQL 0032_product_otp_button.sql (เมลรับ OTP)' : 'เพิ่มสต็อกไม่สำเร็จ', 500);
   return NextResponse.json({ ok: true, notice: `เพิ่มสต็อกแล้ว ${items.length} ชิ้น` });
 }

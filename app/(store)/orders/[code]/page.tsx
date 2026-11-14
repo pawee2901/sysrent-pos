@@ -10,6 +10,8 @@ import { Delivered } from '@/components/Delivered';
 import { DownloadImage } from '@/components/DownloadImage';
 import { SubCard } from '../../my/SubCard';
 import { productMedia } from '@/lib/media';
+import { otpApps, otpEmails } from '@/lib/otp-button';
+import { OtpButton } from '@/components/OtpButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +30,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
   const items = (o.shop_order_items ?? []) as I[];
   // วิธีการใช้งานของสินค้า (ยังไม่รัน 0011 = ไม่แสดง)
   const ids = [...new Set(items.map((i) => i.product_id))];
-  const media = (await productMedia({ ids })).map;
+  const [media, otp, otpMail] = await Promise.all([productMedia({ ids }).then((m) => m.map), otpApps(shop, ids), otpEmails(items.filter((i) => i.status === 'delivered').map((i) => i.id))]);
   const usage: Record<string, string> = Object.fromEntries([...media].map(([id, m]) => [id, m.usage]));
   const usageImg: Record<string, string[]> = Object.fromEntries([...media].map(([id, m]) => [id, m.usageImages]));
   // หมดประกัน = วันจ่าย + จำนวนวันของแพ็กเกจ
@@ -59,6 +61,11 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
                 const sub = subOf(i.id);
                 if (sub) return <SubCard s={{ id: sub.id, active: sub.status === 'active', startsAt: sub.starts_at, endsAt: sub.ends_at, productId: sub.shop_products?.id ?? '', name: sub.shop_products?.name ?? i.name, image: sub.shop_products?.image ?? '', template: sub.shop_products?.template ?? '' }} />;
                 return i.status === 'delivered' && i.delivered ? <Delivered content={i.delivered} warranty={warranty(i)} /> : null;
+              })()}
+              {(() => {
+                // ปุ่มรับ OTP: ร้านเปิดที่สินค้านี้ + แอดมินใส่เมลรับ OTP ไว้ที่สต็อกชิ้นที่ลูกค้าได้
+                const app = otp.get(i.product_id), emails = otpMail.get(i.id) ?? [];
+                return app && emails.length && i.status === 'delivered' ? <div style={{ width: '100%' }}><OtpButton otp={{ ...app, emails }} /></div> : null;
               })()}
               {i.status === 'delivered' && (usage[i.product_id] || usageImg[i.product_id]?.length) && (
                 <details className="usage-box" open><summary>📖 วิธีการใช้งาน</summary>

@@ -10,10 +10,14 @@ import { DownloadImage } from '@/components/DownloadImage';
 import { notify } from '@/components/dialog';
 import { ReportDialog } from './ReportDialog';
 import { SubCard } from '../my/SubCard';
+import { OtpButton } from '@/components/OtpButton';
+import type { OtpButton as OtpInfo } from '@/lib/otp-button';
 
 export type HItem = {
   id: string; name: string; total: number; queued: boolean; delivered: string | null; warranty: string | null;
   usage: string; usageImages: string[];
+  /** ปุ่มรับ OTP (ร้านเปิดไว้ที่สินค้านี้) */
+  otp: OtpInfo | null;
   sub: { id: string; active: boolean; startsAt: string; endsAt: string; productId: string; image: string; template: string } | null;
 };
 export type HOrder = {
@@ -92,6 +96,7 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
       <div className="hcard-acts">
         {pending ? <Link href={to(`/checkout/${o.code}`)} className="btn primary">ไปจ่ายเงิน</Link>
           : paid && ready && <button type="button" className="btn hcard-show" onClick={() => setShow(!show)}>{show ? 'ซ่อนไอดี' : 'แสดงไอดี'}</button>}
+        {paid && o.items.filter((i) => i.otp).map((i, _k, all) => <OtpButton key={`otp${i.id}`} otp={i.otp!} label={all.length > 1 ? `รับรหัส OTP · ${i.name}` : undefined} />)}
         {paid && guides.length > 0 && <button type="button" className="btn" aria-expanded={howto} onClick={() => setHowto(!howto)}>{howto ? 'ซ่อนวิธีใช้งาน' : '📖 ดูวิธีการใช้งาน'}</button>}
         {paid && canReport && (!o.report || o.report.status === 'resolved') && <button type="button" className="btn hcard-report-btn" onClick={report}>⚠️ แจ้งปัญหา</button>}
       </div>

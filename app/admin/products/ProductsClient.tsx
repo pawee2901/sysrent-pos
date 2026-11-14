@@ -15,15 +15,15 @@ import { markPlain } from '@/lib/fields';
 type OptF = { id?: string; name: string; price: string; compare_at: string; cost: string; duration_days: string; agent_price: string; active: boolean };
 type Form = { id?: string; name: string; category: string; description: string; image: string; template: string; fulfillment: 'stock' | 'slot' | 'manual'; badge: string; askInfo: string; active: boolean; options: OptF[] };
 const num = (s: string) => (s.trim() === '' ? null : Number(s));
-type StockForm = { optionId: string; mode: 'fields' | 'block'; text: string; repeat: string; cols: string[]; rows: string[][] };
+type StockForm = { optionId: string; mode: 'fields' | 'block'; text: string; repeat: string; cols: string[]; rows: string[][]; otp: string[]; otpAll: string };
 const DEFAULT_COLS = ['อีเมล', 'รหัสผ่าน', 'โปรไฟล์'];
-const newStock = (optionId: string): StockForm => ({ optionId, mode: 'fields', text: '', repeat: '1', cols: [...DEFAULT_COLS], rows: [['', '', '']] });
+const newStock = (optionId: string): StockForm => ({ optionId, mode: 'fields', text: '', repeat: '1', cols: [...DEFAULT_COLS], rows: [['', '', '']], otp: [], otpAll: '' });
 /** เติมค่าที่ขาด (เช่น state เก่าจากก่อนอัปเดตหน้า ที่ยังไม่มีตาราง) */
 const fillStock = (st: Partial<StockForm> & { optionId: string }): StockForm => {
   const base = newStock(st.optionId);
   const cols = st.cols?.length ? st.cols : base.cols;
   const rows = st.rows?.length ? st.rows : [cols.map(() => '')];
-  return { ...base, ...st, cols, rows, text: st.text ?? '', repeat: st.repeat ?? '1' };
+  return { ...base, ...st, cols, rows, text: st.text ?? '', repeat: st.repeat ?? '1', otp: st.otp ?? [], otpAll: st.otpAll ?? '' };
 };
 /** ตาราง → ชิ้นละหลายบรรทัด "หัวข้อ: ค่า" คั่นชิ้นด้วย --- (ลูกค้าเห็นแยกช่อง + ปุ่มคัดลอก) */
 function fieldsToText(st: StockForm) {
@@ -54,8 +54,9 @@ const fromProduct = (p: Product, ap: Record<string, number> = {}): Form => ({
 });
 
 /** สินค้า: ตาราง + เพิ่มจากแม่แบบ + แผงแก้ไข (ข้อมูล · แพ็กเกจ · สต็อก) */
-export function ProductsClient({ products, categories, usages, usageReady, usageImages, images, imgReady, galleryReady, agentPrices, agentsOn }: { products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string[]>; images: Record<string, string[]>; imgReady: boolean; galleryReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean }) {
+export function ProductsClient({ products, categories, usages, usageReady, usageImages, images, imgReady, galleryReady, agentPrices, agentsOn, otp }: { products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string[]>; images: Record<string, string[]>; imgReady: boolean; galleryReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean; otp: { ready: boolean; apps: { id: string; name: string }[]; picks: Record<string, string> } | null }) {
   const [usage, setUsage] = useState('');
+  const [otpApp, setOtpApp] = useState(''); // ปุ่มรับ OTP: '' = ปิด
   const [usageImgs, setUsageImgs] = useState<string[]>([]);
   const [gallery, setGallery] = useState<string[]>([]);
   /** อัปหลายรูปทีละไฟล์ · พังกลางทาง = เก็บที่อัปได้แล้ว */
@@ -86,7 +87,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
 
   /** เปิดแผงแก้ไข · ส่ง optionId มา = เปิดฟอร์มเพิ่มสต็อกของแพ็กเกจนั้นให้เลย */
   function openProduct(p: Product, stockOptionId?: string) {
-    setF(fromProduct(p, agentPrices)); setUsage(usages[p.id] ?? ''); setUsageImgs(usageImages[p.id] ?? []); setGallery(images[p.id] ?? []); setMsg('');
+    setF(fromProduct(p, agentPrices)); setOtpApp(otp?.picks[p.id] ?? ''); setUsage(usages[p.id] ?? ''); setUsageImgs(usageImages[p.id] ?? []); setGallery(images[p.id] ?? []); setMsg('');
     setStock(stockOptionId ? newStock(stockOptionId) : null);
   }
 
@@ -94,7 +95,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
     const t = templateOf(key)!;
     setF({ ...blank(), name: t.name, category: t.category, description: t.description, template: t.key, fulfillment: 'slot',
       options: t.plans.map(([n, price, days]) => ({ name: n, price: String(price), compare_at: '', cost: '', duration_days: String(days), agent_price: '', active: true })) });
-    setPick(false); setMsg(''); setUsage(''); setUsageImgs([]); setGallery([]);
+    setPick(false); setMsg(''); setUsage(''); setUsageImgs([]); setGallery([]); setOtpApp('');
   }
   async function save() {
     if (!f) return;
@@ -114,6 +115,11 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
       const media = galleryReady ? { usage_images: usageImgs, images: gallery } : imgReady ? { usage_image: usageImgs[0] ?? '' } : {};
       const u = await api('/api/admin/products', { action: 'usage', id: pid, usage, ...media });
       if (!u.ok) { setMsg(u.error); router.refresh(); return; }
+    }
+    // ปุ่มรับ OTP: บันทึกแยก เฉพาะเมื่อเปลี่ยน
+    if (pid && otp?.ready && otpApp !== (otp.picks[pid] ?? '')) {
+      const o = await api('/api/admin/products', { action: 'otp', id: pid, app_id: otpApp || null });
+      if (!o.ok) { setMsg(o.error); router.refresh(); return; }
     }
     setF(null); router.refresh();
   }
@@ -137,7 +143,12 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
     setBusy(true);
     const text = stock.mode === 'fields' ? fieldsToText(stock) : stock.text;
     if (!text.trim()) { setBusy(false); setMsg('ยังไม่ได้กรอกข้อมูล'); return; }
-    const r = await api<{ notice: string }>('/api/admin/products', { action: 'stock', optionId: stock.optionId, text, mode: 'block', plain: stock.mode === 'block', repeat: stock.mode === 'block' ? Math.max(1, Number(stock.repeat) || 1) : 1 });
+    // เมลรับ OTP: ตาราง = ทีละชิ้น (เฉพาะชิ้นที่กรอก ลำดับเดียวกับ fieldsToText) · ข้อความ = เมลเดียวทุกชิ้น
+    const st = fillStock(stock);
+    const otpMail = !otpApp ? {} : st.mode === 'fields'
+      ? { otp_emails: st.rows.map((row, k) => [row, k] as const).filter(([row]) => row.some((v) => v.trim())).map(([, k]) => (st.otp[k] ?? '').trim()) }
+      : { otp_email: st.otpAll.trim() };
+    const r = await api<{ notice: string }>('/api/admin/products', { action: 'stock', optionId: stock.optionId, text, mode: 'block', plain: stock.mode === 'block', repeat: stock.mode === 'block' ? Math.max(1, Number(stock.repeat) || 1) : 1, ...otpMail });
     setBusy(false);
     setMsg(r.ok ? r.data.notice : r.error);
     if (r.ok) { setStock(null); router.refresh(); }
@@ -149,7 +160,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   return (
     <>
       <div className="page-head"><div><h1>สินค้า</h1><p>สินค้าและแพ็กเกจที่ขายในร้าน · กดแถวเพื่อแก้ไข</p></div>
-        <div className="acts"><button type="button" className="btn" onClick={() => setPick(true)}>ระบบแบ่งจอ</button><button type="button" className="btn primary" onClick={() => { setF(blank()); setUsage(''); setUsageImgs([]); setGallery([]); setMsg(''); }}>+ เพิ่มสินค้า</button></div></div>
+        <div className="acts"><button type="button" className="btn" onClick={() => setPick(true)}>ระบบแบ่งจอ</button><button type="button" className="btn primary" onClick={() => { setF(blank()); setUsage(''); setUsageImgs([]); setGallery([]); setOtpApp(''); setMsg(''); }}>+ เพิ่มสินค้า</button></div></div>
       <div className="kpis">
         <div className="card kpi"><span className="lbl">เปิดขาย</span><span className="val num">{live.length}</span><span className="delta mute">จาก {products.length} สินค้า</span></div>
         <div className="card kpi"><span className="lbl">ของหมด</span><span className="val num">{live.filter((p) => !p.inStock).length}</span><span className="delta mute">{live.filter((p) => !p.inStock).map((p) => p.name).slice(0, 2).join(', ') || 'ไม่มี 👍'}</span></div>
@@ -249,6 +260,14 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
             <div className="field"><span>รูปวิธีการใช้งาน (ลูกค้าดูและดาวน์โหลดได้หลังซื้อ{galleryReady ? ' · ใส่กี่รูปก็ได้' : ''})</span>
               <ImageList urls={usageImgs} onChange={setUsageImgs} max={galleryReady ? MAX_IMAGES : 1} disabled={busy || !imgReady} upload={uploadMany} addLabel="รูปวิธีใช้" />
               <small className="faint" style={{ fontSize: 12 }}>{!imgReady ? '⚠️ ต้องรัน SQL 0012_usage_image.sql ก่อน' : galleryReady ? 'เช่น รูปขั้นตอนการเข้าใช้ทีละขั้น / ภาพแคปหน้าจอ · ลูกค้าเห็นเรียงตามลำดับนี้' : '⚠️ ตอนนี้ใส่ได้ 1 รูป · รัน SQL 0029_product_images.sql เพื่อใส่ได้หลายรูป'}</small></div>
+            {otp && (
+              <label className="field"><span>🔐 ปุ่มรับรหัส OTP (ลูกค้าเห็นในหน้าประวัติการซื้อ · ใส่เมลรับ OTP ตอนเพิ่มสต็อก)</span>
+                <select className="input" value={otpApp} disabled={!otp.ready || !otp.apps.length} onChange={(e) => setOtpApp(e.target.value)}>
+                  <option value="">ปิด — ไม่แสดงปุ่ม</option>
+                  {otp.apps.map((a) => <option key={a.id} value={a.id}>เปิด — ค้นรหัสของ {a.name}</option>)}
+                </select>
+                <small className="faint" style={{ fontSize: 12 }}>{!otp.ready ? '⚠️ ต้องรัน SQL 0032_product_otp_button.sql ก่อน' : !otp.apps.length ? 'เพิ่มแอปในหน้า "ค้นหา OTP" ก่อน แล้วค่อยเลือกที่นี่' : 'เปิดแล้ว ตอนกด "+ เพิ่มสต็อก" จะมีช่อง 📧 เมลรับ OTP ให้ใส่ทีละชิ้น · ชิ้นที่ใส่เมล = ลูกค้าที่ได้ชิ้นนั้นเห็นปุ่ม (ค้นได้เฉพาะเมลนั้น และสินค้าที่ยังไม่หมดอายุ)'}</small></label>
+            )}
             </div>
 
             <div className="pe-col">
@@ -281,12 +300,16 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                             <button key={k} type="button" role="radio" aria-checked={stock.mode === k} className={stock.mode === k ? 'on' : ''} onClick={() => setStock(fillStock({ ...stock, mode: k }))}><b>{l}</b><small>{d}</small></button>
                           ))}
                         </div>
-                        {stock.mode === 'fields' && <StockTable st={fillStock(stock)} set={setStock} />}
+                        {stock.mode === 'fields' && <StockTable st={fillStock(stock)} set={setStock} otpOn={!!otpApp} />}
                         {stock.mode === 'block' && <textarea className="input" rows={10} value={stock.text} onChange={(e) => setStock({ ...stock, text: e.target.value })}
                           placeholder={'วางข้อความทั้งก้อน = 1 ชิ้น เช่น\n🔗 Link เข้าร่วมทีม: https://...\n👥 Team: ...\n⏰ วันหมดอายุ: ...\n\n(จะเพิ่มหลายชิ้นในครั้งเดียว คั่นแต่ละชิ้นด้วยบรรทัด ---)'} />}
                         {stock.mode === 'block' && (
                           <label className="field" style={{ maxWidth: 300 }}><span>เพิ่มชิ้นนี้ซ้ำกี่ชิ้น (เช่น ลิงก์ทีมรับได้ 5 คน = 5)</span>
                             <input className="input" inputMode="numeric" value={stock.repeat} onChange={(e) => setStock({ ...stock, repeat: e.target.value.replace(/\D/g, '').slice(0, 3) })} /></label>
+                        )}
+                        {stock.mode === 'block' && otpApp && (
+                          <label className="field"><span>📧 เมลรับ OTP (ไม่บังคับ · ใช้กับทุกชิ้นที่เพิ่มครั้งนี้)</span>
+                            <input className="input" type="email" value={fillStock(stock).otpAll} placeholder="เช่น netflix01@gmail.com · เว้นว่าง = ไม่มีปุ่มรับ OTP" onChange={(e) => setStock({ ...fillStock(stock), otpAll: e.target.value })} /></label>
                         )}
                         <small className="faint">{stockCount(stock)}</small>
                         {(() => { const pv = previewOf(stock); return pv ? (
@@ -341,7 +364,7 @@ function ImageList({ urls, onChange, max, disabled, upload, addLabel }: { urls: 
   );
 }
 
-function StockTable({ st, set }: { st: StockForm; set: (s: StockForm) => void }) {
+function StockTable({ st, set, otpOn }: { st: StockForm; set: (s: StockForm) => void; otpOn: boolean }) {
   const setCell = (r: number, c: number, v: string) => set({ ...st, rows: st.rows.map((row, i) => (i === r ? row.map((x, j) => (j === c ? v : x)) : row)) });
   function paste(e: React.ClipboardEvent<HTMLInputElement>, r: number, c: number) {
     const t = e.clipboardData.getData('text').replace(/\r\n/g, '\n').trim();
@@ -376,11 +399,17 @@ function StockTable({ st, set }: { st: StockForm; set: (s: StockForm) => void })
       {st.rows.map((row, i) => (
         <div key={i} className="sv-item">
           <div className="sv-item-head"><b>ชิ้นที่ {i + 1}</b>
-            {st.rows.length > 1 && <button type="button" className="btn ghost sm" onClick={() => set({ ...st, rows: st.rows.filter((_, k) => k !== i) })}>🗑 ลบชิ้นนี้</button>}</div>
+            {st.rows.length > 1 && <button type="button" className="btn ghost sm" onClick={() => set({ ...st, rows: st.rows.filter((_, k) => k !== i), otp: st.otp.filter((_, k) => k !== i) })}>🗑 ลบชิ้นนี้</button>}</div>
           {st.cols.map((c, j) => (
             <label key={j} className="field sv-field"><span>{c || `ช่อง ${j + 1}`}</span>
               <input className="input" value={row[j] ?? ''} placeholder={`ใส่${c || 'ข้อมูล'}`} onChange={(e) => setCell(i, j, e.target.value)} onPaste={(e) => paste(e, i, j)} /></label>
           ))}
+          {/* เมลรับ OTP ของชิ้นนี้ (ร้านเปิดปุ่มรับ OTP ที่สินค้า) — ลูกค้าที่ได้ชิ้นนี้เห็นปุ่ม และค้นรหัสได้เฉพาะเมลนี้ */}
+          {otpOn && (
+            <label className="field sv-field"><span>📧 เมลรับ OTP (ไม่บังคับ)</span>
+              <input className="input" type="email" value={st.otp[i] ?? ''} placeholder="เว้นว่าง = ชิ้นนี้ไม่มีปุ่มรับ OTP"
+                onChange={(e) => { const otp = [...st.otp]; otp[i] = e.target.value; set({ ...st, otp }); }} /></label>
+          )}
         </div>
       ))}
 

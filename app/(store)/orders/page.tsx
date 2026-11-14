@@ -9,6 +9,7 @@ import { db } from '@/lib/db';
 import { canReport } from '@/lib/reports';
 import { productMedia } from '@/lib/media';
 import { HistoryCard, type HOrder } from './HistoryCard';
+import { otpApps, otpEmails } from '@/lib/otp-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,12 +30,14 @@ export default async function Orders() {
   const productIds = [...new Set(items.map((i) => i.product_id))];
 
   // ข้อมูลประกอบ (แต่ละอย่างพังได้โดยไม่ทำให้หน้าล่ม — เช่น ยังไม่รัน SQL ของฟีเจอร์นั้น)
-  const [opts, subs, usage, reports] = await Promise.all([
+  const [opts, subs, usage, reports, otp, otpMail] = await Promise.all([
     d.from('shop_options').select('id, duration_days').in('id', [...new Set(items.map((i) => i.option_id))]),
     d.from('shop_subscriptions').select('id, status, starts_at, ends_at, order_item_id, shop_products(id, image, template)').eq('shop_id', shop.id).eq('customer_id', me.id).in('order_item_id', items.map((i) => i.id)),
     productMedia({ ids: productIds }),
     d.from('shop_reports').select('order_id, topic, status, reply, image, created_at').eq('customer_id', me.id).in('order_id', rows.map((o) => o.id)).order('created_at', { ascending: false })
       .then((r) => (r.error ? d.from('shop_reports').select('order_id, topic, status, reply, created_at').eq('customer_id', me.id).in('order_id', rows.map((o) => o.id)).order('created_at', { ascending: false }) : r)),
+    otpApps(shop, productIds),
+    otpEmails(items.filter((i) => i.status === 'delivered').map((i) => i.id)),
   ]);
   type Sub = { id: string; status: string; starts_at: string; ends_at: string; order_item_id: string; shop_products: { id: string; image: string; template: string } | null };
   const subOf = (id: string) => ((subs.data ?? []) as unknown as Sub[]).find((s) => s.order_item_id === id);
@@ -59,7 +62,10 @@ export default async function Orders() {
       items: o.shop_order_items.map((i, k) => {
         const sub = subOf(i.id);
         const p = prod(i.product_id);
+        // ปุ่มรับ OTP: ร้านเปิดที่สินค้านี้ + แอดมินใส่เมลรับ OTP ไว้ที่สต็อกชิ้นที่ลูกค้าได้
+        const app = otp.get(i.product_id), emails = otpMail.get(i.id) ?? [];
         return {
+          otp: app && emails.length && i.status === 'delivered' ? { ...app, emails } : null,
           id: i.id, name: i.name, total: Number(i.total), queued: i.status === 'queued', delivered: i.status === 'delivered' ? i.delivered : null,
           warranty: ends[k] ? `${thDate(ends[k]!)}` : null, usage: p?.usage ?? '', usageImages: p?.usageImages ?? [],
           sub: sub ? { id: sub.id, active: sub.status === 'active', startsAt: sub.starts_at, endsAt: sub.ends_at, productId: sub.shop_products?.id ?? '', image: sub.shop_products?.image ?? '', template: sub.shop_products?.template ?? '' } : null,

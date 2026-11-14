@@ -1,5 +1,6 @@
 import 'server-only';
 import { db } from '@/lib/db';
+import { otpEmails } from '@/lib/otp-button';
 
 export type OtpAccount = { email: string; product: string; until: string };
 
@@ -7,7 +8,7 @@ const EMAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 const DAY = 86_400_000;
 const DEFAULT_DAYS = 30; // ตัวเลือกที่ไม่ได้กำหนดจำนวนวัน
 
-type Item = { name: string; status: string; fulfillment: string; delivered: string | null; customer_info: string | null; updated_at: string; shop_options: { duration_days: number | null } | null };
+type Item = { id: string; name: string; status: string; fulfillment: string; delivered: string | null; customer_info: string | null; updated_at: string; shop_options: { duration_days: number | null } | null };
 type Order = { paid_at: string | null; shop_order_items: Item[] };
 type Sub = { ends_at: string; shop_products: { name: string } | null; shop_slots: { shop_accounts: { login: string } | null } | null };
 
@@ -22,7 +23,7 @@ export async function otpAccounts(shopId: string, customerId: string): Promise<O
   const [subs, orders] = await Promise.all([
     d.from('shop_subscriptions').select('ends_at, shop_products(name), shop_slots(shop_accounts(login))')
       .eq('shop_id', shopId).eq('customer_id', customerId).eq('status', 'active').gt('ends_at', new Date(now).toISOString()).limit(200),
-    d.from('shop_orders').select('paid_at, shop_order_items(name, status, fulfillment, delivered, customer_info, updated_at, shop_options(duration_days))')
+    d.from('shop_orders').select('paid_at, shop_order_items(id, name, status, fulfillment, delivered, customer_info, updated_at, shop_options(duration_days))')
       .eq('shop_id', shopId).eq('customer_id', customerId).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(300),
   ]);
 
@@ -30,14 +31,19 @@ export async function otpAccounts(shopId: string, customerId: string): Promise<O
     const login = s.shop_slots?.shop_accounts?.login ?? '';
     for (const email of login.match(EMAIL) ?? []) add(email, s.shop_products?.name ?? '', new Date(s.ends_at).getTime());
   }
+  const live: { id: string; name: string; until: number }[] = [];
   for (const o of (orders.data ?? []) as unknown as Order[]) {
     for (const i of o.shop_order_items) {
       if (i.status !== 'delivered') continue;
       const start = new Date(i.fulfillment === 'manual' ? i.updated_at : (o.paid_at as string)).getTime();
       const until = start + (i.shop_options?.duration_days ?? DEFAULT_DAYS) * DAY;
       if (until <= now) continue;
+      live.push({ id: i.id, name: i.name.split(' · ')[0], until });
       for (const email of `${i.delivered ?? ''} ${i.customer_info ?? ''}`.match(EMAIL) ?? []) add(email, i.name.split(' · ')[0], until);
     }
   }
+  // เมลรับ OTP ที่แอดมินใส่เองตอนเพิ่มสต็อก (ปุ่มรับรหัส OTP) — อาจไม่อยู่ในข้อความที่ลูกค้าได้
+  const fromStock = await otpEmails(live.map((i) => i.id));
+  for (const i of live) for (const email of fromStock.get(i.id) ?? []) add(email, i.name, i.until);
   return [...found.values()].sort((a, b) => a.email.localeCompare(b.email));
 }

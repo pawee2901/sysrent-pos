@@ -553,3 +553,8 @@ a.promo:hover img { transform: scale(1.03); }
   background: color-mix(in srgb, var(--surface, #fff) 84%, transparent);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
+
+/* ปุ่มรับรหัส OTP (components/OtpButton.tsx) — สีเขียวเด่นจากปุ่มอื่นในการ์ดประวัติ */
+.otp-btn { background: #0f9f6e; border-color: #0f9f6e; color: #fff; font-weight: 700; }
+.otp-btn:hover { background: #0b8a5f; border-color: #0b8a5f; color: #fff; }
+.otpb-steps { margin: 0; padding: 12px 14px 12px 34px; display: grid; gap: 6px; border-radius: 14px; background: var(--surface-2); font-size: 14.5px; line-height: 1.55; }
