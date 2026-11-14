@@ -18,6 +18,7 @@ export function BuyBox({ product, options, open, children }: { product: P; optio
   const [msg, setMsg] = useState('');
   const [buying, setBuying] = useState(false);
   const [coupon, setCoupon] = useState('');
+  const [couponOpen, setCouponOpen] = useState(false);
   const o = options[pick];
   const max = !o ? 0 : product.fulfillment === 'stock' ? Math.min(20, o.stock ?? 0) : o.stock === 0 ? 0 : 1;
 
@@ -57,12 +58,23 @@ export function BuyBox({ product, options, open, children }: { product: P; optio
         })}
       </div>
       {children}
-      <label className="field" style={{ marginTop: 12 }}><span>โค้ดส่วนลด</span>
-        <input className="input" value={coupon} maxLength={20} placeholder="ถ้ามี เช่น NEW10" style={{ textTransform: 'uppercase', letterSpacing: '.05em' }} onChange={(e) => { setCoupon(e.target.value); setMsg(''); }} />
-        {coupon.trim() && <small className="faint" style={{ fontSize: 12 }}>ใช้กับปุ่ม &quot;ซื้อเลย&quot; · ถ้าใส่ตะกร้า ให้กรอกโค้ดอีกครั้งที่หน้าตะกร้า</small>}</label>
-      <div className="buy-bar">
-        <button type="button" className="btn lg" disabled={max < 1} onClick={() => { if (put()) setMsg('ใส่ตะกร้าแล้ว 🛒'); }}>ใส่ตะกร้า</button>
-        <button type="button" className="btn primary lg" disabled={max < 1 || buying} onClick={buyNow}>{buying ? 'กำลังสร้างออเดอร์…' : `ซื้อเลย ${o ? baht(o.price) : ''}`}</button>
+      <div className="buy-panel">
+        {!couponOpen ? (
+          <button type="button" className="coupon-toggle" onClick={() => setCouponOpen(true)}>🏷️ มีโค้ดส่วนลด?</button>
+        ) : (
+          <div className="coupon-row">
+            <span className="coupon-ic" aria-hidden>🏷️</span>
+            <input className="input" autoFocus aria-label="โค้ดส่วนลด" value={coupon} maxLength={20} placeholder="กรอกโค้ด เช่น NEW10" onChange={(e) => { setCoupon(e.target.value.toUpperCase()); setMsg(''); }} />
+            {coupon && <button type="button" className="coupon-clear" aria-label="ล้างโค้ด" onClick={() => setCoupon('')}>✕</button>}
+          </div>
+        )}
+        {coupon.trim() && <small className="faint coupon-hint">โค้ดใช้กับปุ่ม &quot;ซื้อเลย&quot; · ถ้าใส่ตะกร้า ให้กรอกอีกครั้งที่หน้าตะกร้า</small>}
+        <div className="buy-bar">
+          <button type="button" className="btn lg cart-btn" disabled={max < 1} onClick={() => { if (put()) setMsg('ใส่ตะกร้าแล้ว 🛒'); }}>🛒 ใส่ตะกร้า</button>
+          <button type="button" className="btn primary lg buy-btn" disabled={max < 1 || buying} onClick={buyNow}>
+            {buying ? 'กำลังสร้างออเดอร์…' : <><span>ซื้อเลย</span>{o && <b>{baht(o.price)}</b>}</>}
+          </button>
+        </div>
       </div>
       {product.askInfo && <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>📝 ร้านจะขอ <b>{product.askInfo}</b> ก่อนจ่ายเงิน</p>}
       {msg && <p className="muted" role="status" style={{ marginTop: 10 }}>{msg}</p>}

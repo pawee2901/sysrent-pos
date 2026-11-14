@@ -67,8 +67,20 @@
   .plan.on { border-color: var(--accent); background: var(--accent-soft); }
   .plan b { font-family: var(--font-head); font-size: 20px; }
   .plan s { font-size: 13px; color: var(--faint); }
-  .buy-bar { display: flex; gap: 10px; }
-  .buy-bar .btn { flex: 1; }
+  .buy-panel { margin-top: 18px; display: grid; gap: 12px; }
+  .coupon-toggle { justify-self: start; background: none; border: 0; padding: 2px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; text-decoration: underline dotted; text-underline-offset: 4px; }
+  .coupon-toggle:hover { color: var(--text); }
+  .coupon-row { position: relative; display: flex; align-items: center; }
+  .coupon-row .input { width: 100%; padding-left: 42px; padding-right: 40px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  .coupon-row .input::placeholder { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .coupon-ic { position: absolute; left: 14px; font-size: 16px; pointer-events: none; }
+  .coupon-clear { position: absolute; right: 8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--line); color: var(--muted); cursor: pointer; font-size: 12px; }
+  .coupon-hint { font-size: 12px; margin-top: -4px; }
+  .buy-bar { display: grid; grid-template-columns: 1fr 1.6fr; gap: 10px; }
+  .buy-bar .btn { min-width: 0; }
+  .buy-btn { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-left: 22px; padding-right: 22px; }
+  .buy-btn b { font-size: 1.1em; }
+  @media (max-width: 380px) { .buy-bar { grid-template-columns: 1fr; } .buy-bar .buy-btn { order: -1; } }
   .perks { margin-top: 22px; display: grid; gap: 10px; }
   .perk { display: flex; gap: 12px; align-items: center; padding: 12px 14px; font-size: 14px; }
   .perk i { font-style: normal; font-size: 20px; }
