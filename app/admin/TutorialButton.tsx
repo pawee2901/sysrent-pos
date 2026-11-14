@@ -15,6 +15,7 @@ const CLIPS: Record<string, { title: string; src: string }> = {
   '/payments': { title: 'วิธีดูการชำระเงินและตั้งบัญชีรับเงิน', src: '/tutorials/payments.mp4' },
   '/accounting': { title: 'วิธีใช้หน้าบัญชี', src: '/tutorials/accounting.mp4' },
   '/settings': { title: 'วิธีตั้งค่าร้าน', src: '/tutorials/settings.mp4' },
+  '/renewals': { title: 'วิธีเชื่อม LINE OA สำหรับต่อเมล', src: '/tutorials/renewals.mp4' },
 };
 
 /** ปุ่ม "วิธีใช้" บนแถบบน: แสดงเฉพาะหน้าที่มีคลิป · โหลดวิดีโอเมื่อกดเปิดเท่านั้น */
