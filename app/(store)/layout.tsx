@@ -37,7 +37,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const bg = (shop.bg_style === 'image' && !shop.bg_image) || (shop.bg_style === 'color' && !shop.bg_color) ? 'default' : shop.bg_style;
   return (
     <CartProvider shop={shop.slug}>
-    <div className="store" data-style={theme} data-card={shop.card_style ?? 'white'} style={{ ...(bg === 'color' ? { ['--tint' as string]: shop.bg_color } : {}), ...(font ? { ['--font' as string]: fontStack(font.family), ['--font-head' as string]: fontStack(font.family) } : {}) }}>
+    <div className="store" data-style={theme} data-card={shop.card_style ?? 'white'} data-fest={fest ?? undefined} style={{ ...(bg === 'color' ? { ['--tint' as string]: shop.bg_color } : {}), ...(font ? { ['--font' as string]: fontStack(font.family), ['--font-head' as string]: fontStack(font.family) } : {}) }}>
       {font && <link rel="stylesheet" href={fontHref(font.key)} precedence="default" />}
       <PageLoader kind={look?.loader ?? 'none'} logo={shop.logo_url} />
       {!fest && <FloatingFx effect={look?.effect ?? 'none'} />}
