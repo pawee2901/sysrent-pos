@@ -7,6 +7,7 @@ import { ACCENTS, HEX, accentHex, accentVars } from '@/lib/colors';
 import { DiscordCard } from './DiscordCard';
 import { MailCard, type MailInit } from './MailCard';
 import { AppearanceCard, type AppearanceInit } from './AppearanceCard';
+import { PromoCards, type Promo } from './PromoCards';
 
 /** ตัวแปร CSS ของชั้นพื้นหลัง (รูป / สี) สำหรับตัวอย่าง */
 const bgVars = (k: string, l: { bg_image: string; bg_color: string }): React.CSSProperties | undefined =>
@@ -25,7 +26,7 @@ const CARDS: [string, string][] = [['white', 'ขาว'], ['tint', 'ตาม�
 const BG_COLORS = ['#fff1f5', '#fdf2f8', '#f5f3ff', '#eef2ff', '#eff6ff', '#ecfeff', '#f0fdf4', '#f7fee7', '#fefce8', '#fff7ed', '#fdf6ec', '#f4f4f5'];
 
 /** ตั้งค่าร้าน + ตัวอย่างหน้าร้านบนมือถือ (เปลี่ยนแล้วเห็นทันที) */
-export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit }) {
+export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] } }) {
   const router = useRouter();
   const [f, setF] = useState(initial);
   const [look, setLook] = useState(lookInit);
@@ -209,6 +210,7 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
                 <textarea className="input" rows={2} value={look.popup_text} maxLength={300} placeholder="เช่น 🎉 โปรเปิดร้าน ใส่โค้ด NEW10 ลด 10%" onChange={(e) => setLook({ ...look, popup_text: e.target.value })} /></div>
               <label className="field"><span>ปุ่มในป๊อปอัปไปที่ (ไม่บังคับ)</span><input className="input" value={look.popup_link} maxLength={300} placeholder="/item/... หรือ https://..." onChange={(e) => setLook({ ...look, popup_link: e.target.value })} /></label>
             </div></section>}
+          {tab === 'home' && <PromoCards init={promos} />}
 
           {tab === 'pay' && <section className="card"><div className="card-head"><h2>รับเงิน</h2><span className={`pill ${payReady ? 'ok' : 'warn'}`}>{payReady ? 'พร้อมใช้' : 'ยังตั้งไม่ครบ'}</span><button type="button" className="btn primary sm" disabled={busy} onClick={() => save()}>บันทึก</button></div>
             <div className="form">

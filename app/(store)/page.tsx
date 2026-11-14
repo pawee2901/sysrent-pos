@@ -35,12 +35,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const shop = (await getShop())!;
   const { c = '', q = '' } = await searchParams;
   const d = db();
-  const [all, { count: members }, { data: recent }, me] = await Promise.all([
+  const [all, { count: members }, { data: recent }, me, { data: pc }] = await Promise.all([
     loadProducts(shop.id),
     d.from('shop_customers').select('id', { count: 'exact', head: true }).eq('shop_id', shop.id),
     d.from('shop_orders').select('paid_at, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(4),
     getCustomer(),
+    d.from('shops').select('promo_cards').eq('id', shop.id).maybeSingle(), // ยังไม่รัน 0031 = ไม่แสดงกล่องรูป
   ]);
+  const promos = (Array.isArray(pc?.promo_cards) ? pc.promo_cards as { image?: string; link?: string }[] : []).filter((x) => x.image);
   // ตัวแทน (ร้าน Pro): เห็นราคาตัวแทน · ราคาปกติขีดฆ่า
   const agent = await getAgent(shop, me?.id);
   const products = agent ? withAgentPrices(all, await agentPrices(all.flatMap((p) => p.options.map((o) => o.id)))) : all;
@@ -70,6 +72,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         </div>
         {products.length > 0 && <div className="hero-art">{products.slice(0, 6).map((p) => <AppLogo key={p.id} image={p.image} template={p.template} name={p.name} />)}</div>}
       </section>)}
+      {promos.length > 0 && (
+        <div className="promos">{promos.map((x, i) => x.link
+          ? <a key={i} href={x.link} className="promo"><img src={x.image} alt="" loading={i > 3 ? 'lazy' : undefined} /></a>
+          : <div key={i} className="promo"><img src={x.image} alt="" loading={i > 3 ? 'lazy' : undefined} /></div>)}</div>
+      )}
       {live.length > 0 && (
         <div className="live"><span className="live-dot" />{live.map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> ซื้อ {l.what} · {l.when}</span>)}</div>
       )}

@@ -46,6 +46,8 @@ const schema = z.discriminatedUnion('action', [
     loader: z.string().refine(isLoader, 'ไม่มีเอฟเฟกต์นี้'), music_url: z.string().trim().max(500).refine((u) => !u || !!parseMusic(u), 'ลิงก์เพลงไม่ถูกต้อง'),
   }),
   z.object({ action: z.literal('mail_test') }),
+  // กล่องรูปใต้รูปหน้าแรก (สูงสุด 8 · [] = ไม่แสดง)
+  z.object({ action: z.literal('promos'), cards: z.array(z.object({ image: https(500).refine(Boolean, 'ใส่รูปก่อน'), link })).max(8) }),
   z.object({ action: z.literal('admin'), username: z.string().trim().min(3, 'ชื่อผู้ดูแลอย่างน้อย 3 ตัว').max(40), password: z.string().min(8, 'รหัสผ่านอย่างน้อย 8 ตัว').max(72) }),
 ]);
 
@@ -102,6 +104,10 @@ export async function POST(req: Request) {
     // เปลี่ยนธีม = พื้นหลังกลับเป็น "ตามธีม" (รูปพื้นหลังที่อัปไว้ยังเก็บอยู่ เลือกกลับได้)
     const { error } = await d.from('shops').update({ theme: b.data.theme, bg_style: 'default' }).eq('id', a.shop.id);
     return error ? fail('บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
+  if (b.data.action === 'promos') {
+    const { error } = await d.from('shops').update({ promo_cards: b.data.cards }).eq('id', a.shop.id);
+    return error ? fail(/promo_cards/.test(error.message) ? 'ยังไม่ได้รัน SQL 0031_shop_promo_cards.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
   }
   if (b.data.action === 'shop' || b.data.action === 'look') {
     const { action: _a, ...upd } = b.data;
