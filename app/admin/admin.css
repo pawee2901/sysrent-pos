@@ -750,3 +750,8 @@ body::before { height: 360px; }
 .imgs-add span { font-size: 12px; }
 .imgs-add:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 .imgs-add:disabled { opacity: .5; cursor: not-allowed; }
+
+/* แถบซ้าย: เมนูยาวเกินจอ → เลื่อนเฉพาะเมนู · กล่องแพ็กเกจ / โควตาสลิปด้านล่างเห็นเสมอ */
+.side .nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; margin-right: -6px; padding-right: 6px; }
+.side-brand, .staff-badge, .side-foot { flex: none; }
+.side-foot { margin-top: 8px; }
