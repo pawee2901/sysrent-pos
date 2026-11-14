@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { api } from '@/components/Cart';
 import { notify } from '@/components/dialog';
 import { FloatingFx } from '@/components/FloatingFx';
+import { FestivalFx } from '@/components/FestivalFx';
 import { LoaderMark } from '@/components/PageLoader';
-import { EFFECTS, FONTS, LOADERS, allFontsHref, fontStack } from '@/lib/appearance';
+import { EFFECTS, FEST, FESTIVALS, FONTS, LOADERS, allFontsHref, festOf, fontStack } from '@/lib/appearance';
 import { MUSIC_HINT, parseMusic } from '@/lib/music';
 
 export type AppearanceInit = { enabled: boolean; ready: boolean; font: string; effect: string; loader: string; music_url: string };
@@ -28,7 +29,7 @@ export function AppearanceCard({ init, logo }: { init: AppearanceInit; logo: str
       <link rel="stylesheet" href={allFontsHref} precedence="default" />
       <div className="card-head"><h2>ฟอนต์ · เพลง · เอฟเฟกต์</h2><button type="button" className="btn primary sm" disabled={busy || !init.ready || !init.enabled || badMusic} onClick={save}>{busy ? 'กำลังบันทึก…' : 'บันทึกส่วนนี้'}</button></div>
       <div className="form">
-        {!init.enabled && <p style={{ margin: 0, fontWeight: 600 }}>🔒 ลองเลือกดูตัวอย่างได้ · ใช้งานจริงในแพ็กเกจ Pro (฿399/เดือน) ขึ้นไป · อัปเกรดที่ sysrent.shop</p>}
+        {!init.enabled && <p style={{ margin: 0, fontWeight: 600 }}>🔒 ลองเลือกดูตัวอย่างได้ · ติดต่อ sysrent.shop เพื่อเปิดใช้งาน</p>}
         {!init.ready && <p style={{ color: 'var(--warn)', margin: 0 }}>⚠️ ต้องรัน SQL <code>0022_shop_appearance.sql</code> ใน Supabase ก่อน</p>}
 
         <div className="field"><span>ฟอนต์ตัวหนังสือ</span>
@@ -41,7 +42,12 @@ export function AppearanceCard({ init, logo }: { init: AppearanceInit; logo: str
 
         <div className="field"><span>เอฟเฟกต์ลอย</span>
           <div className="ap-picks">{EFFECTS.map(([k, l, icon]) => <button key={k} type="button" className={`ap-pick${f.effect === k ? ' on' : ''}`} onClick={() => setF({ ...f, effect: k })}>{icon} {l}</button>)}</div>
-          {f.effect !== 'none' && <div className="ap-preview"><FloatingFx effect={f.effect} contained /></div>}
+          {f.effect !== 'none' && !festOf(f.effect) && <div className="ap-preview"><FloatingFx effect={f.effect} contained /></div>}
+        </div>
+
+        <div className="field"><span>ธีมเทศกาล (รูปฉากเต็มหน้าร้าน + เอฟเฟกต์ขยับ · ใช้แทนเอฟเฟกต์ลอย)</span>
+          <div className="ap-picks">{FESTIVALS.map(([k, l, icon]) => <button key={k} type="button" className={`ap-pick${f.effect === FEST + k ? ' on' : ''}`} onClick={() => setF({ ...f, effect: f.effect === FEST + k ? 'none' : FEST + k })}>{icon} {l}</button>)}</div>
+          {festOf(f.effect) && <div className="ap-preview tall"><FestivalFx code={festOf(f.effect)!} contained /></div>}
         </div>
 
         <div className="field"><span>เอฟเฟกต์รอโหลด (ตอนเปิดเว็บ)</span>

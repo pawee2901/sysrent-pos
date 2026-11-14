@@ -24,11 +24,28 @@ export const EFFECTS = [
   ['none', 'ไม่มี', ''], ['confetti', 'คอนเฟตติ', '🎊'], ['hearts', 'หัวใจ', '💗'], ['sakura', 'ซากุระ', '🌸'],
   ['snow', 'หิมะ', '❄️'], ['stars', 'ดาว', '✨'], ['lantern', 'โคมลอย', '🏮'], ['bubbles', 'ฟองสบู่', '🫧'],
 ] as const;
-export const LOADERS = [['none', 'ไม่มี'], ['spinner', 'วงกลมหมุน'], ['dots', 'จุดเด้ง'], ['heart', 'หัวใจเต้น'], ['logo', 'โลโก้เด้ง'], ['bar', 'แถบวิ่ง']] as const;
+export const LOADERS = [['none', 'ไม่มี'], ['spinner', 'วงกลมหมุน'], ['dots', 'จุดเด้ง'], ['heart', 'หัวใจเต้น'], ['logo', 'โลโก้เด้ง'], ['bar', 'แถบวิ่ง'],
+  // ฟังก์ชันเสริมจาก SysRent: ตัวการ์ตูน (code ต้องตรงกับ BUILTIN_LOADERS ใน components/addons/AddonArt.tsx — ไฟล์นั้นเป็น client component นำเข้าฝั่ง server ไม่ได้)
+  ['cat', '🐱 แมวส้ม'], ['bunny', '🐰 กระต่าย'], ['penguin', '🐧 เพนกวิน'], ['dino', '🦖 ไดโนเสาร์'], ['ghost', '👻 ผีน้อย'], ['chick', '🐣 ลูกเจี๊ยบ'],
+  ['bear', '🐻 หมีน้อย'], ['krathong', '🪷 กระทง'], ['sleigh', '🎅 ซานต้าขี่เลื่อน']] as const;
+
+/**
+ * ธีมเทศกาล (ฟังก์ชันเสริมจาก SysRent): รูปฉาก + เอฟเฟกต์เคลื่อนไหว เต็มหน้าร้าน — บันทึกในคอลัมน์ effect เป็น 'fest-<code>'
+ * code ต้องตรงกับ BUILTIN_THEMES ใน components/addons/AddonArt.tsx
+ */
+export const FESTIVALS = [
+  ['christmas', 'คริสต์มาส หิมะ', '🎄'], ['xmasnight', 'คริสต์มาส คืนหิมะ', '🎅'], ['newyear', 'ปีใหม่ พลุ', '🎆'], ['loykrathong', 'ลอยกระทง', '🪷'],
+  ['chinese', 'ตรุษจีน', '🧧'], ['songkran', 'สงกรานต์', '💦'], ['valentine', 'วาเลนไทน์', '💖'], ['halloween', 'ฮาโลวีน', '🎃'],
+  ['sakura', 'ซากุระบาน', '🌸'], ['galaxy', 'อวกาศ กาแล็กซี', '🌌'], ['ocean', 'ใต้ทะเล', '🐠'], ['aurora', 'แสงเหนือ', '🌠'],
+  ['autumn', 'ใบไม้ร่วง', '🍁'], ['firefly', 'ป่าหิ่งห้อย', '✨'], ['pastel', 'ท้องฟ้าพาสเทล', '🎈'], ['gold', 'ทองหรูหรา', '👑'], ['rain', 'ฝนพรำ เมืองยามค่ำ', '🌧️'],
+] as const;
+export const FEST = 'fest-';
+/** 'fest-christmas' → 'christmas' · เอฟเฟกต์ลอยธรรมดา → null */
+export const festOf = (effect: string) => (effect.startsWith(FEST) && FESTIVALS.some(([k]) => FEST + k === effect) ? effect.slice(FEST.length) : null);
 
 export type Effect = (typeof EFFECTS)[number][0];
 export type Loader = (typeof LOADERS)[number][0];
-export const isEffect = (v: string): v is Effect => EFFECTS.some(([k]) => k === v);
+export const isEffect = (v: string): v is Effect => EFFECTS.some(([k]) => k === v) || festOf(v) !== null;
 export const isLoader = (v: string): v is Loader => LOADERS.some(([k]) => k === v);
 export const fontOf = (key: string) => FONTS.find((f) => f.key === key);
 export const fontStack = (family: string) => `'${family}', 'IBM Plex Sans Thai', sans-serif`;

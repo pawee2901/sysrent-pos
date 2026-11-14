@@ -4,6 +4,8 @@ import { getShop, baht } from '@/lib/shop';
 import { customerEmail, getCustomer, isShopAdmin } from '@/lib/auth';
 import { ContactFab } from '@/components/ContactFab';
 import { FloatingFx } from '@/components/FloatingFx';
+import { FestivalFx } from '@/components/FestivalFx';
+import { festOf } from '@/lib/appearance';
 import { PageLoader } from '@/components/PageLoader';
 import { MusicPlayer } from '@/components/MusicPlayer';
 import { fontHref, fontOf, fontStack } from '@/lib/appearance';
@@ -29,6 +31,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const [isAdmin, agent, email] = me ? await Promise.all([isShopAdmin(), getAgent(shop, me.id), customerEmail(me.id)]) : [false, null, ''];
   const look = apErr || !can(shop.plan, 'appearance') ? null : ap;
   const font = fontOf(look?.font ?? '');
+  const fest = festOf(look?.effect ?? '');
   const theme = activeTheme(shop.theme ?? 'modern', ownedThemes(shop.plan, shop.themes_owned));
   // พื้นหลัง: ธีมโมเดิร์น + แบบมาตรฐาน = ใช้แสงสีของ body · ที่เหลือวาดชั้นพื้นหลังตามธีม / แบบที่ร้านเลือก
   const bg = (shop.bg_style === 'image' && !shop.bg_image) || (shop.bg_style === 'color' && !shop.bg_color) ? 'default' : shop.bg_style;
@@ -37,11 +40,12 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     <div className="store" data-style={theme} data-card={shop.card_style ?? 'white'} style={{ ...(bg === 'color' ? { ['--tint' as string]: shop.bg_color } : {}), ...(font ? { ['--font' as string]: fontStack(font.family), ['--font-head' as string]: fontStack(font.family) } : {}) }}>
       {font && <link rel="stylesheet" href={fontHref(font.key)} precedence="default" />}
       <PageLoader kind={look?.loader ?? 'none'} logo={shop.logo_url} />
-      <FloatingFx effect={look?.effect ?? 'none'} />
+      {!fest && <FloatingFx effect={look?.effect ?? 'none'} />}
       {look?.music_url && <MusicPlayer url={look.music_url} />}
       {(theme !== 'modern' || bg !== 'default') && (
         <div className="shop-bg" data-bg={bg} style={bg === 'image' ? { ['--bg-image' as string]: `url("${shop.bg_image}")` } : bg === 'color' ? { ['--bg-color' as string]: shop.bg_color } : undefined} aria-hidden="true" />
       )}
+      {fest && <FestivalFx code={fest} />}
       {shop.announcement && <div className="announce">{shop.announcement}</div>}
       <header className="top">
         <div className="wrap top-row">

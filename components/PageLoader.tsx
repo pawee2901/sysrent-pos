@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { BUILTIN_LOADERS, LoaderArt } from '@/components/addons/AddonArt';
 
 /** ตัวการ์ตูนโหลด (ใช้ทั้งหน้าร้านและตัวอย่างในหลังบ้าน) */
 export function LoaderMark({ kind, logo }: { kind: string; logo?: string }) {
+  if (BUILTIN_LOADERS[kind]) return <LoaderArt code={kind} size={110} label="กำลังโหลด" />;
   if (kind === 'dots') return <div className="pl-dots"><i /><i /><i /></div>;
   if (kind === 'heart') return <div className="pl-heart">💗</div>;
   if (kind === 'bar') return <div className="pl-bar"><i /></div>;

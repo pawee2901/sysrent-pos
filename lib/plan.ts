@@ -14,9 +14,11 @@ export const SLIP_QUOTA: Record<Plan, number> = { starter: 50, pro: 200, max: 50
 export const COUPON_LIMIT: Record<Plan, number | null> = { starter: 3, pro: null, max: null };
 
 export type Feature = 'report' | 'agents' | 'appearance' | 'mail' | 'renewals' | 'line_shop' | 'otp' | 'accounting' | 'staff' | 'export' | 'premium_themes';
-const PRO: Feature[] = ['report', 'agents', 'appearance', 'mail'];
+// appearance (ฟอนต์ · เอฟเฟกต์ · เพลง · ตัวการ์ตูนโหลด · ธีมเทศกาล) = ฟังก์ชันเสริมฟรีทุกแพ็กเกจ เหมือนเว็บ OTP
+const FREE: Feature[] = ['appearance'];
+const PRO: Feature[] = [...FREE, 'report', 'agents', 'mail'];
 // ต่อเมล + ขายของผ่าน LINE (บอท LINE) = เฉพาะ Max
-const FEATURES: Record<Plan, Feature[]> = { starter: [], pro: PRO, max: [...PRO, 'renewals', 'line_shop', 'otp', 'accounting', 'staff', 'export', 'premium_themes'] };
+const FEATURES: Record<Plan, Feature[]> = { starter: FREE, pro: PRO, max: [...PRO, 'renewals', 'line_shop', 'otp', 'accounting', 'staff', 'export', 'premium_themes'] };
 export const FEATURE_LABEL: Record<Feature, string> = {
   report: 'ปุ่มแจ้งปัญหา', agents: 'ระบบตัวแทนราคาส่ง', appearance: 'ฟอนต์ · เอฟเฟกต์ · เพลง', mail: 'อีเมลแจ้งลูกค้า', renewals: 'ต่อเมลอัตโนมัติผ่าน LINE', line_shop: 'ขายสินค้าใน LINE',
   otp: 'ค้นหา OTP', accounting: 'บัญชี รายรับ ต้นทุน กำไร', staff: 'แอดมินพนักงาน', export: 'ส่งออก Excel', premium_themes: 'ธีมพิเศษทุกแบบ',
