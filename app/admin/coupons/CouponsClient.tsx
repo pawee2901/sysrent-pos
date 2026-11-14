@@ -1,4 +1,5 @@
 'use client';
+import { ThaiDateInput } from '@/components/ThaiDateInput';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ask, notify } from '@/components/dialog';
@@ -96,7 +97,7 @@ export function CouponsClient({ rows }: { rows: Coupon[] }) {
               <label className="field"><span>ยอดซื้อขั้นต่ำ (บาท)</span><input className="input" inputMode="decimal" value={f.min_total} placeholder="ไม่มี" onChange={(e) => setF({ ...f, min_total: e.target.value.replace(/[^\d.]/g, '') })} /></label>
               <label className="field"><span>ใช้ได้ทั้งหมด (ครั้ง)</span><input className="input" inputMode="numeric" value={f.max_uses} placeholder="ไม่จำกัด" onChange={(e) => setF({ ...f, max_uses: e.target.value.replace(/\D/g, '') })} /></label>
             </div>
-            <label className="field"><span>ใช้ได้ถึงวันที่ (ไม่บังคับ)</span><input className="input" type="date" value={f.expires} onChange={(e) => setF({ ...f, expires: e.target.value })} /></label>
+            <div className="field"><span>ใช้ได้ถึงวันที่ (ไม่บังคับ)</span><ThaiDateInput label="ใช้ได้ถึงวันที่" value={f.expires} onChange={(v) => setF({ ...f, expires: v })} /></div>
             <p className="muted" style={{ fontSize: 13, margin: 0 }}>💡 ลูกค้าแต่ละคนใช้โค้ดเดียวกันได้ 1 ครั้ง · ออเดอร์ที่ไม่จ่ายเงินจะไม่นับสิทธิ์</p>
             {msg && <p style={{ color: 'var(--bad)', margin: 0 }} role="alert">{msg}</p>}
           </div>

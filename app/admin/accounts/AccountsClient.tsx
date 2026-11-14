@@ -1,4 +1,5 @@
 'use client';
+import { ThaiDateInput } from '@/components/ThaiDateInput';
 import { to } from '@/lib/routes';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -91,7 +92,7 @@ export function AccountsClient({ products, current, accounts, plans }: { product
             <div className="two"><label className="field"><span>อีเมล / ชื่อผู้ใช้ของบัญชี</span><input className="input" autoComplete="off" value={f.login} onChange={(e) => setF({ ...f, login: e.target.value })} /></label>
               <label className="field"><span>รหัสผ่าน (เก็บแบบเข้ารหัส)</span><input className="input" type="password" autoComplete="new-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></label></div>
             <div className="two"><label className="field"><span>ต้นทุนต่อรอบ (บาท)</span><input className="input" inputMode="decimal" value={f.cost} onChange={(e) => setF({ ...f, cost: e.target.value.replace(/[^\d.]/g, '') })} /></label>
-              <label className="field"><span>วันหมดอายุบัญชี (ขายได้ถึงวันนี้)</span><input className="input" type="date" value={f.renew_at} onChange={(e) => setF({ ...f, renew_at: e.target.value })} /></label></div>
+              <div className="field"><span>วันหมดอายุบัญชี (ขายได้ถึงวันนี้)</span><ThaiDateInput label="วันหมดอายุบัญชี" value={f.renew_at} onChange={(v) => setF({ ...f, renew_at: v })} /></div></div>
             <div className="two"><label className="field"><span>จำนวนจอ</span><input className="input" inputMode="numeric" value={f.count} onChange={(e) => setF({ ...f, count: e.target.value.replace(/\D/g, '').slice(0, 2) })} /></label>
               <label className="field"><span>ชื่อโปรไฟล์ขึ้นต้นด้วย (PIN สุ่มให้ แก้ทีหลังได้)</span><input className="input" value={f.prefix} maxLength={20} onChange={(e) => setF({ ...f, prefix: e.target.value })} /></label></div>
             <button type="button" className="btn primary" disabled={busy || f.login.length < 3 || !f.password} onClick={addAccount}>{busy ? 'กำลังบันทึก…' : `บันทึก (${Math.max(1, Math.min(20, Number(f.count) || 1))} จอ)`}</button>
@@ -120,7 +121,7 @@ export function AccountsClient({ products, current, accounts, plans }: { product
                 <div className="two"><label className="field"><span>อีเมล / ชื่อผู้ใช้ของบัญชี</span><input className="input" autoComplete="off" value={edit.login} onChange={(e) => setEdit({ ...edit, login: e.target.value })} /></label>
                   <label className="field"><span>รหัสผ่านใหม่</span><input className="input" type="password" autoComplete="new-password" placeholder="เว้นว่าง = ใช้รหัสเดิม" value={edit.password} onChange={(e) => setEdit({ ...edit, password: e.target.value })} /></label></div>
                 <div className="two"><label className="field"><span>ต้นทุนต่อรอบ (บาท)</span><input className="input" inputMode="decimal" value={edit.cost} onChange={(e) => setEdit({ ...edit, cost: e.target.value.replace(/[^\d.]/g, '') })} /></label>
-                  <label className="field"><span>วันหมดอายุบัญชี (เว้นว่าง = ไม่จำกัด)</span><input className="input" type="date" value={edit.renew_at} onChange={(e) => setEdit({ ...edit, renew_at: e.target.value })} /></label></div>
+                  <div className="field"><span>วันหมดอายุบัญชี (เว้นว่าง = ไม่จำกัด)</span><ThaiDateInput label="วันหมดอายุบัญชี" value={edit.renew_at} onChange={(v) => setEdit({ ...edit, renew_at: v })} /></div></div>
                 <small style={{ color: 'var(--warn)' }}>⚠️ อีเมลและรหัสผ่านใช้ร่วมกันทุกจอ แก้แล้วลูกค้าทุกคนในบัญชีนี้จะเห็นของใหม่</small>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                   <button type="button" className="btn ghost sm" disabled={busy} onClick={() => setEdit(null)}>ยกเลิก</button>

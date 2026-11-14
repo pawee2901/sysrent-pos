@@ -1,4 +1,5 @@
 'use client';
+import { ThaiDateInput } from '@/components/ThaiDateInput';
 import { to } from '@/lib/routes';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -98,7 +99,7 @@ export function AccountingClient({ l }: { l: Ledger }) {
             <div className="card-head"><h2>รายจ่ายอื่น</h2><span className="muted num" style={{ fontSize: 13 }}>{baht(t.expenses)}</span></div>
             <form className="form acc-exform" onSubmit={addExpense}>
               <div className="two">
-                <label className="field"><span>วันที่</span><input className="input" type="date" value={f.spent_on} max={l.today} onChange={(e) => setF({ ...f, spent_on: e.target.value })} /></label>
+                <div className="field"><span>วันที่</span><ThaiDateInput label="วันที่" value={f.spent_on} max={l.today} clearable={false} onChange={(v) => setF({ ...f, spent_on: v })} /></div>
                 <label className="field"><span>จำนวนเงิน ฿</span><input className="input" inputMode="decimal" placeholder="เช่น 350" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value.replace(/[^\d.]/g, '') })} /></label>
               </div>
               <label className="field"><span>หมวด</span><select className="input" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })}>{CATS.map((c) => <option key={c}>{c}</option>)}</select></label>

@@ -249,3 +249,7 @@ body.swal2-toast-shown .swal2-container .swal2-popup { pointer-events: auto; }
 @media (max-width: 860px) { .music-fab { bottom: 96px; left: 10px; } }
 .route-loading { display: grid; place-items: center; min-height: 45vh; }
 @media (prefers-reduced-motion: reduce) { .route-loading * { animation: none !important; } }
+
+/* ช่องวันที่ภาษาไทย: วัน / เดือน / ปี พ.ศ. (components/ThaiDateInput) */
+.thdate { display: grid; grid-template-columns: minmax(64px, .8fr) minmax(0, 1.6fr) minmax(76px, 1fr) auto; gap: 6px; align-items: center; }
+.thdate .input { min-width: 0; padding-left: 10px; padding-right: 6px; }
