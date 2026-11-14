@@ -16,7 +16,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Shop } from '@/lib/shop';
 
 /**
- * ขายสินค้าใน LINE OA ของร้าน (migration 0029 · แพ็กเกจ Pro / Max · ร้านเปิด "ขายใน LINE")
+ * ขายสินค้าใน LINE OA ของร้าน (migration 0029 · แพ็กเกจ Max · ร้านเปิด "ขายใน LINE")
  * ลูกค้าไม่ต้องสมัคร: กดปุ่มครั้งแรก → สร้างบัญชีลูกค้าร้านเบื้องหลัง (shop_customers.line_user_id)
  * ออเดอร์ / สต็อก / จอ / ราคา ตรวจในฐานข้อมูลชุดเดียวกับหน้าเว็บร้าน (shop_create_order / shop_pay_order)
  */

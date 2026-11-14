@@ -20,7 +20,7 @@ const schema = z.discriminatedUnion('action', [
 export async function POST(req: Request) {
   const a = await requireAdmin('linebot');
   if ('res' in a) return a.res;
-  if (!can(a.shop.plan, 'line_shop') && !can(a.shop.plan, 'renewals')) return fail('บอท LINE ใช้ได้ในแพ็กเกจ Pro ขึ้นไป', 403);
+  if (!can(a.shop.plan, 'line_shop') && !can(a.shop.plan, 'renewals')) return fail('บอท LINE ใช้ได้เฉพาะแพ็กเกจ Max', 403);
   const b = await body(req, schema);
   if ('res' in b) return b.res;
   const d = db(), x = b.data, sid = a.shop.id;

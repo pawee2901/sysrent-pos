@@ -68,7 +68,7 @@ async function myRenewals(shop: ShopLite, userId: string): Promise<LineMessage[]
 }
 
 /**
- * เปิดอะไรบ้างในแชทของร้านนี้: renewals = ต่อเมล (แพ็กเกจ Pro+) · sell = ขายสินค้า (Pro+ และร้านเปิด "ขายใน LINE")
+ * เปิดอะไรบ้างในแชทของร้านนี้: renewals = ต่อเมล (แพ็กเกจ Max) · sell = ขายสินค้า (Max และร้านเปิด "ขายใน LINE")
  * ต่อเมลมาก่อนเสมอ (รหัสผูก / ต่อเมล / ปุ่มแพ็กเกจต่อ / สลิปของ QR ต่อเมล) แล้วค่อยเป็นเรื่องร้านค้า
  */
 async function handle(shop: Shop, line: ShopLine, e: LineEvent, on: { renewals: boolean; sell: boolean }, cfg: BotConfig) {

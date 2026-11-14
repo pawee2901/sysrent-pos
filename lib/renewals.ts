@@ -8,7 +8,7 @@ import { receiverIsShop } from '@/lib/slip-receiver';
 import type { Shop } from '@/lib/shop';
 
 /**
- * ต่อเมลอัตโนมัติผ่าน LINE OA ของร้าน (migration 0028 · แพ็กเกจ Pro / Max)
+ * ต่อเมลอัตโนมัติผ่าน LINE OA ของร้าน (migration 0028 · แพ็กเกจ Max)
  * แอดมินกรอกลูกค้า → ก่อนหมด N วัน ส่ง LINE เตือน + ปุ่มแพ็กเกจ → ลูกค้าจ่ายในแชท → shop_renewal_paid เลื่อนวันหมดอายุ
  */
 
