@@ -148,6 +148,10 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
     const otpMail = !otpApp ? {} : st.mode === 'fields'
       ? { otp_emails: st.rows.map((row, k) => [row, k] as const).filter(([row]) => row.some((v) => v.trim())).map(([, k]) => (st.otp[k] ?? '').trim()) }
       : { otp_email: st.otpAll.trim() };
+    if (f?.id && otp?.ready && otpApp !== (otp.picks[f.id] ?? '')) {
+      const o = await api('/api/admin/products', { action: 'otp', id: f.id, app_id: otpApp || null });
+      if (!o.ok) { setBusy(false); setMsg(o.error); return; }
+    }
     const r = await api<{ notice: string }>('/api/admin/products', { action: 'stock', optionId: stock.optionId, text, mode: 'block', plain: stock.mode === 'block', repeat: stock.mode === 'block' ? Math.max(1, Number(stock.repeat) || 1) : 1, ...otpMail });
     setBusy(false);
     setMsg(r.ok ? r.data.notice : r.error);
@@ -260,14 +264,6 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
             <div className="field"><span>รูปวิธีการใช้งาน (ลูกค้าดูและดาวน์โหลดได้หลังซื้อ{galleryReady ? ' · ใส่กี่รูปก็ได้' : ''})</span>
               <ImageList urls={usageImgs} onChange={setUsageImgs} max={galleryReady ? MAX_IMAGES : 1} disabled={busy || !imgReady} upload={uploadMany} addLabel="รูปวิธีใช้" />
               <small className="faint" style={{ fontSize: 12 }}>{!imgReady ? '⚠️ ต้องรัน SQL 0012_usage_image.sql ก่อน' : galleryReady ? 'เช่น รูปขั้นตอนการเข้าใช้ทีละขั้น / ภาพแคปหน้าจอ · ลูกค้าเห็นเรียงตามลำดับนี้' : '⚠️ ตอนนี้ใส่ได้ 1 รูป · รัน SQL 0029_product_images.sql เพื่อใส่ได้หลายรูป'}</small></div>
-            {otp && (
-              <label className="field"><span>🔐 ปุ่มรับรหัส OTP (ลูกค้าเห็นในหน้าประวัติการซื้อ · ใส่เมลรับ OTP ตอนเพิ่มสต็อก)</span>
-                <select className="input" value={otpApp} disabled={!otp.ready || !otp.apps.length} onChange={(e) => setOtpApp(e.target.value)}>
-                  <option value="">ปิด — ไม่แสดงปุ่ม</option>
-                  {otp.apps.map((a) => <option key={a.id} value={a.id}>เปิด — ค้นรหัสของ {a.name}</option>)}
-                </select>
-                <small className="faint" style={{ fontSize: 12 }}>{!otp.ready ? '⚠️ ต้องรัน SQL 0032_product_otp_button.sql ก่อน' : !otp.apps.length ? 'เพิ่มแอปในหน้า "ค้นหา OTP" ก่อน แล้วค่อยเลือกที่นี่' : 'เปิดแล้ว ตอนกด "+ เพิ่มสต็อก" จะมีช่อง 📧 เมลรับ OTP ให้ใส่ทีละชิ้น · ชิ้นที่ใส่เมล = ลูกค้าที่ได้ชิ้นนั้นเห็นปุ่ม (ค้นได้เฉพาะเมลนั้น และสินค้าที่ยังไม่หมดอายุ)'}</small></label>
-            )}
             </div>
 
             <div className="pe-col">
@@ -300,6 +296,16 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                             <button key={k} type="button" role="radio" aria-checked={stock.mode === k} className={stock.mode === k ? 'on' : ''} onClick={() => setStock(fillStock({ ...stock, mode: k }))}><b>{l}</b><small>{d}</small></button>
                           ))}
                         </div>
+                        {otp && (
+                          <div className="otp-pick">
+                            <label className="field"><span>🔐 ปุ่มรับรหัส OTP ของสินค้านี้ (ลูกค้าเห็นในหน้าประวัติการซื้อ)</span>
+                              <select className="input" value={otpApp} disabled={!otp.ready || !otp.apps.length} onChange={(e) => setOtpApp(e.target.value)}>
+                                <option value="">ปิด — ไม่แสดงปุ่ม</option>
+                                {otp.apps.map((a) => <option key={a.id} value={a.id}>เปิด — ค้นรหัสของ {a.name}</option>)}
+                              </select></label>
+                            <small className="faint">{!otp.ready ? '⚠️ ต้องรัน SQL 0032_product_otp_button.sql ก่อน' : !otp.apps.length ? 'เพิ่มแอปในหน้า "ค้นหา OTP" ก่อน แล้วค่อยเลือกที่นี่' : otpApp ? 'ใส่ 📧 เมลรับ OTP ในแต่ละชิ้นด้านล่าง · ชิ้นที่ใส่ = ลูกค้าที่ได้ชิ้นนั้นเห็นปุ่ม (ค้นได้เฉพาะเมลนั้น และสินค้าที่ยังไม่หมดอายุ)' : 'เลือกแอปเพื่อเปิดปุ่ม แล้วจะมีช่อง 📧 เมลรับ OTP ให้ใส่ทีละชิ้น'}</small>
+                          </div>
+                        )}
                         {stock.mode === 'fields' && <StockTable st={fillStock(stock)} set={setStock} otpOn={!!otpApp} />}
                         {stock.mode === 'block' && <textarea className="input" rows={10} value={stock.text} onChange={(e) => setStock({ ...stock, text: e.target.value })}
                           placeholder={'วางข้อความทั้งก้อน = 1 ชิ้น เช่น\n🔗 Link เข้าร่วมทีม: https://...\n👥 Team: ...\n⏰ วันหมดอายุ: ...\n\n(จะเพิ่มหลายชิ้นในครั้งเดียว คั่นแต่ละชิ้นด้วยบรรทัด ---)'} />}

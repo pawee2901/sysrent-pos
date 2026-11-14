@@ -762,3 +762,6 @@ body::before { height: 360px; }
 .promo-ed-img { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
 .promo-ed-img img { display: block; width: 100%; height: auto; }
 .ap-preview.tall { height: 180px; }
+/* ปุ่มรับรหัส OTP ในกล่องเพิ่มสต็อก — กรอบเขียวให้เห็นชัด */
+.otp-pick { display: grid; gap: 6px; padding: 12px 14px; border: 2px solid #0f9f6e; border-radius: 14px; background: color-mix(in srgb, #0f9f6e 7%, var(--surface)); }
+.otp-pick small { font-size: 12.5px; }
