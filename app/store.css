@@ -535,3 +535,7 @@ a.hist-row:hover .hist-go:not(.primary) { background: var(--accent-soft); color:
 .promo img { display: block; width: 100%; height: auto; transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
 a.promo:hover img { transform: scale(1.03); }
 @media (max-width: 560px) { .promos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0; } .promo { border-radius: 14px; } }
+
+/* ธีมเทศกาล (ฟังก์ชันเสริมจาก SysRent · components/FestivalFx.tsx) — อยู่หลังเนื้อหาเหมือน .shop-bg, วางทีหลังจึงทับพื้นหลังร้าน */
+.fest-layer { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.fest-layer.contained { position: absolute; z-index: 0; }

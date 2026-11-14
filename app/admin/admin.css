@@ -761,3 +761,4 @@ body::before { height: 360px; }
 .promo-ed-item { display: grid; gap: 6px; }
 .promo-ed-img { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
 .promo-ed-img img { display: block; width: 100%; height: auto; }
+.ap-preview.tall { height: 180px; }
