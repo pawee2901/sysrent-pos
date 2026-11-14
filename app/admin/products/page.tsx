@@ -1,20 +1,19 @@
 import { adminShop } from '@/lib/admin-page';
 import { loadProducts } from '@/lib/catalog';
 import { ProductsClient } from './ProductsClient';
-import { db } from '@/lib/db';
 import { agentPrices } from '@/lib/agents';
 import { can } from '@/lib/plan';
 import { mergeCategories, shopCategories } from '@/lib/categories';
+import { productMedia } from '@/lib/media';
 
 export default async function AdminProducts() {
   const shop = await adminShop('products');
   if (!shop) return null;
-  const [products, list] = await Promise.all([loadProducts(shop.id, { includeHidden: true }), shopCategories(shop.id)]);
+  const [products, list, media] = await Promise.all([loadProducts(shop.id, { includeHidden: true }), shopCategories(shop.id), productMedia({ shopId: shop.id })]);
   const agentsOn = can(shop.plan, 'agents');
-  let u = await db().from('shop_products').select('id, usage, usage_image').eq('shop_id', shop.id);
-  const imgReady = !u.error;
-  if (u.error) u = await db().from('shop_products').select('id, usage').eq('shop_id', shop.id) as typeof u; // ยังไม่รัน 0012
-  const usages: Record<string, string> = u.error ? {} : Object.fromEntries((u.data ?? []).map((r) => [r.id as string, (r.usage as string) ?? '']));
-  const usageImages: Record<string, string> = !imgReady ? {} : Object.fromEntries((u.data ?? []).map((r) => [r.id as string, ((r as { usage_image?: string }).usage_image) ?? '']));
-  return <ProductsClient products={products} categories={mergeCategories(list, products.map((p) => p.category))} usages={usages} usageReady={!u.error} usageImages={usageImages} imgReady={imgReady} agentPrices={agentsOn ? await agentPrices(products.flatMap((p) => p.options.map((o) => o.id))) : {}} agentsOn={agentsOn} />;
+  const pick = <T,>(fn: (m: { usage: string; usageImages: string[]; images: string[] }) => T) => Object.fromEntries([...media.map].map(([id, m]) => [id, fn(m)]));
+  return <ProductsClient products={products} categories={mergeCategories(list, products.map((p) => p.category))}
+    usages={pick((m) => m.usage)} usageImages={pick((m) => m.usageImages)} images={pick((m) => m.images)}
+    usageReady={media.level !== 'none'} imgReady={media.level === 'multi' || media.level === 'single'} galleryReady={media.level === 'multi'}
+    agentPrices={agentsOn ? await agentPrices(products.flatMap((p) => p.options.map((o) => o.id))) : {}} agentsOn={agentsOn} />;
 }

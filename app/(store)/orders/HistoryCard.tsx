@@ -13,7 +13,7 @@ import { SubCard } from '../my/SubCard';
 
 export type HItem = {
   id: string; name: string; total: number; queued: boolean; delivered: string | null; warranty: string | null;
-  usage: string; usageImage: string;
+  usage: string; usageImages: string[];
   sub: { id: string; active: boolean; startsAt: string; endsAt: string; productId: string; image: string; template: string } | null;
 };
 export type HOrder = {
@@ -27,7 +27,7 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
   const [show, setShow] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [howto, setHowto] = useState(false);
-  const guides = o.items.filter((i) => (i.usage || i.usageImage) && (i.delivered || i.sub));
+  const guides = o.items.filter((i) => (i.usage || i.usageImages.length) && (i.delivered || i.sub));
   const pending = o.status === 'pending';
   const paid = o.status === 'completed' || o.status === 'processing';
   const waiting = o.items.filter((i) => i.queued).length;
@@ -114,7 +114,10 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
             <div key={i.id} className="hcard-item usage-box">
               <b>📖 วิธีการใช้งาน{guides.length > 1 ? ` · ${i.name}` : ''}</b>
               {i.usage && <p>{i.usage}</p>}
-              {i.usageImage && <div className="dlv-img"><img src={i.usageImage} alt={`วิธีใช้งาน ${i.name}`} loading="lazy" /><DownloadImage src={i.usageImage} name={`วิธีใช้งาน ${i.name}`} /></div>}
+              {i.usageImages.map((src, k) => {
+                const label = `วิธีใช้งาน ${i.name}${i.usageImages.length > 1 ? ` (${k + 1})` : ''}`;
+                return <div key={`${src}${k}`} className="dlv-img"><img src={src} alt={label} loading="lazy" /><DownloadImage src={src} name={label} /></div>;
+              })}
             </div>
           ))}
         </div>

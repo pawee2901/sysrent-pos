@@ -7,6 +7,7 @@ import { EmailPrompt } from './EmailPrompt';
 import { can } from '@/lib/plan';
 import { db } from '@/lib/db';
 import { canReport } from '@/lib/reports';
+import { productMedia } from '@/lib/media';
 import { HistoryCard, type HOrder } from './HistoryCard';
 
 export const dynamic = 'force-dynamic';
@@ -31,13 +32,13 @@ export default async function Orders() {
   const [opts, subs, usage, reports] = await Promise.all([
     d.from('shop_options').select('id, duration_days').in('id', [...new Set(items.map((i) => i.option_id))]),
     d.from('shop_subscriptions').select('id, status, starts_at, ends_at, order_item_id, shop_products(id, image, template)').eq('shop_id', shop.id).eq('customer_id', me.id).in('order_item_id', items.map((i) => i.id)),
-    d.from('shop_products').select('id, usage, usage_image').in('id', productIds).then((r) => (r.error ? d.from('shop_products').select('id, usage').in('id', productIds) : r)),
+    productMedia({ ids: productIds }),
     d.from('shop_reports').select('order_id, topic, status, reply, image, created_at').eq('customer_id', me.id).in('order_id', rows.map((o) => o.id)).order('created_at', { ascending: false })
       .then((r) => (r.error ? d.from('shop_reports').select('order_id, topic, status, reply, created_at').eq('customer_id', me.id).in('order_id', rows.map((o) => o.id)).order('created_at', { ascending: false }) : r)),
   ]);
   type Sub = { id: string; status: string; starts_at: string; ends_at: string; order_item_id: string; shop_products: { id: string; image: string; template: string } | null };
   const subOf = (id: string) => ((subs.data ?? []) as unknown as Sub[]).find((s) => s.order_item_id === id);
-  const prod = (id: string) => ((usage.data ?? []) as { id: string; usage?: string; usage_image?: string }[]).find((p) => p.id === id);
+  const prod = (id: string) => usage.map.get(id);
 
   const orders: HOrder[] = rows.map((o) => {
     const paidAt = o.paid_at ? new Date(o.paid_at) : null;
@@ -60,7 +61,7 @@ export default async function Orders() {
         const p = prod(i.product_id);
         return {
           id: i.id, name: i.name, total: Number(i.total), queued: i.status === 'queued', delivered: i.status === 'delivered' ? i.delivered : null,
-          warranty: ends[k] ? `${thDate(ends[k]!)}` : null, usage: p?.usage ?? '', usageImage: p?.usage_image ?? '',
+          warranty: ends[k] ? `${thDate(ends[k]!)}` : null, usage: p?.usage ?? '', usageImages: p?.usageImages ?? [],
           sub: sub ? { id: sub.id, active: sub.status === 'active', startsAt: sub.starts_at, endsAt: sub.ends_at, productId: sub.shop_products?.id ?? '', image: sub.shop_products?.image ?? '', template: sub.shop_products?.template ?? '' } : null,
         };
       }),

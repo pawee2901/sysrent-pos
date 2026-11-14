@@ -5,6 +5,8 @@ import { loadProducts } from '@/lib/catalog';
 import { getAgent, agentPrices, withAgentPrices } from '@/lib/agents';
 import { getCustomer } from '@/lib/auth';
 import { AppLogo } from '@/components/AppLogo';
+import { ProductGallery } from '@/components/ProductGallery';
+import { productMedia } from '@/lib/media';
 import { BuyBox } from './BuyBox';
 
 export const dynamic = 'force-dynamic';
@@ -18,11 +20,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   // ตัวแทน (ร้าน Pro): ราคาตัวแทน (ราคาปกติขีดฆ่า) — ราคาจริงคิดในฐานข้อมูลตอนสั่ง
   const agent = await getAgent(shop, me?.id);
   const p = agent ? withAgentPrices([base], await agentPrices(base.options.map((o) => o.id)))[0] : base;
+  const gallery = (await productMedia({ ids: [p.id] })).map.get(p.id)?.images ?? [];
+  const cover = <AppLogo image={p.image} template={p.template} name={p.name} size="xl" />;
   return (
     <>
       <nav className="crumb" aria-label="เส้นทาง"><Link href="/">หน้าแรก</Link><i>›</i>{p.category && <><span>{p.category}</span><i>›</i></>}<b>{p.name}</b></nav>
       <div className="pd">
-        <div className="card pd-media"><AppLogo image={p.image} template={p.template} name={p.name} size="xl" /></div>
+        {gallery.length ? <ProductGallery cover={cover} images={gallery} name={p.name} /> : <div className="card pd-media">{cover}</div>}
         <div>
           {p.badge && <span className="pill accent plain">{p.badge}</span>}
           {agent && <span className="pill ok" style={{ marginLeft: p.badge ? 6 : 0 }}>🤝 ราคาตัวแทน</span>}

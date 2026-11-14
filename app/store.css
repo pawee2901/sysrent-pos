@@ -520,3 +520,11 @@ a.hist-row:hover .hist-go:not(.primary) { background: var(--accent-soft); color:
 @keyframes fx-fall-box { from { transform: translate3d(0, -30px, 0) rotate(0); } to { transform: translate3d(calc(var(--drift) / 3), 150px, 0) rotate(360deg); } }
 @keyframes fx-rise-box { from { transform: translate3d(0, 150px, 0); } to { transform: translate3d(calc(var(--drift) / 3), -30px, 0); } }
 @media (prefers-reduced-motion: reduce) { .page-loader * { animation: none !important; } }
+
+/* หน้าสินค้า: รูปใหญ่ + รูปย่อ (components/ProductGallery) */
+.pd-gallery { display: grid; gap: 10px; }
+.pd-main img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: var(--surface-2); }
+.pd-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; }
+.pd-thumbs button { aspect-ratio: 1; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 12px; background: var(--surface-2); cursor: pointer; }
+.pd-thumbs button.on { border-color: var(--accent); }
+.pd-media .pd-thumbs img, .pd-media .pd-thumbs .applogo.xl { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 0; font-size: 18px; }

@@ -9,6 +9,7 @@ import { ITEM_STATUS, ORDER_STATUS } from '@/lib/status';
 import { Delivered } from '@/components/Delivered';
 import { DownloadImage } from '@/components/DownloadImage';
 import { SubCard } from '../../my/SubCard';
+import { productMedia } from '@/lib/media';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,10 +28,9 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
   const items = (o.shop_order_items ?? []) as I[];
   // วิธีการใช้งานของสินค้า (ยังไม่รัน 0011 = ไม่แสดง)
   const ids = [...new Set(items.map((i) => i.product_id))];
-  let u = await db().from('shop_products').select('id, usage, usage_image').in('id', ids);
-  if (u.error) u = await db().from('shop_products').select('id, usage').in('id', ids) as typeof u; // ยังไม่รัน 0012
-  const usage: Record<string, string> = u.error ? {} : Object.fromEntries((u.data ?? []).map((r) => [r.id as string, (r.usage as string) ?? '']));
-  const usageImg: Record<string, string> = u.error ? {} : Object.fromEntries((u.data ?? []).map((r) => [r.id as string, ((r as { usage_image?: string }).usage_image) ?? '']));
+  const media = (await productMedia({ ids })).map;
+  const usage: Record<string, string> = Object.fromEntries([...media].map(([id, m]) => [id, m.usage]));
+  const usageImg: Record<string, string[]> = Object.fromEntries([...media].map(([id, m]) => [id, m.usageImages]));
   // หมดประกัน = วันจ่าย + จำนวนวันของแพ็กเกจ
   const { data: opts } = await db().from('shop_options').select('id, duration_days').in('id', [...new Set(items.map((i) => i.option_id))]);
   // สินค้าแบบแบ่งจอ: การเช่าที่ผูกกับรายการในออเดอร์นี้ (กดดูอีเมล / รหัส / PIN ได้ตรงนี้)
@@ -60,10 +60,13 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
                 if (sub) return <SubCard s={{ id: sub.id, active: sub.status === 'active', startsAt: sub.starts_at, endsAt: sub.ends_at, productId: sub.shop_products?.id ?? '', name: sub.shop_products?.name ?? i.name, image: sub.shop_products?.image ?? '', template: sub.shop_products?.template ?? '' }} />;
                 return i.status === 'delivered' && i.delivered ? <Delivered content={i.delivered} warranty={warranty(i)} /> : null;
               })()}
-              {i.status === 'delivered' && (usage[i.product_id] || usageImg[i.product_id]) && (
+              {i.status === 'delivered' && (usage[i.product_id] || usageImg[i.product_id]?.length) && (
                 <details className="usage-box" open><summary>📖 วิธีการใช้งาน</summary>
                   {usage[i.product_id] && <p>{usage[i.product_id]}</p>}
-                  {usageImg[i.product_id] && <div className="dlv-img"><img src={usageImg[i.product_id]} alt={`วิธีใช้งาน ${i.name}`} loading="lazy" /><DownloadImage src={usageImg[i.product_id]} name={`วิธีใช้งาน ${i.name}`} /></div>}
+                  {(usageImg[i.product_id] ?? []).map((src, k, all) => {
+                    const label = `วิธีใช้งาน ${i.name}${all.length > 1 ? ` (${k + 1})` : ''}`;
+                    return <div key={`${src}${k}`} className="dlv-img"><img src={src} alt={label} loading="lazy" /><DownloadImage src={src} name={label} /></div>;
+                  })}
                 </details>
               )}
             </div>

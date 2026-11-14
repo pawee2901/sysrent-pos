@@ -54,17 +54,21 @@ const fromProduct = (p: Product, ap: Record<string, number> = {}): Form => ({
 });
 
 /** สินค้า: ตาราง + เพิ่มจากแม่แบบ + แผงแก้ไข (ข้อมูล · แพ็กเกจ · สต็อก) */
-export function ProductsClient({ products, categories, usages, usageReady, usageImages, imgReady, agentPrices, agentsOn }: { products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string>; imgReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean }) {
+export function ProductsClient({ products, categories, usages, usageReady, usageImages, images, imgReady, galleryReady, agentPrices, agentsOn }: { products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string[]>; images: Record<string, string[]>; imgReady: boolean; galleryReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean }) {
   const [usage, setUsage] = useState('');
-  const [usageImg, setUsageImg] = useState('');
-  const usageFile = useRef<HTMLInputElement>(null);
-  async function uploadUsage(fl?: File) {
-    if (!fl) return;
-    const fd = new FormData(); fd.append('file', fl);
+  const [usageImgs, setUsageImgs] = useState<string[]>([]);
+  const [gallery, setGallery] = useState<string[]>([]);
+  /** อัปหลายรูปทีละไฟล์ · พังกลางทาง = เก็บที่อัปได้แล้ว */
+  async function uploadMany(files: File[]): Promise<string[]> {
+    const out: string[] = [];
     setBusy(true);
-    const r = await api<{ url: string }>('/api/admin/upload', fd);
+    for (const fl of files) {
+      const fd = new FormData(); fd.append('file', fl);
+      const r = await api<{ url: string }>('/api/admin/upload', fd);
+      if (r.ok) out.push(r.data.url); else { setMsg(r.error); break; }
+    }
     setBusy(false);
-    if (r.ok) setUsageImg(r.data.url); else setMsg(r.error);
+    return out;
   }
   const counts = products.reduce<Record<string, number>>((m, p) => ({ ...m, [p.category]: (m[p.category] ?? 0) + 1 }), {});
   const router = useRouter();
@@ -82,7 +86,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
 
   /** เปิดแผงแก้ไข · ส่ง optionId มา = เปิดฟอร์มเพิ่มสต็อกของแพ็กเกจนั้นให้เลย */
   function openProduct(p: Product, stockOptionId?: string) {
-    setF(fromProduct(p, agentPrices)); setUsage(usages[p.id] ?? ''); setUsageImg(usageImages[p.id] ?? ''); setMsg('');
+    setF(fromProduct(p, agentPrices)); setUsage(usages[p.id] ?? ''); setUsageImgs(usageImages[p.id] ?? []); setGallery(images[p.id] ?? []); setMsg('');
     setStock(stockOptionId ? newStock(stockOptionId) : null);
   }
 
@@ -90,7 +94,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
     const t = templateOf(key)!;
     setF({ ...blank(), name: t.name, category: t.category, description: t.description, template: t.key, fulfillment: 'slot',
       options: t.plans.map(([n, price, days]) => ({ name: n, price: String(price), compare_at: '', cost: '', duration_days: String(days), agent_price: '', active: true })) });
-    setPick(false); setMsg(''); setUsage(''); setUsageImg('');
+    setPick(false); setMsg(''); setUsage(''); setUsageImgs([]); setGallery([]);
   }
   async function save() {
     if (!f) return;
@@ -103,9 +107,12 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
     if (!r.ok) { setMsg(r.error); return; }
     // วิธีการใช้งาน: บันทึกแยก (ยังไม่รัน SQL 0011 = แจ้งเตือน แต่สินค้าบันทึกแล้ว)
     const pid = f.id ?? r.data.id;
-    const imgChanged = imgReady && usageImg !== (usageImages[pid ?? ''] ?? '');
-    if (pid && usageReady && (imgChanged || usage.trim() !== (usages[pid] ?? '').trim())) {
-      const u = await api('/api/admin/products', { action: 'usage', id: pid, usage, ...(imgReady ? { usage_image: usageImg } : {}) });
+    const same = (a: string[], b: string[]) => a.join('\n') === b.join('\n');
+    const imgChanged = imgReady && !same(usageImgs, usageImages[pid ?? ''] ?? []);
+    const galChanged = galleryReady && !same(gallery, images[pid ?? ''] ?? []);
+    if (pid && usageReady && (imgChanged || galChanged || usage.trim() !== (usages[pid] ?? '').trim())) {
+      const media = galleryReady ? { usage_images: usageImgs, images: gallery } : imgReady ? { usage_image: usageImgs[0] ?? '' } : {};
+      const u = await api('/api/admin/products', { action: 'usage', id: pid, usage, ...media });
       if (!u.ok) { setMsg(u.error); router.refresh(); return; }
     }
     setF(null); router.refresh();
@@ -142,7 +149,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   return (
     <>
       <div className="page-head"><div><h1>สินค้า</h1><p>สินค้าและแพ็กเกจที่ขายในร้าน · กดแถวเพื่อแก้ไข</p></div>
-        <div className="acts"><button type="button" className="btn" onClick={() => setPick(true)}>ระบบแบ่งจอ</button><button type="button" className="btn primary" onClick={() => { setF(blank()); setUsage(''); setUsageImg(''); setMsg(''); }}>+ เพิ่มสินค้า</button></div></div>
+        <div className="acts"><button type="button" className="btn" onClick={() => setPick(true)}>ระบบแบ่งจอ</button><button type="button" className="btn primary" onClick={() => { setF(blank()); setUsage(''); setUsageImgs([]); setGallery([]); setMsg(''); }}>+ เพิ่มสินค้า</button></div></div>
       <div className="kpis">
         <div className="card kpi"><span className="lbl">เปิดขาย</span><span className="val num">{live.length}</span><span className="delta mute">จาก {products.length} สินค้า</span></div>
         <div className="card kpi"><span className="lbl">ของหมด</span><span className="val num">{live.filter((p) => !p.inStock).length}</span><span className="delta mute">{live.filter((p) => !p.inStock).map((p) => p.name).slice(0, 2).join(', ') || 'ไม่มี 👍'}</span></div>
@@ -205,6 +212,11 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
               </div>
               <input ref={file} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} />
             </div>
+            <div className="field"><span>รูปสินค้าเพิ่มเติม (ลูกค้าเห็นในหน้าสินค้า · ใส่กี่รูปก็ได้)</span>
+              {galleryReady
+                ? <ImageList urls={gallery} onChange={setGallery} max={MAX_IMAGES} disabled={busy} upload={uploadMany} addLabel="เพิ่มรูป" />
+                : <small className="faint" style={{ fontSize: 12 }}>⚠️ ต้องรัน SQL 0029_product_images.sql ก่อน ถึงจะใส่รูปสินค้าได้หลายรูป</small>}
+              {galleryReady && <small className="faint" style={{ fontSize: 12 }}>รูปบนสุด (โลโก้) ใช้ในการ์ดสินค้า · รูปเพิ่มเติมแสดงต่อท้ายในหน้าสินค้า · กด ‹ เพื่อเลื่อนลำดับ</small>}</div>
             <label className="field"><span>ชื่อสินค้า</span><input className="input" value={f.name} maxLength={80} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <label className="field"><span>หมวด</span>
@@ -234,14 +246,9 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
               <textarea className="input" rows={6} value={usage} maxLength={3000} disabled={!usageReady} onChange={(e) => setUsage(e.target.value)}
                 placeholder={'เช่น\n1. นำลิงก์ไปเปิดผ่าน Google Chrome / Safari\n2. ล็อกอินด้วยเมลของลูกค้า แล้วกด "เข้าร่วมทีม"\n3. ไม่แจ้งเมล = ไม่รับเคลมทุกกรณี'} />
               <small className="faint" style={{ fontSize: 12 }}>{usageReady ? 'ใส่ครั้งเดียว ใช้กับทุกชิ้นของสินค้านี้ · ไม่ต้องพิมพ์ซ้ำในสต็อกทุกชิ้น' : '⚠️ ต้องรัน SQL 0011_product_usage.sql ก่อน'}</small></label>
-            <div className="field"><span>รูปวิธีการใช้งาน (ลูกค้าดูและดาวน์โหลดได้หลังซื้อ)</span>
-              <input ref={usageFile} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { uploadUsage(e.target.files?.[0]); e.target.value = ''; }} />
-              {usageImg && <img src={usageImg} alt="รูปวิธีการใช้งาน" className="usage-thumb" />}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button type="button" className="btn sm" disabled={busy || !imgReady} onClick={() => usageFile.current?.click()}>{usageImg ? 'เปลี่ยนรูป' : '🖼 อัปโหลดรูปวิธีใช้'}</button>
-                {usageImg && <button type="button" className="btn ghost sm" onClick={() => setUsageImg('')}>เอารูปออก</button>}
-              </div>
-              <small className="faint" style={{ fontSize: 12 }}>{imgReady ? 'เช่น รูปขั้นตอนการเข้าใช้ / ภาพแคปหน้าจอ · ใส่คู่กับข้อความ หรือรูปอย่างเดียวก็ได้' : '⚠️ ต้องรัน SQL 0012_usage_image.sql ก่อน'}</small></div>
+            <div className="field"><span>รูปวิธีการใช้งาน (ลูกค้าดูและดาวน์โหลดได้หลังซื้อ{galleryReady ? ' · ใส่กี่รูปก็ได้' : ''})</span>
+              <ImageList urls={usageImgs} onChange={setUsageImgs} max={galleryReady ? MAX_IMAGES : 1} disabled={busy || !imgReady} upload={uploadMany} addLabel="รูปวิธีใช้" />
+              <small className="faint" style={{ fontSize: 12 }}>{!imgReady ? '⚠️ ต้องรัน SQL 0012_usage_image.sql ก่อน' : galleryReady ? 'เช่น รูปขั้นตอนการเข้าใช้ทีละขั้น / ภาพแคปหน้าจอ · ลูกค้าเห็นเรียงตามลำดับนี้' : '⚠️ ตอนนี้ใส่ได้ 1 รูป · รัน SQL 0029_product_images.sql เพื่อใส่ได้หลายรูป'}</small></div>
             </div>
 
             <div className="pe-col">
@@ -308,6 +315,32 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
 }
 
 /** เพิ่มสต็อกแบบแยกช่อง (แนวตั้ง): ตั้งชื่อช่องครั้งเดียวด้านบน · 1 การ์ด = 1 ชิ้น ช่องเรียงลงมา · วาง "a | b | c" หลายบรรทัดได้ */
+const MAX_IMAGES = 20;
+
+/** รูปหลายรูป: ตัวอย่างย่อ · ลบ · เลื่อนลำดับ · เลือกหลายไฟล์พร้อมกันได้ */
+function ImageList({ urls, onChange, max, disabled, upload, addLabel }: { urls: string[]; onChange: (u: string[]) => void; max: number; disabled: boolean; upload: (f: File[]) => Promise<string[]>; addLabel: string }) {
+  const pickRef = useRef<HTMLInputElement>(null);
+  const move = (i: number) => { const a = [...urls]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; onChange(a); };
+  return (
+    <div className="imgs">
+      {urls.map((u, i) => (
+        <div key={`${u}${i}`} className="imgs-item">
+          <img src={u} alt={`${addLabel} ที่ ${i + 1}`} loading="lazy" />
+          <button type="button" className="imgs-x" aria-label={`ลบ${addLabel}ที่ ${i + 1}`} onClick={() => onChange(urls.filter((_, k) => k !== i))}>✕</button>
+          {i > 0 && <button type="button" className="imgs-left" aria-label={`เลื่อน${addLabel}ที่ ${i + 1} ขึ้นก่อน`} onClick={() => move(i)}>‹</button>}
+        </div>
+      ))}
+      {urls.length < max && <button type="button" className="imgs-add" disabled={disabled} onClick={() => pickRef.current?.click()}>＋<span>{addLabel}</span></button>}
+      <input ref={pickRef} type="file" accept="image/jpeg,image/png,image/webp" multiple={max > 1} hidden onChange={async (e) => {
+        const files = [...(e.target.files ?? [])].slice(0, max - urls.length);
+        e.target.value = '';
+        const got = await upload(files);
+        if (got.length) onChange([...urls, ...got]);
+      }} />
+    </div>
+  );
+}
+
 function StockTable({ st, set }: { st: StockForm; set: (s: StockForm) => void }) {
   const setCell = (r: number, c: number, v: string) => set({ ...st, rows: st.rows.map((row, i) => (i === r ? row.map((x, j) => (j === c ? v : x)) : row)) });
   function paste(e: React.ClipboardEvent<HTMLInputElement>, r: number, c: number) {

@@ -6,6 +6,7 @@ import { shopCategories } from '@/lib/categories';
 import { markPlain } from '@/lib/fields';
 
 const SHORT_PLANS = [25, 15, 7, 3];
+const httpsUrl = z.string().trim().max(500).refine((u) => /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https');
 const money = z.number().positive('ราคาต้องมากกว่า 0').max(1_000_000);
 const opt = z.object({
   id: z.string().uuid().optional(),
@@ -38,7 +39,9 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('stock'), optionId: z.string().uuid(), text: z.string().min(1).max(200_000), mode: z.enum(['line', 'block']).default('line'), repeat: z.number().int().min(1).max(500).default(1), plain: z.boolean().default(false) }),
   // แบ่งจอ: เพิ่มแพ็กเกจสั้น เมื่อบัญชีเหลือวันไม่พอขายแพ็กเกจที่มี · days = วันที่บัญชีเหลือ · ไม่ส่ง plans = ขอรายการพร้อมราคาแนะนำ · ส่ง plans = บันทึกตามราคาที่แอดมินยืนยัน
   z.object({ action: z.literal('short_plans'), id: z.string().uuid(), days: z.number().int().min(1).max(3650), plans: z.array(z.object({ days: z.number().int().min(1).max(3650), price: money })).min(1).max(12).optional() }),
-  z.object({ action: z.literal('usage'), id: z.string().uuid(), usage: z.string().max(3000), usage_image: z.string().trim().max(500).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https').optional() }),
+  // usage_images / images = หลายรูป (ต้องรัน 0029) · usage_image = รูปวิธีใช้รูปเดียวแบบเดิม (0012)
+  z.object({ action: z.literal('usage'), id: z.string().uuid(), usage: z.string().max(3000),
+    usage_images: z.array(httpsUrl).max(20).optional(), images: z.array(httpsUrl).max(20).optional(), usage_image: z.string().trim().max(500).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https').optional() }),
 ]);
 
 /** จัดการสินค้า + แพ็กเกจ + เพิ่มสต็อก (ทุกคำสั่งตรวจว่าเป็นของร้านนี้) */
@@ -153,11 +156,14 @@ export async function POST(req: Request) {
 
   if (x.action === 'usage') {
     if (!(await own(x.id))) return fail('ไม่พบสินค้า', 404);
-    const upd: Record<string, string> = { usage: x.usage.trim() };
+    const upd: Record<string, unknown> = { usage: x.usage.trim() };
     if (x.usage_image !== undefined) upd.usage_image = x.usage_image;
+    if (x.usage_images !== undefined) upd.usage_images = x.usage_images;
+    if (x.images !== undefined) upd.images = x.images;
     const { error } = await d.from('shop_products').update(upd).eq('id', x.id);
     if (!error) return NextResponse.json({ ok: true });
-    return fail(error.message.includes('usage_image') ? 'ยังไม่ได้รัน SQL 0012_usage_image.sql' : error.message.includes('usage') ? 'ยังไม่ได้รัน SQL 0011_product_usage.sql' : 'บันทึกไม่สำเร็จ', 500);
+    // เช็ก 0029 ก่อน: ชื่อ usage_images มีคำว่า usage_image อยู่ในตัว
+    return fail(/usage_images|\bimages\b/.test(error.message) ? 'ยังไม่ได้รัน SQL 0029_product_images.sql' : error.message.includes('usage_image') ? 'ยังไม่ได้รัน SQL 0012_usage_image.sql' : error.message.includes('usage') ? 'ยังไม่ได้รัน SQL 0011_product_usage.sql' : 'บันทึกไม่สำเร็จ', 500);
   }
 
   // เพิ่มสต็อก: ทีละบรรทัด (1 บรรทัด = 1 ชิ้น) หรือ 1 ชิ้นหลายบรรทัด (คั่นหลายชิ้นด้วยบรรทัด ---)
