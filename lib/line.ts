@@ -73,6 +73,13 @@ export async function lineWebhookInfo(token: string): Promise<{ endpoint: string
   if (!r?.ok) return null;
   return (await r.json().catch(() => null)) as { endpoint: string; active: boolean } | null;
 }
+/** ตั้ง Webhook URL ในช่อง LINE ของร้านให้เอง (ร้านไม่ต้องไปคัดลอกวาง) · ปุ่ม "Use webhook" ยังต้องเปิดเองในหน้า LINE */
+export async function lineSetWebhook(token: string, endpoint: string): Promise<boolean> {
+  const r = await call(token, '/v2/bot/channel/webhook/endpoint', { method: 'PUT', body: JSON.stringify({ endpoint }) });
+  if (!r?.ok) console.error('[line] set webhook', r?.status, await r?.text().catch(() => ''));
+  return Boolean(r?.ok);
+}
+
 /** ให้ LINE ยิงทดสอบเข้า Webhook ของร้าน */
 export async function lineWebhookTest(token: string): Promise<{ success: boolean; statusCode?: number; reason?: string } | null> {
   const r = await call(token, '/v2/bot/channel/webhook/test', { method: 'POST', body: '{}' });

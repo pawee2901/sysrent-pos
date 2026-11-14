@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { lineContent, lineDisplayName, lineLoading, pushLine, replyLine, type LineMessage, type ShopLine } from '@/lib/line';
 import { LINK_CODE_RE, createRenewalPay, payBySlip, pendingPay, renewalFlex, renewSettings, type RenewalRow } from '@/lib/renewals';
 import { notifyRenewal } from '@/lib/notify';
+import { SHOP_KEYWORDS, botConfig, clearAwaiting, loadSess, shopAction, shopSlip, shopTyped, welcome, withBotCtx } from '@/lib/line-shop';
+import type { BotConfig } from '@/lib/line-bot-config';
 import type { Shop } from '@/lib/shop';
 
 /**
@@ -65,40 +67,74 @@ async function myRenewals(shop: ShopLite, userId: string): Promise<LineMessage[]
   return [{ type: 'flex', altText: 'รายการต่อเมลของฉัน', contents: cards.length === 1 ? cards[0] : { type: 'carousel', contents: cards.slice(0, 12) } }];
 }
 
-async function handle(shop: ShopLite, line: ShopLine, e: LineEvent) {
+/**
+ * เปิดอะไรบ้างในแชทของร้านนี้: renewals = ต่อเมล (แพ็กเกจ Pro+) · sell = ขายสินค้า (Pro+ และร้านเปิด "ขายใน LINE")
+ * ต่อเมลมาก่อนเสมอ (รหัสผูก / ต่อเมล / ปุ่มแพ็กเกจต่อ / สลิปของ QR ต่อเมล) แล้วค่อยเป็นเรื่องร้านค้า
+ */
+async function handle(shop: Shop, line: ShopLine, e: LineEvent, on: { renewals: boolean; sell: boolean }, cfg: BotConfig) {
   if (e.mode === 'standby' || e.deliveryContext?.isRedelivery) return;
   const userId = e.source?.type === 'user' ? e.source.userId : undefined;   // ไม่ตอบในกลุ่ม
   if (!userId) return;
   const name = await noteContact(shop.id, line, userId).catch(() => '');
+  if (!e.replyToken || !cfg.enabled) return;   // ร้านปิดบอทไว้ = ไม่ตอบแชท (ยังจดชื่อลูกค้าไว้)
+  // ทุกข้อความ / ปุ่มข้างในใช้ตั้งค่าบอทของร้าน (น้ำเสียง · ข้อความ · เมนู · การ์ด)
+  return withBotCtx({ cfg, shop, name }, () => reply(shop, line, e, on, userId, name));
+}
+
+async function reply(shop: Shop, line: ShopLine, e: LineEvent & { replyToken?: string }, on: { renewals: boolean; sell: boolean }, userId: string, name: string) {
   if (!e.replyToken) return;
+  const sess = (create: boolean) => (on.sell ? loadSess(shop, userId, name, create) : Promise.resolve(null));
 
   let msgs: LineMessage[] | null = null;
-  if (e.type === 'message' && e.message?.type === 'text') {
+  if (e.type === 'follow') {
+    if (on.sell) msgs = welcome(shop, on.renewals);
+  } else if (e.type === 'message' && e.message?.type === 'text') {
     const raw = (e.message.text ?? '').trim();
-    if (LINK_CODE_RE.test(raw)) msgs = await linkCode(shop, userId, name, raw.toUpperCase());
-    else if (KEYWORDS.has(raw)) msgs = await myRenewals(shop, userId);
+    const kw = SHOP_KEYWORDS[raw.toLowerCase()];
+    if (on.renewals && LINK_CODE_RE.test(raw)) msgs = await linkCode(shop, userId, name, raw.toUpperCase());
+    else if (on.renewals && KEYWORDS.has(raw) && !(raw === 'เมนู' && on.sell)) msgs = await myRenewals(shop, userId);
+    else if (on.sell && kw) {
+      void lineLoading(line.token, userId, 10);
+      const s = await sess(true);
+      if (s) { await clearAwaiting(s); msgs = await shopAction(shop, s, new URLSearchParams(`a=${kw}`), on.renewals); }
+    } else if (on.sell) {
+      const s = await sess(false);   // ข้อความที่บอทขอให้พิมพ์ (เช่น อีเมล / ไอดี) · อื่น ๆ เงียบ ให้ร้านตอบเอง
+      if (s) msgs = await shopTyped(shop, s, raw);
+    }
   } else if (e.type === 'postback' && e.postback) {
     const q = new URLSearchParams(e.postback.data);
-    if (q.get('a') === 'rn') {
+    if (q.get('a') === 'rn' && on.renewals) {
       void lineLoading(line.token, userId, 10);
       const r = await createRenewalPay(shop, userId, q.get('r') ?? '', q.get('o') ?? '');
       msgs = r.ok ? r.messages : [text(`❌ ${r.error}`)];
+    } else if (q.get('a') === 'myrn' && on.renewals) {
+      msgs = await myRenewals(shop, userId);
+    } else if (on.sell) {
+      void lineLoading(line.token, userId, 10);
+      const s = await sess(true);
+      msgs = s ? await shopAction(shop, s, q, on.renewals) : [text('ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง')];
     }
   } else if (e.type === 'message' && e.message?.type === 'image') {
-    const pay = await pendingPay(shop.id, userId);
-    if (pay) {   // ไม่มี QR รอจ่าย = รูปทั่วไปที่ส่งให้ร้านดู → เงียบ
+    const id = e.message.id;
+    const pay = on.renewals ? await pendingPay(shop.id, userId) : null;
+    if (pay) {
       void lineLoading(line.token, userId, 30);
-      const file = await lineContent(line.token, e.message.id);
+      const file = await lineContent(line.token, id);
       msgs = [text(file ? await payBySlip(shop, pay, file, name || 'ลูกค้า LINE') : 'โหลดรูปสลิปไม่สำเร็จ กรุณาส่งใหม่อีกครั้ง')];
+    } else if (on.sell) {
+      const s = await sess(false);
+      if (s) msgs = await shopSlip(shop, s, async () => { void lineLoading(line.token, userId, 30); return lineContent(line.token, id); }, on.renewals);
     }
+    // ไม่มี QR รอจ่าย = รูปทั่วไปที่ส่งให้ร้านดู → เงียบ
   }
   if (!msgs?.length) return;
   // ตอบไม่ทัน (ตรวจสลิปนาน token หมดอายุ) → ส่งแบบ push แทน
   if (!(await replyLine(line.token, e.replyToken, msgs))) await pushLine(line.token, userId, msgs);
 }
 
-export async function handleShopLineEvents(shop: ShopLite, line: ShopLine, events: LineEvent[]) {
+export async function handleShopLineEvents(shop: Shop, line: ShopLine, events: LineEvent[], on: { renewals: boolean; sell: boolean }) {
+  const cfg = await botConfig(shop.id);
   for (const e of events.slice(0, 50)) {
-    await handle(shop, line, e).catch((err) => console.error('[renewal-bot]', shop.id, e.type, err));
+    await handle(shop, line, e, on, cfg).catch((err) => console.error('[line-bot]', shop.id, e.type, err));
   }
 }

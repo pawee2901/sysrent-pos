@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
+import { lineReportNotice } from '@/lib/line-shop';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { body, fail, requireAdmin } from '@/lib/api';
@@ -49,5 +50,8 @@ export async function POST(req: Request) {
   if (x.resolve) { upd.status = 'resolved'; upd.resolved_at = new Date().toISOString(); }
   const { data, error } = await d.from('shop_reports').update(upd).eq('id', x.id).eq('shop_id', a.shop.id).select('id');
   if (error) return fail('บันทึกไม่สำเร็จ', 500);
-  return data?.length ? NextResponse.json({ ok: true }) : fail('ไม่พบเรื่องนี้', 404);
+  if (!data?.length) return fail('ไม่พบเรื่องนี้', 404);
+  // ลูกค้ามาจาก LINE ร้าน + ร้านเปิด "ร้านตอบเรื่องที่ลูกค้าแจ้งปัญหา" (หลังบ้าน → บอท LINE) → แจ้งในแชท
+  if (x.reply) after(() => lineReportNotice(a.shop, x.id).catch((e) => console.error('[line] report notice', e)));
+  return NextResponse.json({ ok: true });
 }

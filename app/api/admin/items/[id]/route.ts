@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
+import { lineItemNotice } from '@/lib/line-shop';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { can } from '@/lib/plan';
@@ -33,6 +34,9 @@ export async function POST(req: Request, { params }: Ctx) {
   const args = b.data.action === 'deliver' ? { p_shop: a.shop.id, p_item: id, p_content: b.data.content } : { p_shop: a.shop.id, p_item: id, p_reason: b.data.content.slice(0, 300) };
   const { error } = await db().rpc(fn, args);
   if (error) return /NOT_OPEN/.test(error.message) ? fail('รายการนี้ถูกจัดการไปแล้ว', 409) : /NOT_FOUND/.test(error.message) ? fail('ไม่พบรายการ', 404) : fail('บันทึกไม่สำเร็จ', 500);
+  // ลูกค้าที่สั่งผ่าน LINE ร้าน → แจ้งในแชท LINE ด้วย (หลังตอบแอดมินแล้ว)
+  const { action, content } = b.data;
+  after(() => lineItemNotice(a.shop, id, action, content).catch((e) => console.error('[line] item notice', e)));
   // รอผลอีเมลเพื่อบอกแอดมินทันที · ส่งไม่ได้ก็ยังถือว่าส่งของ / คืนเงินสำเร็จ
   const mail = b.data.mail && can(a.shop.plan, 'mail') ? await sendItemMail(a.shop, id, b.data.action, b.data.content) : null;
   return NextResponse.json({ ok: true, mail: mail && { sent: mail === 'sent', message: MAIL_RESULT[mail] } });

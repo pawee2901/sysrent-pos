@@ -5,6 +5,7 @@ import { body, fail, requireAdmin } from '@/lib/api';
 import { encConfigured } from '@/lib/secret';
 import { deleteShopLine, lineBotInfo, lineWebhookInfo, lineWebhookTest, pushLine, saveShopLine, shopLine } from '@/lib/line';
 import { completePay, newLinkCode, renewAllowed, renewalFlex, type RenewalRow } from '@/lib/renewals';
+import { botConfig } from '@/lib/line-shop';
 
 const email = z.string().trim().toLowerCase().min(3, 'กรุณากรอกเมล').max(120);
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'วันที่ไม่ถูกต้อง');
@@ -21,6 +22,7 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('delete'), id: z.string().uuid() }),
   z.object({ action: z.literal('remind'), id: z.string().uuid() }),
   z.object({ action: z.literal('confirm_pay'), id: z.string().uuid() }),
+  z.object({ action: z.literal('reject_pay'), id: z.string().uuid(), reason: z.string().trim().min(1, 'ใส่เหตุผล').max(200) }),
   z.object({
     action: z.literal('settings'),
     remind_days: z.number().int().min(1).max(30), grace_days: z.number().int().min(0).max(30),
@@ -29,6 +31,7 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('line_save'), secret: z.string().trim().regex(/^[0-9a-f]{32}$/i, 'Channel secret ต้องเป็นตัวอักษร 32 ตัว (0-9 a-f)'), token: z.string().trim().min(100, 'Channel access token สั้นเกินไป — คัดลอกให้ครบ').max(400) }),
   z.object({ action: z.literal('line_test') }),
   z.object({ action: z.literal('line_delete') }),
+  z.object({ action: z.literal('line_shop'), on: z.boolean() }),
 ]);
 
 /** ต่อเมล (หลังบ้าน): ลูกค้า · ตั้งค่า · เชื่อม LINE OA ของร้าน */
@@ -92,8 +95,18 @@ export async function POST(req: Request) {
     const msg = await completePay(a.shop, p.id, `manual-${p.id}`, { manual: true, at: new Date().toISOString() }, 'แอดมินยืนยัน');
     if (!msg.startsWith('✅')) return fail(msg.replace(/^❌\s*/, ''));
     const line = await shopLine(sid);
-    if (line) await pushLine(line.token, p.line_user_id, [{ type: 'text', text: msg }]);
+    // ร้านเปิด "ร้านอนุมัติสลิปเอง" (หลังบ้าน → บอท LINE) → แจ้งลูกค้าในแชท
+    if (line && (await botConfig(sid)).push.slip_ok) await pushLine(line.token, p.line_user_id, [{ type: 'text', text: msg }]);
     return ok('ยืนยันรับเงินแล้ว ต่ออายุให้ลูกค้าแล้ว');
+  }
+  if (x.action === 'reject_pay') {
+    const { data: p } = await d.from('shop_renewal_pays').update({ status: 'expired', last_error: `ร้านปฏิเสธ: ${x.reason}` }).eq('id', x.id).eq('shop_id', sid).eq('status', 'pending').select('line_user_id, label').maybeSingle();
+    if (!p) return fail('ไม่พบรายการ หรือจัดการไปแล้ว', 404);
+    const line = await shopLine(sid);
+    if (line && (await botConfig(sid)).push.slip_bad) await pushLine(line.token, p.line_user_id, [{ type: 'text', text: `❌ ร้านตรวจสลิปแล้วไม่ผ่าน
+เหตุผล: ${x.reason}
+กรุณาพิมพ์ "ต่อเมล" แล้วกดต่อใหม่ หรือส่งสลิปที่ถูกต้องอีกครั้ง` }]);
+    return ok('ปฏิเสธสลิปแล้ว');
   }
   if (x.action === 'settings') {
     const { error } = await d.from('shops').update({
@@ -123,6 +136,11 @@ export async function POST(req: Request) {
     const t = await lineWebhookTest(line.token);
     if (!t?.success) return fail(t?.statusCode === 401 ? 'Channel secret ไม่ตรงกับช่องนี้ — ตรวจแล้วเชื่อมใหม่' : `LINE ส่งเข้าเว็บร้านไม่สำเร็จ (${t?.statusCode ?? '-'} ${t?.reason ?? ''})`);
     return ok('✅ เชื่อมต่อสมบูรณ์ — LINE ส่งข้อความเข้าร้านได้แล้ว');
+  }
+  if (x.action === 'line_shop') {
+    const { error } = await d.from('shops').update({ line_shop: x.on }).eq('id', sid);
+    if (missing(error)) return fail('ยังไม่ได้รัน 0029_line_shop.sql ใน Supabase', 400);
+    return error ? fail('บันทึกไม่สำเร็จ', 500) : ok(x.on ? 'เปิดขายสินค้าใน LINE แล้ว — ลูกค้าพิมพ์ "ดูสินค้า" ในแชทได้เลย' : 'ปิดขายสินค้าใน LINE แล้ว (ต่อเมลยังทำงานปกติ)');
   }
   await deleteShopLine(sid);
   return ok('ยกเลิกการเชื่อม LINE แล้ว');

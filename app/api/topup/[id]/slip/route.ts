@@ -1,92 +1,21 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 import { fail, isUuid, requireCustomer } from '@/lib/api';
-import { slipServiceConfigured, verifySlip } from '@/lib/slip-service';
-import { receiverIsShop } from '@/lib/slip-receiver';
-import { MAX_ATTEMPTS, SLIP_GRACE_MS } from '@/lib/topup';
-import { checkSlipFree } from '@/lib/slip-free';
-import { notifyOrderPaid, notifyTopup } from '@/lib/notify';
+import { verifyTopupSlip } from '@/lib/topup-slip';
 
-const TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const SKEW = 60_000;
 type Ctx = { params: Promise<{ id: string }> };
 
-/**
- * อัปสลิป → ใช้โควตาตรวจสลิปของร้าน (เกิน 500/เดือน ตัดกระเป๋า SysRent ของเจ้าของร้าน ไม่พอ = ไม่ตรวจ)
- * → Thunder / SlipOK (lib/slip-service.ts) → ยอดตรง + ผู้รับเป็นร้านนี้ + เวลาโอนอยู่ในช่วง QR → เงินเข้ากระเป๋า (+ จ่ายออเดอร์ต่อ ถ้า QR นี้มาจากออเดอร์)
- */
+/** อัปสลิปจากหน้าเว็บร้าน — เงื่อนไขการตรวจทั้งหมดอยู่ใน lib/topup-slip.ts (ใช้ร่วมกับแชท LINE ของร้าน) */
 export async function POST(req: Request, { params }: Ctx) {
   const a = await requireCustomer();
   if ('res' in a) return a.res;
-  const meId = a.me.id, meName = a.me.username, shop = a.shop;
   const { id } = await params;
   if (!isUuid(id)) return fail('ไม่พบรายการ', 404);
-  const d = db();
-  const { data: t } = await d.from('shop_topups').select('id, amount, status, attempts, pay_order, created_at, expires_at')
-    .eq('id', id).eq('shop_id', a.shop.id).eq('customer_id', a.me.id).maybeSingle();
-  if (!t) return fail('ไม่พบรายการ', 404);
-  if (t.status === 'paid') return fail('รายการนี้ชำระเรียบร้อยแล้ว', 409);
-  if (t.status !== 'pending') return fail('รายการนี้หมดเวลาแล้ว กรุณาสร้าง QR ใหม่', 410, { expired: true });
-  const created = new Date(t.created_at).getTime();
-  const expires = new Date(t.expires_at).getTime();
-  if (Date.now() > expires + SLIP_GRACE_MS) {
-    await d.from('shop_topups').update({ status: 'expired' }).eq('id', t.id).eq('status', 'pending');
-    return fail('เกินเวลาตรวจสลิป หากโอนแล้วกรุณาติดต่อร้านพร้อมสลิป', 410, { expired: true });
-  }
-  if (t.attempts >= MAX_ATTEMPTS) return fail('อัปสลิปเกินจำนวนครั้ง กรุณาติดต่อร้าน', 429);
-
   const form = await req.formData().catch(() => null);
   const file = form?.get('slip');
-  if (!(file instanceof Blob) || !file.size) return fail('กรุณาเลือกรูปสลิป');
-  if (file.size > 5 * 1024 * 1024) return fail('ไฟล์ใหญ่เกิน 5MB');
-  if (!TYPES.has(file.type)) return fail('รองรับเฉพาะรูป jpg, png, webp');
-
-  // ไม่มีบริการตรวจสลิป (Thunder / SlipOK) → ตรวจเอง (QR บนสลิป + AI + แจ้งเตือนเงินเข้า)
-  if (!slipServiceConfigured()) {
-    await d.from('shop_topups').update({ attempts: t.attempts + 1 }).eq('id', t.id);
-    const r = await checkSlipFree(a.shop, a.me.id, { ...t, amount: Number(t.amount) }, Buffer.from(await file.arrayBuffer()));
-    if (r.kind === 'error') { await d.from('shop_topups').update({ last_error: r.message }).eq('id', t.id); return fail(r.message, r.status); }
-    if (r.kind === 'waiting') return NextResponse.json({ ok: true, waiting: true, message: r.message });
-    return finish(r.amount);
-  }
-
-  // โควตาตรวจสลิปของร้าน (นับก่อนส่งไปตรวจ เพราะบริการตรวจสลิปคิดเงินทุกครั้ง)
-  const { data: allowed, error: qErr } = await d.rpc('shop_use_slip', { p_shop: a.shop.id });
-  if (qErr) { console.error('[slip] quota', qErr.message); return fail('ระบบตรวจสลิปขัดข้อง กรุณาลองใหม่', 500); }
-  if (!allowed) return fail('ร้านใช้โควตาตรวจสลิปเดือนนี้ครบแล้ว — ระบบยังรับเงินไม่ได้ชั่วคราว กรุณาติดต่อร้านทาง LINE', 503);
-
-  await d.from('shop_topups').update({ attempts: t.attempts + 1 }).eq('id', t.id);
-  const amount = Number(t.amount);
-  const r = await verifySlip(file, amount);
-  const bad = async (msg: string, status = 400) => { await d.from('shop_topups').update({ last_error: msg }).eq('id', t.id); return fail(msg, status); };
-  if (!r.ok) return bad(r.message, r.retryable ? 503 : 400);
-  const s = r.data;
-  if (Math.abs(Number(s.amount) - amount) >= 0.005) return bad(`ยอดในสลิป ฿${s.amount} ไม่ตรงกับยอดที่ต้องโอน ฿${amount}`);
-  if (!receiverIsShop(s.receiver, a.shop)) return bad('บัญชีผู้รับในสลิปไม่ใช่บัญชีของร้านนี้');
-  const paidAt = Date.parse(s.transTimestamp);
-  if (!Number.isFinite(paidAt) || paidAt < created - SKEW) return bad('สลิปนี้โอนก่อนสร้างรายการ ใช้ไม่ได้');
-  if (paidAt > expires + SKEW) return bad('โอนหลัง QR หมดอายุ กรุณาติดต่อร้านพร้อมสลิป');
-
-  const slip = { transRef: s.transRef, at: s.transTimestamp, amount: s.amount, sender: s.sender?.displayName || s.sender?.name || null, bank: s.sendingBank ?? null };
-  const { data: balance, error } = await d.rpc('shop_credit_topup', { p_topup: t.id, p_ref: s.transRef, p_slip: slip });
-  if (error) {
-    if (/DUPLICATE_SLIP/.test(error.message) || error.code === '23505') return bad('สลิปนี้ถูกใช้ไปแล้ว', 409);
-    if (/NOT_PENDING/.test(error.message)) return fail('รายการนี้ชำระเรียบร้อยแล้ว', 409);
-    console.error('[slip] credit', error.message);
-    return bad('บันทึกยอดเงินไม่สำเร็จ กรุณาติดต่อร้านพร้อมสลิป', 500);
-  }
-
-  return finish(amount, Number(balance));
-
-  // QR นี้มาจากออเดอร์ → จ่ายต่อจากกระเป๋าทันที (ออเดอร์หมดเวลา/ของหมด = เงินยังอยู่ในกระเป๋า ไม่หาย)
-  async function finish(amount: number, balance?: number) {
-  if (t!.pay_order) {
-    const { data: o, error: pErr } = await d.rpc('shop_pay_order', { p_order: t!.pay_order, p_customer: meId, p_paid_by: 'promptpay' });
-    if (!pErr && o) { notifyOrderPaid(shop, t!.pay_order); return NextResponse.json({ ok: true, amount, order: (o as { code: string }).code }); }
-    notifyTopup(shop, meName, amount); // ออเดอร์จ่ายไม่สำเร็จ แต่เงินเข้ากระเป๋าแล้ว
-    return NextResponse.json({ ok: true, amount, balance, orderError: 'เงินเข้ากระเป๋าแล้ว แต่ออเดอร์จ่ายไม่สำเร็จ (อาจหมดเวลาหรือของหมด) — สั่งใหม่แล้วจ่ายด้วยกระเป๋าได้เลย' });
-  }
-  notifyTopup(shop, meName, amount);
-  return NextResponse.json({ ok: true, amount, balance });
-  }
+  const r = await verifyTopupSlip(a.shop, { id: a.me.id, username: a.me.username }, id, file instanceof Blob ? file : null);
+  if (!r.ok) return fail(r.error, r.status, r.expired ? { expired: true } : {});
+  if (r.waiting) return NextResponse.json({ ok: true, waiting: true, message: r.message });
+  if (r.order) return NextResponse.json({ ok: true, amount: r.amount, order: r.order });
+  if (r.orderError) return NextResponse.json({ ok: true, amount: r.amount, balance: r.balance, orderError: r.orderError });
+  return NextResponse.json({ ok: true, amount: r.amount, balance: r.balance });
 }

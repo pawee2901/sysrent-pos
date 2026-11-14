@@ -25,6 +25,9 @@ export default async function AdminRenewals() {
       .gt('attempts', 0).gte('created_at', new Date(Date.now() - 3 * 86_400_000).toISOString()).order('created_at', { ascending: false }),
     renewSettings(shop.id),
   ]);
+  // ขายสินค้าใน LINE เปิดอยู่ไหม (null = ยังไม่รัน 0029)
+  const { data: ls, error: lsErr } = await d.from('shops').select('line_shop').eq('id', shop.id).maybeSingle();
+  const lineShop = lsErr ? null : ls?.line_shop !== false;
   if (lineErr && (lineErr.code === '42P01' || lineErr.code === 'PGRST205')) {
     return <div className="card card-pad"><h2 style={{ marginTop: 0 }}>ต่อเมล</h2><p className="muted">ยังไม่ได้รัน <code>supabase/migrations/0028_shop_renewals.sql</code> ใน Supabase — รันแล้วรีเฟรชหน้านี้</p></div>;
   }
@@ -65,7 +68,7 @@ export default async function AdminRenewals() {
     <RenewalsClient
       rows={view} groups={groups} contacts={contactList} pending={pending} settings={st}
       fams={[...famMap.values()].sort((a, b) => a.email.localeCompare(b.email))}
-      line={line ? { botName: line.bot_name, basicId: line.basic_id } : null} webhook={webhook}
+      line={line ? { botName: line.bot_name, basicId: line.basic_id } : null} webhook={webhook} lineShop={lineShop}
       autoSlip={slipServiceConfigured()} hasPromptpay={Boolean(shop.promptpay_id)}
     />
   );

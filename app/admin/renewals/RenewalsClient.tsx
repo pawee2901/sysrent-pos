@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api, baht } from '@/components/Cart';
 import { ask, notify } from '@/components/dialog';
 import { ThaiDateInput } from '@/components/ThaiDateInput';
+import { to } from '@/lib/routes';
 
 export type RenewalView = {
   id: string; customerEmail: string; famEmail: string; optionId: string; option: string;
@@ -65,9 +66,9 @@ function ChatSelect({ value, onChange, contacts }: { value: string | null; onCha
   );
 }
 
-export function RenewalsClient({ rows, groups, contacts, pending, settings, fams, line, webhook, autoSlip, hasPromptpay }: {
+export function RenewalsClient({ rows, groups, contacts, pending, settings, fams, line, webhook, autoSlip, hasPromptpay, lineShop = null }: {
   rows: RenewalView[]; groups: OptionGroup[]; contacts: Contact[]; pending: PendingPay[]; settings: Settings; fams: Fam[];
-  line: { botName: string; basicId: string } | null; webhook: string; autoSlip: boolean; hasPromptpay: boolean;
+  line: { botName: string; basicId: string } | null; webhook: string; autoSlip: boolean; hasPromptpay: boolean; lineShop?: boolean | null;
 }) {
   const router = useRouter();
   const [f, setF] = useState<Form | null>(null);
@@ -196,7 +197,7 @@ export function RenewalsClient({ rows, groups, contacts, pending, settings, fams
         </div>
 
         <div className="rn-col">
-          <LineCard line={line} webhook={webhook} call={call} />
+          <LineCard line={line} />
           <SettingsCard settings={settings} call={call} />
         </div>
       </div>
@@ -225,42 +226,17 @@ export function RenewalsClient({ rows, groups, contacts, pending, settings, fams
   );
 }
 
-/** เชื่อม LINE OA ของร้าน: วิธีทำ + ช่องใส่รหัส + ทดสอบ */
-function LineCard({ line, webhook, call }: { line: { botName: string; basicId: string } | null; webhook: string; call: (b: object, c?: string) => Promise<unknown> }) {
-  const [secret, setSecret] = useState('');
-  const [token, setToken] = useState('');
-  const [open, setOpen] = useState(!line);
+/** การเชื่อม LINE ย้ายไปเมนู "บอท LINE" แล้ว — หน้านี้บอกสถานะ + ลิงก์ไปตั้งค่า */
+function LineCard({ line }: { line: { botName: string; basicId: string } | null }) {
   return (
     <section className="card">
       <div className="card-head">
-        <h2>เชื่อม LINE OA ของร้าน</h2>
+        <h2>LINE OA ของร้าน</h2>
         {line ? <span className="pill ok">เชื่อมแล้ว · {line.botName} {line.basicId}</span> : <span className="pill warn">ยังไม่เชื่อม</span>}
       </div>
       <div className="rn-body">
-        {line && !open && (
-          <div className="rn-acts">
-            <button type="button" className="btn sm primary" onClick={() => call({ action: 'line_test' })}>ทดสอบการเชื่อมต่อ</button>
-            <button type="button" className="btn sm ghost" onClick={() => setOpen(true)}>เปลี่ยนรหัส / วิธีตั้งค่า</button>
-            <button type="button" className="btn sm ghost" onClick={() => call({ action: 'line_delete' }, 'ยกเลิกการเชื่อม LINE? ระบบจะหยุดเตือนและรับเงินในแชท')}>ยกเลิกการเชื่อม</button>
-          </div>
-        )}
-        {open && <>
-          <ol className="rn-steps">
-            <li>LINE OA Manager (บัญชีร้าน) → ⚙ ตั้งค่า → <b>Messaging API</b> → <b>ใช้ Messaging API</b></li>
-            <li>ช่อง <b>Webhook URL</b> ใส่ลิงก์นี้ แล้วบันทึก
-              <span className="rn-copy"><code>{webhook}</code><button type="button" className="btn sm" onClick={() => copy(webhook)}>คัดลอก</button></span></li>
-            <li>ตั้งค่าการตอบกลับ: <b>แชท เปิด · Webhook เปิด</b> · ข้อความตอบกลับอัตโนมัติ <b>ปิด</b> (ไม่งั้นตอบซ้อนกับระบบ)</li>
-            <li>developers.line.biz → ช่องของร้าน → <b>Basic settings</b> → คัดลอก <b>Channel secret</b> · แท็บ <b>Messaging API</b> → <b>Channel access token</b> กด Issue แล้วคัดลอก</li>
-            <li>วางทั้ง 2 ค่าด้านล่าง → บันทึก → กด &quot;ทดสอบการเชื่อมต่อ&quot;</li>
-          </ol>
-          <label className="field"><span>Channel secret</span><input className="input" value={secret} maxLength={64} autoComplete="off" placeholder="ตัวอักษร 32 ตัว" onChange={(e) => setSecret(e.target.value.trim())} /></label>
-          <label className="field"><span>Channel access token (long-lived)</span><textarea className="input" rows={3} value={token} autoComplete="off" placeholder="วาง token ยาวที่กด Issue มา" onChange={(e) => setToken(e.target.value.trim())} /></label>
-          <div className="rn-acts">
-            <button type="button" className="btn primary" disabled={secret.length < 32 || token.length < 100} onClick={async () => { if (await call({ action: 'line_save', secret, token })) { setSecret(''); setToken(''); setOpen(false); } }}>บันทึก</button>
-            {line && <button type="button" className="btn ghost" onClick={() => setOpen(false)}>ปิด</button>}
-          </div>
-          <p className="rn-note">🔒 รหัสเก็บแบบเข้ารหัส · ระบบตอบในแชทเฉพาะเรื่องต่อเมล (รหัสผูก R12345 · พิมพ์ &quot;ต่อเมล&quot; · ปุ่มแพ็กเกจ · สลิป) ข้อความอื่นร้านตอบเองตามปกติ</p>
-        </>}
+        <small className="muted">เชื่อม LINE · ตั้งข้อความ / เมนู / ข้อความที่เสียโควตา ได้ที่เมนู <b>บอท LINE</b></small>
+        <div className="rn-acts"><a className="btn sm primary" href={to('/admin/line-bot')}>ไปที่ บอท LINE</a></div>
       </div>
     </section>
   );
