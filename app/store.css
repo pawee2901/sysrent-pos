@@ -558,3 +558,33 @@ a.promo:hover img { transform: scale(1.03); }
 .otp-btn { background: #0f9f6e; border-color: #0f9f6e; color: #fff; font-weight: 700; }
 .otp-btn:hover { background: #0b8a5f; border-color: #0b8a5f; color: #fff; }
 .otpb-steps { margin: 0; padding: 12px 14px 12px 34px; display: grid; gap: 6px; border-radius: 14px; background: var(--surface-2); font-size: 14.5px; line-height: 1.55; }
+
+/* ---------- หน้าแรกที่ร้านจัดเอง (กล่องเสริม) ---------- */
+.hb { display: block; margin-top: 28px; }
+.hb-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+.hb-pair.solo { grid-template-columns: 1fr; max-width: calc(50% - 9px); }
+.hb-cell { min-width: 0; }
+.hb-text { padding: 22px 24px; }
+.hb-text h2 { font-size: 20px; margin: 0 0 8px; }
+.hb-text p { margin: 0; color: var(--muted); white-space: pre-line; line-height: 1.7; }
+.hb-text.center { text-align: center; }
+.hb-image { overflow: hidden; border-radius: 22px; border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--surface); }
+.hb-image img { display: block; width: 100%; height: auto; transition: transform .4s cubic-bezier(.2, .8, .2, 1); }
+a.hb-image:hover img { transform: scale(1.02); }
+.hb-notice { padding: 14px 18px; border-radius: 16px; font-weight: 600; text-align: center; white-space: pre-line; color: #fff; background: var(--grad, var(--accent)); box-shadow: var(--shadow); }
+.hb-notice.ok { background: var(--ok); }
+.hb-notice.warn { background: var(--warn); }
+.hb-notice.info { background: #2563eb; }
+a.hb-notice { text-decoration: none; }
+a.hb-notice:hover { filter: brightness(1.06); }
+.hb-btn { display: flex; justify-content: center; }
+.hb-btn .btn { min-width: min(320px, 100%); }
+.hb-frame { position: relative; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden; border: 1px solid var(--line); background: #000; box-shadow: var(--shadow); }
+.hb-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.hb-space.s { height: 12px; } .hb-space.m { height: 32px; } .hb-space.l { height: 64px; }
+.hb-pair .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+@media (max-width: 760px) {
+  .hb-pair { grid-template-columns: 1fr; }
+  .hb-pair.solo { max-width: none; }
+  .hb { margin-top: 22px; }
+}

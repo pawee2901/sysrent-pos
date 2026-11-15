@@ -765,3 +765,56 @@ body::before { height: 360px; }
 /* ปุ่มรับรหัส OTP ในกล่องเพิ่มสต็อก — กรอบเขียวให้เห็นชัด */
 .otp-pick { display: grid; gap: 6px; padding: 12px 14px; border: 2px solid #0f9f6e; border-radius: 14px; background: color-mix(in srgb, #0f9f6e 7%, var(--surface)); }
 .otp-pick small { font-size: 12.5px; }
+
+/* ---------- จัดหน้าแรก ---------- */
+.lay { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 18px; align-items: start; }
+.lay-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lay-item { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); transition: border-color .15s, box-shadow .15s; }
+.lay-item.open { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.lay-item.over { border-color: var(--accent); border-style: dashed; }
+.lay-item.off { opacity: .55; }
+.lay-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; }
+.lay-grip { cursor: grab; color: var(--faint, var(--muted)); font-size: 15px; letter-spacing: -2px; padding: 4px 2px; user-select: none; }
+.lay-grip:active { cursor: grabbing; }
+.lay-ic { font-size: 20px; width: 28px; text-align: center; flex: none; }
+.lay-name { flex: 1; min-width: 0; display: grid; gap: 2px; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; font: inherit; }
+.lay-name b { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; }
+.lay-name b .pill { height: 20px; font-size: 11px; padding: 0 8px; }
+.lay-name > span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lay-acts { display: flex; gap: 2px; flex: none; }
+.lay-acts .btn { min-width: 32px; padding: 0 8px; }
+.lay-edit { display: grid; gap: 12px; padding: 4px 14px 14px 52px; }
+.lay-img { width: 100%; max-height: 180px; object-fit: contain; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); }
+.lay-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; max-height: 240px; overflow-y: auto; }
+.lay-pick { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; cursor: pointer; }
+.lay-pick.on { border-color: var(--accent); background: var(--accent-soft); }
+.lay-map { position: sticky; top: 16px; display: grid; gap: 8px; justify-items: center; font-size: 13px; }
+.lay-phone { width: 100%; border: 6px solid var(--text); border-radius: 22px; padding: 8px 7px 12px; background: var(--bg); display: grid; gap: 5px; max-height: 520px; overflow-y: auto; scrollbar-width: none; }
+.lay-bar { height: 12px; border-radius: 6px; background: var(--line); margin-bottom: 3px; }
+.lay-mrow { display: grid; gap: 5px; }
+.lay-mrow.pair { grid-template-columns: 1fr 1fr; }
+.lay-mbox { display: grid; place-items: center; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-size: 10px; line-height: 1.2; padding: 2px 4px; cursor: pointer; overflow: hidden; }
+.lay-mbox span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.lay-mbox.on { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.lay-mbox.empty { border-style: dashed; opacity: .6; }
+.lay-mbox.t-hero, .lay-mbox.t-notice { background: var(--accent-soft); color: var(--accent); }
+.lay-mbox.t-space { background: transparent; border-style: dotted; }
+.lay-add { border: 1px dashed var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+.lay-add-head { display: flex; justify-content: space-between; align-items: center; }
+.lay-add-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.lay-add-item { display: grid; gap: 2px; justify-items: start; text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: inherit; font: inherit; cursor: pointer; }
+.lay-add-item:hover:not(:disabled) { border-color: var(--accent); }
+.lay-add-item:disabled { opacity: .5; cursor: not-allowed; }
+.lay-add-item span { font-size: 20px; }
+.lay-add-item b { font-size: 14px; }
+.lay-add-item small { font-size: 12px; color: var(--muted); }
+@media (max-width: 900px) {
+  .lay { grid-template-columns: 1fr; }
+  .lay-map { position: static; order: -1; }
+  .lay-phone { max-width: 220px; max-height: 300px; }
+}
+@media (max-width: 560px) {
+  .lay-edit { padding-left: 14px; }
+  .lay-grip { display: none; }
+  .lay-acts .btn { min-width: 28px; padding: 0 6px; }
+}

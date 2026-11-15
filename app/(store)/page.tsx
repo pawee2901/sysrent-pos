@@ -7,6 +7,7 @@ import { getShop, baht } from '@/lib/shop';
 import { loadProducts, type Product } from '@/lib/catalog';
 import { db } from '@/lib/db';
 import { AppLogo } from '@/components/AppLogo';
+import { HALF_OK, parseLayout, youtubeId, type Block } from '@/lib/home-layout';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     getCustomer(),
     d.from('shops').select('promo_cards').eq('id', shop.id).maybeSingle(), // ยังไม่รัน 0031 = ไม่แสดงกล่องรูป
   ]);
+  // หน้าแรกที่ร้านจัดเอง (ยังไม่รัน 0034 / ยังไม่ตั้ง = แบบเดิม)
+  const { data: hl } = await d.from('shops').select('home_layout').eq('id', shop.id).maybeSingle();
+  const layout = parseLayout(hl?.home_layout).filter((b) => b.on);
   const promos = (Array.isArray(pc?.promo_cards) ? pc.promo_cards as { image?: string; link?: string }[] : []).filter((x) => x.image);
   // ตัวแทน (ร้าน Pro): เห็นราคาตัวแทน · ราคาปกติขีดฆ่า
   const agent = await getAgent(shop, me?.id);
@@ -56,10 +60,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   type R = { paid_at: string; shop_customers: { username: string } | null; shop_order_items: { name: string }[] };
   const live = ((recent ?? []) as unknown as R[]).map((r) => ({ who: r.shop_customers ? `@${mask(r.shop_customers.username)}` : 'ลูกค้า', what: (r.shop_order_items[0]?.name ?? 'สินค้า').split(' · ')[0], when: ago(r.paid_at) }));
 
-  return (
-    <>
-      {/* ร้านอัปรูปหน้าแรกไว้ = แสดงรูปแทนกล่องข้อความ (ไม่ครอปรูป ข้อความในรูปไม่โดนตัด) */}
-      {shop.banner_url ? (shop.banner_link
+  const builtin: Record<string, React.ReactNode> = {
+    hero: (shop.banner_url ? (shop.banner_link
         ? <a href={shop.banner_link} className="banner"><img src={shop.banner_url} alt={shop.name} /></a>
         : <div className="banner"><img src={shop.banner_url} alt={shop.name} /></div>) : (
       <section className={`hero${products.length ? '' : ' solo'}`}>
@@ -71,21 +73,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           <div className="hero-ticks"><span>ตรวจสลิปอัตโนมัติ</span><span>รับประกันตลอดอายุ</span><span>ดูแลทาง LINE</span></div>
         </div>
         {products.length > 0 && <div className="hero-art">{products.slice(0, 6).map((p) => <AppLogo key={p.id} image={p.image} template={p.template} name={p.name} />)}</div>}
-      </section>)}
-      {promos.length > 0 && (
+      </section>)),
+    promos: promos.length > 0 && (
         <div className="promos">{promos.map((x, i) => x.link
           ? <a key={i} href={x.link} className="promo"><img src={x.image} alt="" loading={i > 3 ? 'lazy' : undefined} /></a>
           : <div key={i} className="promo"><img src={x.image} alt="" loading={i > 3 ? 'lazy' : undefined} /></div>)}</div>
-      )}
-      {live.length > 0 && (
+      ),
+    live: live.length > 0 && (
         <div className="live"><span className="live-dot" />{live.map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> ซื้อ {l.what} · {l.when}</span>)}</div>
-      )}
-      <div className="stats">
+      ),
+    stats: (<div className="stats">
         <div className="card stat"><b className="num">{(members ?? 0).toLocaleString('th-TH')}</b><span>สมาชิก</span></div>
         <div className="card stat"><b className="num">{sold.toLocaleString('th-TH')}</b><span>ขายไปแล้ว</span></div>
         <div className="card stat"><b className="num">{ready.toLocaleString('th-TH')}</b><span>พร้อมส่งตอนนี้</span></div>
-      </div>
-      <section className="sec" id="cat">
+      </div>),
+    products: (<section className="sec" id="cat">
         <div className="sec-head"><h2>{term ? `ผลการค้นหา "${q}"` : 'สินค้าทั้งหมด'}</h2><span className="muted" style={{ fontSize: 14 }}>{shown.length} รายการ</span></div>
         {cats.length > 1 && (
           <div className="chips" style={{ marginBottom: 14 }}>
@@ -95,15 +97,55 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         )}
         {shown.length ? <div className="grid">{shown.map((p) => <Card key={p.id} p={p} />)}</div>
           : <div className="card success"><p className="muted">{products.length ? 'ไม่พบสินค้าที่ค้นหา' : 'ร้านกำลังเตรียมสินค้า แวะมาใหม่เร็ว ๆ นี้นะ'}</p></div>}
-      </section>
-      <section className="sec">
+      </section>),
+    how: (<section className="sec">
         <div className="sec-head"><h2>ซื้อง่าย 3 ขั้นตอน</h2></div>
         <div className="how">
           <div className="card"><span className="how-n">1</span><div><b>เลือกแอปและแพ็กเกจ</b><span>มีให้เลือกหลายระยะเวลา</span></div></div>
           <div className="card"><span className="how-n">2</span><div><b>สแกนจ่ายพร้อมเพย์</b><span>อัปสลิป ระบบตรวจให้อัตโนมัติ</span></div></div>
           <div className="card"><span className="how-n">3</span><div><b>ได้รหัสทันที</b><span>ดูได้ที่ &quot;บัญชีของฉัน&quot; ตลอดอายุ</span></div></div>
         </div>
-      </section>
-    </>
-  );
+      </section>),
+  };
+  // ลูกค้าค้นหา / กดหมวด แต่ร้านซ่อนกล่องสินค้าไว้ = แสดงผลค้นหาไว้บนสุด
+  const blocks: Block[] = (term || c) && !layout.some((b) => b.type === 'products') ? [{ id: 'products', type: 'products', on: true }, ...layout] : layout;
+  const pickOf = (b: Block) => {
+    const lim = Math.min(24, Math.max(1, b.limit ?? 4));
+    if (b.pick === 'ids') return (b.ids ?? []).map((id) => products.find((p) => p.id === id)).filter((p): p is Product => !!p).slice(0, lim);
+    const pool = b.pick === 'cat' ? products.filter((p) => p.category === b.category) : [...products].sort((a, z) => z.sold - a.sold);
+    return pool.slice(0, lim);
+  };
+  const go = (href: string | undefined, cls: string, inner: React.ReactNode) => href
+    ? (href.startsWith('/') ? <Link href={href} className={cls}>{inner}</Link> : <a href={href} className={cls} target="_blank" rel="noopener noreferrer">{inner}</a>)
+    : <div className={cls}>{inner}</div>;
+  function render(b: Block): React.ReactNode {
+    if (b.type in builtin) return builtin[b.type];
+    if (b.type === 'featured') {
+      const list = pickOf(b);
+      return list.length ? <section className="hb"><div className="sec-head"><h2>{b.title || 'สินค้าแนะนำ'}</h2></div><div className="grid">{list.map((p) => <Card key={p.id} p={p} />)}</div></section> : null;
+    }
+    if (b.type === 'text') return b.title || b.text ? <section className={`card hb hb-text${b.align === 'center' ? ' center' : ''}`}>{b.title && <h2>{b.title}</h2>}{b.text && <p>{b.text}</p>}</section> : null;
+    if (b.type === 'image') return b.image ? go(b.link, 'hb hb-image', <img src={b.image} alt={b.title ?? ''} loading="lazy" />) : null;
+    if (b.type === 'notice') return b.text ? go(b.link, `hb hb-notice ${b.tone ?? 'accent'}`, <span>{b.text}</span>) : null;
+    if (b.type === 'button') return b.label ? <div className="hb hb-btn">{go(b.link, 'btn primary lg', b.label)}</div> : null;
+    if (b.type === 'video') {
+      const id = youtubeId(b.video);
+      return id ? <section className="hb hb-video">{b.title && <div className="sec-head"><h2>{b.title}</h2></div>}<div className="hb-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${id}`} title={b.title || 'วิดีโอ'} loading="lazy" allow="encrypted-media; picture-in-picture" allowFullScreen /></div></section> : null;
+    }
+    if (b.type === 'space') return <div className={`hb-space ${b.size ?? 'm'}`} aria-hidden />;
+    return null;
+  }
+  // กล่องครึ่งแถวที่อยู่ติดกัน = จับคู่วางข้างกัน (จอคอม)
+  const rows: React.ReactNode[] = [];
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i], n = blocks[i + 1];
+    const half = (x?: Block) => !!x && !!x.half && HALF_OK.includes(x.type);
+    if (half(b)) {
+      const pair = half(n) ? [b, n!] : [b];
+      if (pair.length === 2) i++;
+      rows.push(<div key={b.id} className={`hb-pair${pair.length === 1 ? ' solo' : ''}`}>{pair.map((x) => <div key={x.id} className="hb-cell">{render(x)}</div>)}</div>);
+    } else rows.push(<div key={b.id} className="hb-row">{render(b)}</div>);
+  }
+
+  return <>{rows}</>;
 }

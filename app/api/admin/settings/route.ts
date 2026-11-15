@@ -11,10 +11,19 @@ import { sendMail, shopSmtp, verifyGmail } from '@/lib/mail';
 import { encConfigured, encrypt } from '@/lib/secret';
 import { fontOf, isEffect, isLoader } from '@/lib/appearance';
 import { parseMusic } from '@/lib/music';
+import { BLOCK_INFO, BUILTIN, LAYOUT_MAX, youtubeId, type BlockType } from '@/lib/home-layout';
 
 const https = (max: number) => z.string().trim().max(max).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์ต้องขึ้นต้นด้วย https://');
 /** ลิงก์ในร้าน (/p/...) หรือ https:// */
 const link = z.string().trim().max(300).refine((u) => !u || /^https:\/\//.test(u) || /^\/(?!\/)/.test(u), 'ลิงก์ต้องขึ้นต้นด้วย https:// หรือ / (หน้าในร้าน)');
+/** กล่องหน้าแรก 1 กล่อง (เก็บเฉพาะช่องที่รู้จัก) */
+const block = z.object({
+  id: z.string().regex(/^[a-z0-9]{1,24}$/), type: z.enum(Object.keys(BLOCK_INFO) as [BlockType, ...BlockType[]]), on: z.boolean(), half: z.boolean().optional(),
+  title: z.string().trim().max(80).optional(), text: z.string().trim().max(1000).optional(), image: https(500).optional(), link: link.optional(), label: z.string().trim().max(40).optional(),
+  pick: z.enum(['best', 'cat', 'ids']).optional(), category: z.string().trim().max(60).optional(), ids: z.array(z.string().uuid()).max(24).optional(), limit: z.number().int().min(1).max(24).optional(),
+  tone: z.enum(['accent', 'ok', 'warn', 'info']).optional(), align: z.enum(['left', 'center']).optional(), size: z.enum(['s', 'm', 'l']).optional(),
+  video: z.string().trim().max(300).refine((u) => !u || !!youtubeId(u), 'ลิงก์ YouTube ไม่ถูกต้อง').optional(),
+});
 const schema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('shop'),
@@ -48,6 +57,10 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('mail_test') }),
   // กล่องรูปใต้รูปหน้าแรก (สูงสุด 8 · [] = ไม่แสดง)
   z.object({ action: z.literal('promos'), cards: z.array(z.object({ image: https(500).refine(Boolean, 'ใส่รูปก่อน'), link })).max(8) }),
+  // จัดหน้าแรก ([] = กลับเป็นแบบเดิม) · กล่องของระบบมีได้อย่างละ 1
+  z.object({ action: z.literal('layout'), blocks: z.array(block).max(LAYOUT_MAX)
+    .refine((a) => BUILTIN.every((t) => a.filter((x) => x.type === t).length <= 1), 'กล่องของระบบใส่ได้อย่างละ 1 กล่อง')
+    .refine((a) => new Set(a.map((x) => x.id)).size === a.length, 'รหัสกล่องซ้ำ') }),
   z.object({ action: z.literal('admin'), username: z.string().trim().min(3, 'ชื่อผู้ดูแลอย่างน้อย 3 ตัว').max(40), password: z.string().min(8, 'รหัสผ่านอย่างน้อย 8 ตัว').max(72) }),
 ]);
 
@@ -108,6 +121,10 @@ export async function POST(req: Request) {
   if (b.data.action === 'promos') {
     const { error } = await d.from('shops').update({ promo_cards: b.data.cards }).eq('id', a.shop.id);
     return error ? fail(/promo_cards/.test(error.message) ? 'ยังไม่ได้รัน SQL 0031_shop_promo_cards.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
+  if (b.data.action === 'layout') {
+    const { error } = await d.from('shops').update({ home_layout: b.data.blocks.length ? b.data.blocks : null }).eq('id', a.shop.id);
+    return error ? fail(/home_layout/.test(error.message) ? 'ยังไม่ได้รัน SQL 0034_shop_home_layout.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
   }
   if (b.data.action === 'shop' || b.data.action === 'look') {
     const { action: _a, ...upd } = b.data;

@@ -8,6 +8,7 @@ import { DiscordCard } from './DiscordCard';
 import { MailCard, type MailInit } from './MailCard';
 import { AppearanceCard, type AppearanceInit } from './AppearanceCard';
 import { PromoCards, type Promo } from './PromoCards';
+import { HomeLayout, type LayoutInit } from './HomeLayout';
 
 /** ตัวแปร CSS ของชั้นพื้นหลัง (รูป / สี) สำหรับตัวอย่าง */
 const bgVars = (k: string, l: { bg_image: string; bg_color: string }): React.CSSProperties | undefined =>
@@ -17,8 +18,8 @@ const bgVars = (k: string, l: { bg_image: string; bg_color: string }): React.CSS
 type S = { name: string; tagline: string; logo_url: string; accent: string; line_url: string; announcement: string; promptpay_id: string; receiver_name: string };
 type Look = { facebook_url: string; banner_url: string; banner_link: string; popup_text: string; popup_image: string; popup_link: string; bg_style: string; bg_image: string; bg_color: string; card_style: string };
 type Pic = 'banner_url' | 'popup_image' | 'bg_image';
-type Tab = 'shop' | 'look' | 'home' | 'pay' | 'notify' | 'admin';
-const TABS: [Tab, string][] = [['shop', 'ข้อมูลร้าน'], ['look', 'หน้าตาร้าน'], ['home', 'รูปหน้าแรก · ป๊อปอัป'], ['pay', 'รับเงิน'], ['notify', 'แจ้งเตือน'], ['admin', 'บัญชีหลังบ้าน']];
+type Tab = 'shop' | 'look' | 'layout' | 'home' | 'pay' | 'notify' | 'admin';
+const TABS: [Tab, string][] = [['shop', 'ข้อมูลร้าน'], ['look', 'หน้าตาร้าน'], ['layout', 'จัดหน้าแรก'], ['home', 'รูปหน้าแรก · ป๊อปอัป'], ['pay', 'รับเงิน'], ['notify', 'แจ้งเตือน'], ['admin', 'บัญชีหลังบ้าน']];
 export type DiscordInit = { ready: boolean; set: boolean; hint: string; events: string[] };
 const BGS: [string, string][] = [['default', 'ตามธีม'], ['plain', 'เรียบ'], ['aurora', 'ออโรร่า'], ['dots', 'จุด'], ['color', 'สีที่เลือก'], ['image', 'รูปของร้าน']];
 /** สีพื้นหลังแนะนำ (อ่อน ตัวหนังสือยังอ่านง่าย) */
@@ -26,7 +27,7 @@ const CARDS: [string, string][] = [['white', 'ขาว'], ['tint', 'ตาม�
 const BG_COLORS = ['#fff1f5', '#fdf2f8', '#f5f3ff', '#eef2ff', '#eff6ff', '#ecfeff', '#f0fdf4', '#f7fee7', '#fefce8', '#fff7ed', '#fdf6ec', '#f4f4f5'];
 
 /** ตั้งค่าร้าน + ตัวอย่างหน้าร้านบนมือถือ (เปลี่ยนแล้วเห็นทันที) */
-export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] } }) {
+export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos, layout }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] }; layout: LayoutInit }) {
   const router = useRouter();
   const [f, setF] = useState(initial);
   const [look, setLook] = useState(lookInit);
@@ -111,7 +112,7 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
   return (
     <>
       <div className="page-head"><div><h1>ตั้งค่าร้าน</h1><p>เปลี่ยนแล้วกดบันทึก หน้าร้านอัปเดตทันที</p></div>
-        {tab !== 'notify' && tab !== 'admin' && <div className="acts"><button type="button" className="btn primary" disabled={busy} onClick={saveAll}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button></div>}</div>
+        {tab !== 'notify' && tab !== 'admin' && tab !== 'layout' && <div className="acts"><button type="button" className="btn primary" disabled={busy} onClick={saveAll}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button></div>}</div>
       {msg && <p role="status" className={`save-toast ${msg.includes('✓') ? 'ok' : 'bad'}`} onClick={() => setMsg('')}>{msg}</p>}
       <nav className="set-tabs" role="tablist">{TABS.map(([k, l]) => (
         <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => pickTab(k)}>
@@ -211,6 +212,7 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
               <label className="field"><span>ปุ่มในป๊อปอัปไปที่ (ไม่บังคับ)</span><input className="input" value={look.popup_link} maxLength={300} placeholder="/item/... หรือ https://..." onChange={(e) => setLook({ ...look, popup_link: e.target.value })} /></label>
             </div></section>}
           {tab === 'home' && <PromoCards init={promos} />}
+          {tab === 'layout' && <HomeLayout init={layout} />}
 
           {tab === 'pay' && <section className="card"><div className="card-head"><h2>รับเงิน</h2><span className={`pill ${payReady ? 'ok' : 'warn'}`}>{payReady ? 'พร้อมใช้' : 'ยังตั้งไม่ครบ'}</span><button type="button" className="btn primary sm" disabled={busy} onClick={() => save()}>บันทึก</button></div>
             <div className="form">
