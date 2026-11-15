@@ -20,7 +20,9 @@ export default async function AdminSettings() {
   const prods = await loadProducts(shop.id);
   const plist = prods.map((p) => ({ id: p.id, name: p.name, category: p.category, image: p.image, template: p.template, from: p.from, sold: p.sold }));
   const promoImgs = (Array.isArray(pc.data?.promo_cards) ? (pc.data.promo_cards as { image?: string }[]) : []).map((x) => x.image ?? '').filter(Boolean);
-  const layout = { ready: !hl.error, blocks: parseLayout(hl.data?.home_layout), products: plist,
+  const pg = await d.from('shop_pages').select('id, slug, title, in_menu, blocks').eq('shop_id', shop.id).order('sort').order('created_at'); // ยังไม่รัน 0035 = error
+  const pages = { ready: !pg.error, list: ((pg.data ?? []) as { id: string; slug: string; title: string; in_menu: boolean; blocks: unknown }[]).map((x) => ({ ...x, blocks: Array.isArray(x.blocks) && x.blocks.length ? parseLayout(x.blocks) : [] })) };
+  const layout = { pages, ready: !hl.error, blocks: parseLayout(hl.data?.home_layout), products: plist,
     categories: mergeCategories(await shopCategories(shop.id), plist.map((p) => p.category).filter(Boolean)).filter((c) => plist.some((p) => p.category === c)),
     shop: { name: shop.name, tagline: shop.tagline, banner: shop.banner_url ?? '', line: !!shop.line_url, facebook: !!shop.facebook_url }, promos: promoImgs };
   const dc = await d.from('shops').select('discord_webhook, discord_events').eq('id', shop.id).maybeSingle();

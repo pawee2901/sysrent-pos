@@ -28,6 +28,9 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     getCustomer(),
     db().from('shops').select('font, effect, loader, music_url').eq('id', shop.id).maybeSingle(),
   ]);
+  // หน้าเพิ่มเติมที่ร้านเปิดไว้ในเมนู (ยังไม่รัน 0035 = ไม่มีเมนู)
+  const { data: pageRows } = await db().from('shop_pages').select('slug, title').eq('shop_id', shop.id).eq('in_menu', true).order('sort').order('created_at').limit(20);
+  const pages = (pageRows ?? []) as { slug: string; title: string }[];
   const [isAdmin, agent, email] = me ? await Promise.all([isShopAdmin(), getAgent(shop, me.id), customerEmail(me.id)]) : [false, null, ''];
   const look = apErr || !can(shop.plan, 'appearance') ? null : ap;
   const font = fontOf(look?.font ?? '');
@@ -66,12 +69,17 @@ export default async function StoreLayout({ children }: { children: React.ReactN
               : <Link href={to('/login')} className="btn primary sm">เข้าสู่ระบบ</Link>}
           </div>
         </div>
+        {pages.length > 0 && (
+          <nav className="wrap page-nav" aria-label="หน้าของร้าน">
+            <Link href="/">หน้าแรก</Link>{pages.map((p) => <Link key={p.slug} href={to(`/page/${p.slug}`)}>{p.title}</Link>)}
+          </nav>
+        )}
       </header>
       <main className="wrap">{children}</main>
       <footer>
         <div className="wrap">
           <span>© {new Date().getFullYear()} {shop.name} · ร้านค้าบน <b>SysRent</b></span>
-          <span><Link href="/">หน้าแรก</Link> · <Link href={to('/orders')}>ออเดอร์</Link> · <Link href={to('/terms')}>เงื่อนไขการใช้งาน</Link>
+          <span><Link href="/">หน้าแรก</Link> · <Link href={to('/orders')}>ออเดอร์</Link> · <Link href={to('/terms')}>เงื่อนไขการใช้งาน</Link>{pages.map((p) => <span key={p.slug}> · <Link href={to(`/page/${p.slug}`)}>{p.title}</Link></span>)}
             {shop.facebook_url && <> · <a href={shop.facebook_url} target="_blank" rel="noopener noreferrer">Facebook</a></>}{shop.line_url && <> · <a href={shop.line_url} target="_blank" rel="noopener noreferrer">LINE</a></>}</span>
         </div>
       </footer>

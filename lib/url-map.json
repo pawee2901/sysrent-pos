@@ -10,7 +10,8 @@
     "/my": "/me",
     "/p": "/item",
     "/terms": "/rules",
-    "/otp": "/code"
+    "/otp": "/code",
+    "/page": "/s"
   },
   "admin": {
     "/accounting": "/ledger",

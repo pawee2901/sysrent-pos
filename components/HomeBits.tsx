@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /** เวลาที่ร้านตั้ง (YYYY-MM-DDTHH:mm เวลาไทย) → มิลลิวินาที */
 export const untilMs = (until: string | undefined) => (until ? new Date(`${until}:00+07:00`).getTime() : NaN);
@@ -19,6 +19,29 @@ export function CouponBox({ title, code, text }: { title?: string; code: string;
     <div className="hb hb-coupon">
       <div>{title && <b>{title}</b>}{text && <span>{text}</span>}</div>
       <button type="button" className="hb-code" onClick={copy} aria-label={`คัดลอกโค้ด ${code}`}><span>{code}</span><small>{done ? 'คัดลอกแล้ว ✓' : 'แตะเพื่อคัดลอก'}</small></button>
+    </div>
+  );
+}
+
+/** สไลด์รูป: เลื่อนเองทุก 4 วินาที · ปัดด้วยนิ้วได้ · จุดบอกตำแหน่ง */
+export function Slider({ items }: { items: { image: string; link?: string }[] }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [at, setAt] = useState(0);
+  const [hold, setHold] = useState(false);
+  const go = (i: number) => { const el = box.current; if (el) el.scrollTo({ left: el.clientWidth * i, behavior: 'smooth' }); };
+  useEffect(() => {
+    if (items.length < 2 || hold) return;
+    const t = setInterval(() => go((at + 1) % items.length), 4000);
+    return () => clearInterval(t);
+  }, [at, hold, items.length]);
+  return (
+    <div className="hb hb-slider" onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)}>
+      <div ref={box} className="hb-slides" onScroll={(e) => { const el = e.currentTarget; setAt(Math.round(el.scrollLeft / Math.max(1, el.clientWidth))); }}>
+        {items.map((x, i) => x.link
+          ? <a key={i} href={x.link}><img src={x.image} alt="" loading={i ? 'lazy' : undefined} /></a>
+          : <div key={i}><img src={x.image} alt="" loading={i ? 'lazy' : undefined} /></div>)}
+      </div>
+      {items.length > 1 && <div className="hb-dots">{items.map((_, i) => <button key={i} type="button" className={i === at ? 'on' : ''} aria-label={`รูปที่ ${i + 1}`} onClick={() => go(i)} />)}</div>}
     </div>
   );
 }

@@ -6,9 +6,16 @@
 export type BlockType =
   | 'hero' | 'promos' | 'live' | 'stats' | 'products' | 'how'
   | 'featured' | 'cats' | 'text' | 'image' | 'gallery' | 'imgtext' | 'notice' | 'button' | 'contact' | 'faq'
-  | 'coupon' | 'countdown' | 'video' | 'divider' | 'space';
+  | 'coupon' | 'countdown' | 'video' | 'divider' | 'space'
+  | 'heading' | 'slider' | 'cta' | 'features' | 'steps' | 'reviews' | 'pricelist' | 'numbers' | 'marquee' | 'logos' | 'social' | 'spotlight' | 'quote' | 'linkcards' | 'badges';
 /** รายการย่อยในกล่อง (รูปในแกลเลอรี · คำถามในถาม-ตอบ) */
-export type BlockItem = { image?: string; link?: string; q?: string; a?: string };
+export type BlockItem = { image?: string; link?: string; q?: string; a?: string; icon?: string; stars?: number; kind?: SocialKind };
+export type SocialKind = 'line' | 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'x' | 'discord' | 'telegram' | 'web';
+export const SOCIAL: Record<SocialKind, { label: string; color: string; short: string }> = {
+  line: { label: 'LINE', color: '#06c755', short: 'L' }, facebook: { label: 'Facebook', color: '#1877f2', short: 'f' }, instagram: { label: 'Instagram', color: '#e1306c', short: 'IG' },
+  tiktok: { label: 'TikTok', color: '#111111', short: '♪' }, youtube: { label: 'YouTube', color: '#ff0000', short: '▶' }, x: { label: 'X', color: '#000000', short: 'X' },
+  discord: { label: 'Discord', color: '#5865f2', short: 'D' }, telegram: { label: 'Telegram', color: '#229ed9', short: '✈' }, web: { label: 'เว็บไซต์', color: '#64748b', short: '🌐' },
+};
 export type Block = {
   id: string; type: BlockType; on: boolean;
   /** ครึ่งแถว (จอคอม: วางคู่กับกล่องครึ่งแถวถัดไป · มือถือ: เต็มแถวเสมอ) */
@@ -18,13 +25,19 @@ export type Block = {
   pick?: 'best' | 'cat' | 'ids'; category?: string; ids?: string[]; limit?: number;
   tone?: 'accent' | 'ok' | 'warn' | 'info' | 'dark'; align?: 'left' | 'center'; size?: 's' | 'm' | 'l'; video?: string;
   items?: BlockItem[]; cols?: number; flip?: boolean; code?: string; until?: string;
+  /** สินค้าแนะนำ: ตาราง / เลื่อนข้าง / รายการ */
+  variant?: 'grid' | 'scroll' | 'list';
 };
 
 /** กล่องของระบบ (มีได้อย่างละ 1) */
 export const BUILTIN: BlockType[] = ['hero', 'promos', 'live', 'stats', 'products', 'how'];
 /** กล่องที่ตั้งเป็นครึ่งแถวได้ */
-export const HALF_OK: BlockType[] = ['featured', 'cats', 'text', 'image', 'gallery', 'notice', 'button', 'contact', 'faq', 'coupon', 'countdown', 'video'];
-export const LAYOUT_MAX = 40;
+export const HALF_OK: BlockType[] = ['featured', 'cats', 'text', 'image', 'gallery', 'notice', 'button', 'contact', 'faq', 'coupon', 'countdown', 'video',
+  'heading', 'slider', 'cta', 'features', 'steps', 'reviews', 'pricelist', 'numbers', 'logos', 'social', 'spotlight', 'quote', 'linkcards', 'badges'];
+export const LAYOUT_MAX = 60;
+export const PAGES_MAX = 50;
+/** ชื่อหน้าในลิงก์ (/s/ชื่อ) */
+export const PAGE_SLUG = /^[a-z0-9][a-z0-9-]{0,39}$/;
 export const ITEMS_MAX = 12;
 
 export const BLOCK_INFO: Record<BlockType, { icon: string; label: string; desc: string }> = {
@@ -49,13 +62,47 @@ export const BLOCK_INFO: Record<BlockType, { icon: string; label: string; desc: 
   video: { icon: '🎬', label: 'วิดีโอ YouTube', desc: 'ฝังคลิปสอน / รีวิว' },
   divider: { icon: '➖', label: 'เส้นคั่น', desc: 'เส้นแบ่งส่วน' },
   space: { icon: '↕️', label: 'ช่องว่าง', desc: 'เว้นระยะ' },
+  heading: { icon: '🔠', label: 'หัวข้อใหญ่', desc: 'หัวข้อ + คำอธิบายเปิดส่วนใหม่' },
+  slider: { icon: '🎞️', label: 'สไลด์รูป', desc: 'รูปเลื่อนเองอัตโนมัติ' },
+  cta: { icon: '🚀', label: 'แบนเนอร์ชวนซื้อ', desc: 'พื้นสี/รูป + หัวข้อ + ปุ่มใหญ่' },
+  features: { icon: '💎', label: 'จุดเด่นร้าน', desc: 'ไอคอน + หัวข้อ + คำอธิบาย' },
+  steps: { icon: '🪜', label: 'ขั้นตอน', desc: 'ลำดับขั้นตอนตั้งเองได้' },
+  reviews: { icon: '💬', label: 'รีวิวลูกค้า', desc: 'ชื่อ · ดาว · ข้อความรีวิว' },
+  pricelist: { icon: '🏷️', label: 'ตารางราคา', desc: 'รายการ + ราคา เรียงเป็นตาราง' },
+  numbers: { icon: '🔢', label: 'ตัวเลขเด่น', desc: 'ตัวเลขตั้งเอง เช่น 10,000+ ลูกค้า' },
+  marquee: { icon: '📜', label: 'ตัวหนังสือวิ่ง', desc: 'ข้อความเลื่อนไปเรื่อย ๆ' },
+  logos: { icon: '🏅', label: 'แถบโลโก้', desc: 'โลโก้แบรนด์ / ช่องทางจ่ายเงิน' },
+  social: { icon: '📱', label: 'โซเชียล', desc: 'ปุ่ม TikTok IG YouTube ฯลฯ' },
+  spotlight: { icon: '🔦', label: 'สินค้าเด่น', desc: 'สินค้าชิ้นเดียวแบบเต็มกล่อง' },
+  quote: { icon: '❝', label: 'คำคม / คำพูด', desc: 'ข้อความเน้นตัวใหญ่' },
+  linkcards: { icon: '🗃️', label: 'การ์ดลิงก์', desc: 'รูป + หัวข้อ กดไปหน้าอื่น' },
+  badges: { icon: '✅', label: 'แถบความมั่นใจ', desc: 'ส่งไว · ปลอดภัย · มีประกัน' },
+};
+
+/** ช่องของรายการย่อยแต่ละแบบ (ป้ายชื่อ q / a ในหน้าแก้ไข) */
+export type ItemField = 'image' | 'icon' | 'q' | 'a' | 'stars' | 'kind' | 'link';
+export const ITEM_SPEC: Partial<Record<BlockType, { fields: ItemField[]; q?: string; a?: string; add: BlockItem; noun: string }>> = {
+  gallery: { fields: ['image', 'link'], add: {}, noun: 'รูป' },
+  slider: { fields: ['image', 'link'], add: {}, noun: 'รูป' },
+  logos: { fields: ['image', 'link'], add: {}, noun: 'โลโก้' },
+  faq: { fields: ['q', 'a'], q: 'คำถาม', a: 'คำตอบ', add: { q: '', a: '' }, noun: 'คำถาม' },
+  features: { fields: ['icon', 'q', 'a'], q: 'หัวข้อ', a: 'รายละเอียด', add: { icon: '⚡', q: 'จุดเด่น', a: '' }, noun: 'จุดเด่น' },
+  steps: { fields: ['q', 'a'], q: 'ขั้นตอน', a: 'รายละเอียด', add: { q: 'ขั้นตอนใหม่', a: '' }, noun: 'ขั้นตอน' },
+  reviews: { fields: ['q', 'stars', 'a', 'image'], q: 'ชื่อลูกค้า', a: 'ข้อความรีวิว', add: { q: 'ลูกค้า', a: 'ดีมากครับ', stars: 5 }, noun: 'รีวิว' },
+  pricelist: { fields: ['q', 'a', 'link'], q: 'รายการ', a: 'ราคา', add: { q: 'รายการใหม่', a: '฿99' }, noun: 'แถว' },
+  numbers: { fields: ['icon', 'q', 'a'], q: 'ตัวเลข', a: 'คำอธิบาย', add: { icon: '⭐', q: '100+', a: 'คำอธิบาย' }, noun: 'ตัวเลข' },
+  social: { fields: ['kind', 'link'], add: { kind: 'tiktok', link: '' }, noun: 'ช่องทาง' },
+  linkcards: { fields: ['image', 'q', 'a', 'link'], q: 'หัวข้อ', a: 'คำอธิบาย', add: { q: 'หัวข้อ', a: '', link: '' }, noun: 'การ์ด' },
+  badges: { fields: ['icon', 'q'], q: 'ข้อความ', add: { icon: '✅', q: 'ข้อความ' }, noun: 'ป้าย' },
 };
 
 /** หมวดในแถบเลือกกล่อง (หน้าจัดหน้าแรก) */
 export const PALETTE: [string, BlockType[]][] = [
-  ['สินค้า', ['featured', 'cats', 'products']],
-  ['รูป · วิดีโอ', ['image', 'gallery', 'imgtext', 'video', 'hero', 'promos']],
-  ['ข้อความ', ['text', 'notice', 'faq', 'button', 'contact']],
+  ['สินค้า', ['featured', 'spotlight', 'cats', 'pricelist', 'products']],
+  ['รูป · วิดีโอ', ['image', 'slider', 'gallery', 'imgtext', 'cta', 'video', 'logos', 'hero', 'promos']],
+  ['ข้อความ', ['heading', 'text', 'notice', 'marquee', 'quote', 'faq', 'steps']],
+  ['ความน่าเชื่อถือ', ['reviews', 'features', 'numbers', 'badges']],
+  ['ลิงก์ · ติดต่อ', ['button', 'linkcards', 'contact', 'social']],
   ['โปรโมชัน', ['coupon', 'countdown']],
   ['ตกแต่ง · อื่น ๆ', ['divider', 'space', 'live', 'stats', 'how']],
 ];
@@ -81,6 +128,21 @@ export function newBlock(type: BlockType): Block {
     case 'coupon': return { ...base, title: 'โค้ดส่วนลดสำหรับคุณ', code: 'NEW10', text: 'ใส่โค้ดตอนชำระเงิน' };
     case 'countdown': return { ...base, title: 'โปรจะหมดใน', until: new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 16), tone: 'dark' };
     case 'space': return { ...base, size: 'm' };
+    case 'heading': return { ...base, title: 'หัวข้อส่วนใหม่', text: 'คำอธิบายสั้น ๆ', align: 'center', size: 'm' };
+    case 'slider': return { ...base, items: [] };
+    case 'cta': return { ...base, title: 'สมัครวันนี้ รับส่วนลดทันที', text: 'โปรนี้มีจำนวนจำกัด', label: 'เลือกซื้อเลย', link: '/#cat', tone: 'accent' };
+    case 'features': return { ...base, title: 'ทำไมต้องร้านเรา', cols: 3, items: [{ icon: '⚡', q: 'ส่งไว', a: 'ได้ของทันทีหลังจ่าย' }, { icon: '🛡️', q: 'มีประกัน', a: 'รับประกันตลอดอายุ' }, { icon: '💬', q: 'ดูแลตลอด', a: 'ทักร้านได้ทุกวัน' }] };
+    case 'steps': return { ...base, title: 'วิธีสั่งซื้อ', items: [{ q: 'เลือกสินค้า', a: '' }, { q: 'ชำระเงิน', a: '' }, { q: 'รับของ', a: '' }] };
+    case 'reviews': return { ...base, title: 'รีวิวจากลูกค้า', items: [{ q: 'คุณเอ', a: 'ส่งไวมาก ใช้ได้จริง', stars: 5 }, { q: 'คุณบี', a: 'แอดมินตอบไว ประทับใจ', stars: 5 }, { q: 'คุณซี', a: 'ราคาดี จะกลับมาซื้ออีก', stars: 5 }] };
+    case 'pricelist': return { ...base, title: 'ราคา', items: [{ q: 'Netflix 1 เดือน', a: '฿99' }, { q: 'YouTube Premium 1 เดือน', a: '฿59' }] };
+    case 'numbers': return { ...base, items: [{ icon: '👥', q: '1,000+', a: 'ลูกค้า' }, { icon: '📦', q: '5,000+', a: 'ออเดอร์' }, { icon: '⭐', q: '4.9', a: 'คะแนนรีวิว' }] };
+    case 'marquee': return { ...base, text: '🔥 โปรแรง ลดทุกแอป · ส่งไวภายใน 1 นาที · รับประกันตลอดอายุ 🔥', tone: 'dark' };
+    case 'logos': return { ...base, items: [] };
+    case 'social': return { ...base, title: 'ติดตามเรา', items: [{ kind: 'tiktok', link: '' }, { kind: 'instagram', link: '' }] };
+    case 'spotlight': return { ...base, label: 'ซื้อเลย', text: '' };
+    case 'quote': return { ...base, text: 'ซื้อง่าย ได้ไว ใช้ได้จริง', title: 'ร้านของเรา', align: 'center' };
+    case 'linkcards': return { ...base, title: 'ลิงก์ที่น่าสนใจ', cols: 3, items: [{ q: 'ประวัติการซื้อ', a: 'ดูไอดีที่ซื้อไว้', link: '/history' }, { q: 'เติมเงิน', a: 'เติมเข้ากระเป๋า', link: '/balance' }] };
+    case 'badges': return { ...base, items: [{ icon: '⚡', q: 'ส่งอัตโนมัติ' }, { icon: '🔒', q: 'จ่ายปลอดภัย' }, { icon: '🛡️', q: 'มีประกัน' }, { icon: '💬', q: 'ทักได้ทุกวัน' }] };
     default: return base;
   }
 }

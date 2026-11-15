@@ -11,7 +11,7 @@ import { sendMail, shopSmtp, verifyGmail } from '@/lib/mail';
 import { encConfigured, encrypt } from '@/lib/secret';
 import { fontOf, isEffect, isLoader } from '@/lib/appearance';
 import { parseMusic } from '@/lib/music';
-import { BLOCK_INFO, BUILTIN, ITEMS_MAX, LAYOUT_MAX, youtubeId, type BlockType } from '@/lib/home-layout';
+import { BLOCK_INFO, BUILTIN, ITEMS_MAX, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, SOCIAL, youtubeId, type BlockType, type SocialKind } from '@/lib/home-layout';
 
 const https = (max: number) => z.string().trim().max(max).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์ต้องขึ้นต้นด้วย https://');
 /** ลิงก์ในร้าน (/p/...) หรือ https:// */
@@ -23,10 +23,14 @@ const block = z.object({
   pick: z.enum(['best', 'cat', 'ids']).optional(), category: z.string().trim().max(60).optional(), ids: z.array(z.string().uuid()).max(24).optional(), limit: z.number().int().min(1).max(24).optional(),
   tone: z.enum(['accent', 'ok', 'warn', 'info', 'dark']).optional(), align: z.enum(['left', 'center']).optional(), size: z.enum(['s', 'm', 'l']).optional(),
   video: z.string().trim().max(300).refine((u) => !u || !!youtubeId(u), 'ลิงก์ YouTube ไม่ถูกต้อง').optional(),
-  items: z.array(z.object({ image: https(500).optional(), link: link.optional(), q: z.string().trim().max(200).optional(), a: z.string().trim().max(1000).optional() })).max(ITEMS_MAX).optional(),
+  items: z.array(z.object({ image: https(500).optional(), link: link.optional(), q: z.string().trim().max(200).optional(), a: z.string().trim().max(1000).optional(),
+    icon: z.string().trim().max(12).optional(), stars: z.number().int().min(1).max(5).optional(), kind: z.enum(Object.keys(SOCIAL) as [SocialKind, ...SocialKind[]]).optional() })).max(ITEMS_MAX).optional(),
+  variant: z.enum(['grid', 'scroll', 'list']).optional(),
   cols: z.number().int().min(1).max(4).optional(), flip: z.boolean().optional(),
   code: z.string().trim().max(40).optional(), until: z.string().regex(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})?$/, 'วันเวลาไม่ถูกต้อง').optional(),
 });
+const pageTitle = z.string().trim().min(1, 'ใส่ชื่อหน้า').max(60);
+const pageSlug = z.string().trim().toLowerCase().regex(PAGE_SLUG, 'ลิงก์หน้าใช้ a-z 0-9 และ - (ยาวไม่เกิน 40 ตัว)');
 const schema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('shop'),
@@ -61,9 +65,13 @@ const schema = z.discriminatedUnion('action', [
   // กล่องรูปใต้รูปหน้าแรก (สูงสุด 8 · [] = ไม่แสดง)
   z.object({ action: z.literal('promos'), cards: z.array(z.object({ image: https(500).refine(Boolean, 'ใส่รูปก่อน'), link })).max(8) }),
   // จัดหน้าแรก ([] = กลับเป็นแบบเดิม) · กล่องของระบบมีได้อย่างละ 1
-  z.object({ action: z.literal('layout'), blocks: z.array(block).max(LAYOUT_MAX)
+  z.object({ action: z.literal('layout'), page_id: z.string().uuid().optional(), blocks: z.array(block).max(LAYOUT_MAX)
     .refine((a) => BUILTIN.every((t) => a.filter((x) => x.type === t).length <= 1), 'กล่องของระบบใส่ได้อย่างละ 1 กล่อง')
     .refine((a) => new Set(a.map((x) => x.id)).size === a.length, 'รหัสกล่องซ้ำ') }),
+  // หน้าเพิ่มเติม (/s/ชื่อ)
+  z.object({ action: z.literal('page_create'), title: pageTitle, slug: pageSlug }),
+  z.object({ action: z.literal('page_update'), id: z.string().uuid(), title: pageTitle, slug: pageSlug, in_menu: z.boolean() }),
+  z.object({ action: z.literal('page_delete'), id: z.string().uuid() }),
   z.object({ action: z.literal('admin'), username: z.string().trim().min(3, 'ชื่อผู้ดูแลอย่างน้อย 3 ตัว').max(40), password: z.string().min(8, 'รหัสผ่านอย่างน้อย 8 ตัว').max(72) }),
 ]);
 
@@ -124,6 +132,28 @@ export async function POST(req: Request) {
   if (b.data.action === 'promos') {
     const { error } = await d.from('shops').update({ promo_cards: b.data.cards }).eq('id', a.shop.id);
     return error ? fail(/promo_cards/.test(error.message) ? 'ยังไม่ได้รัน SQL 0031_shop_promo_cards.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
+  if (b.data.action === 'layout' && b.data.page_id) {
+    const { data, error } = await d.from('shop_pages').update({ blocks: b.data.blocks, updated_at: new Date().toISOString() }).eq('id', b.data.page_id).eq('shop_id', a.shop.id).select('id');
+    if (error) return fail(/shop_pages/.test(error.message) ? 'ยังไม่ได้รัน SQL 0035_shop_pages.sql' : 'บันทึกไม่สำเร็จ', 500);
+    return data?.length ? NextResponse.json({ ok: true }) : fail('ไม่พบหน้านี้', 404);
+  }
+  if (b.data.action === 'page_create') {
+    const { count } = await d.from('shop_pages').select('id', { count: 'exact', head: true }).eq('shop_id', a.shop.id);
+    if ((count ?? 0) >= PAGES_MAX) return fail(`สร้างได้สูงสุด ${PAGES_MAX} หน้า`);
+    const { data, error } = await d.from('shop_pages').insert({ shop_id: a.shop.id, title: b.data.title, slug: b.data.slug, sort: count ?? 0 }).select('id, slug, title, in_menu').single();
+    if (error) return fail(error.code === '23505' ? 'ลิงก์หน้านี้มีอยู่แล้ว' : /shop_pages/.test(error.message) ? 'ยังไม่ได้รัน SQL 0035_shop_pages.sql' : 'สร้างหน้าไม่สำเร็จ', error.code === '23505' ? 409 : 500);
+    return NextResponse.json({ ok: true, page: data });
+  }
+  if (b.data.action === 'page_update') {
+    const { id, title, slug, in_menu } = b.data;
+    const { data, error } = await d.from('shop_pages').update({ title, slug, in_menu, updated_at: new Date().toISOString() }).eq('id', id).eq('shop_id', a.shop.id).select('id');
+    if (error) return fail(error.code === '23505' ? 'ลิงก์หน้านี้มีอยู่แล้ว' : 'บันทึกไม่สำเร็จ', error.code === '23505' ? 409 : 500);
+    return data?.length ? NextResponse.json({ ok: true }) : fail('ไม่พบหน้านี้', 404);
+  }
+  if (b.data.action === 'page_delete') {
+    const { error } = await d.from('shop_pages').delete().eq('id', b.data.id).eq('shop_id', a.shop.id);
+    return error ? fail('ลบไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
   }
   if (b.data.action === 'layout') {
     const { error } = await d.from('shops').update({ home_layout: b.data.blocks.length ? b.data.blocks : null }).eq('id', a.shop.id);

@@ -19,7 +19,7 @@ type S = { name: string; tagline: string; logo_url: string; accent: string; line
 type Look = { facebook_url: string; banner_url: string; banner_link: string; popup_text: string; popup_image: string; popup_link: string; bg_style: string; bg_image: string; bg_color: string; card_style: string };
 type Pic = 'banner_url' | 'popup_image' | 'bg_image';
 type Tab = 'shop' | 'look' | 'layout' | 'home' | 'pay' | 'notify' | 'admin';
-const TABS: [Tab, string][] = [['shop', 'ข้อมูลร้าน'], ['look', 'หน้าตาร้าน'], ['layout', 'จัดหน้าแรก'], ['home', 'รูปหน้าแรก · ป๊อปอัป'], ['pay', 'รับเงิน'], ['notify', 'แจ้งเตือน'], ['admin', 'บัญชีหลังบ้าน']];
+const TABS: [Tab, string][] = [['shop', 'ข้อมูลร้าน'], ['look', 'หน้าตาร้าน'], ['layout', 'จัดหน้าร้าน'], ['home', 'รูปหน้าแรก · ป๊อปอัป'], ['pay', 'รับเงิน'], ['notify', 'แจ้งเตือน'], ['admin', 'บัญชีหลังบ้าน']];
 export type DiscordInit = { ready: boolean; set: boolean; hint: string; events: string[] };
 const BGS: [string, string][] = [['default', 'ตามธีม'], ['plain', 'เรียบ'], ['aurora', 'ออโรร่า'], ['dots', 'จุด'], ['color', 'สีที่เลือก'], ['image', 'รูปของร้าน']];
 /** สีพื้นหลังแนะนำ (อ่อน ตัวหนังสือยังอ่านง่าย) */

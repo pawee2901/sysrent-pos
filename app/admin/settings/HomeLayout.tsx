@@ -5,15 +5,20 @@ import { api, baht } from '@/components/Cart';
 import { ask, notify } from '@/components/dialog';
 import { AppLogo } from '@/components/AppLogo';
 import { splitLeft, untilMs } from '@/components/HomeBits';
-import { BLOCK_INFO, BUILTIN, DEFAULT_LAYOUT, HALF_OK, ITEMS_MAX, LAYOUT_MAX, PALETTE, newBlock, newBlockId, youtubeId, type Block, type BlockItem, type BlockType } from '@/lib/home-layout';
+import { BLOCK_INFO, BUILTIN, DEFAULT_LAYOUT, HALF_OK, ITEMS_MAX, ITEM_SPEC, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, PALETTE, SOCIAL, newBlock, newBlockId, youtubeId, type Block, type BlockItem, type BlockType, type SocialKind } from '@/lib/home-layout';
 
 type P = { id: string; name: string; category: string; image: string; template: string; from: number | null; sold: number };
 export type LayoutInit = {
   ready: boolean; blocks: Block[]; products: P[]; categories: string[];
   shop: { name: string; tagline: string; banner: string; line: boolean; facebook: boolean }; promos: string[];
+  /** หน้าเพิ่มเติม (ready = รัน 0035 แล้ว) */
+  pages: { ready: boolean; list: PageRow[] };
 };
+export type PageRow = { id: string; slug: string; title: string; in_menu: boolean; blocks: Block[] };
 type Drag = { kind: 'new'; type: BlockType } | { kind: 'move'; id: string };
 
+/** กล่องที่มีช่อง "หัวข้อ" */
+const TITLED: BlockType[] = ['featured', 'cats', 'text', 'video', 'imgtext', 'contact', 'faq', 'coupon', 'countdown', 'heading', 'cta', 'features', 'steps', 'reviews', 'pricelist', 'numbers', 'logos', 'social', 'spotlight', 'quote', 'linkcards'];
 const TONES: [NonNullable<Block['tone']>, string][] = [['accent', 'สีร้าน'], ['dark', 'ดำ'], ['ok', 'เขียว'], ['warn', 'ส้ม'], ['info', 'ฟ้า']];
 
 /** ปุ่มเลือกแบบแถว (segmented) */
@@ -46,7 +51,12 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
     case 'stats': return <div className="cv-cols" style={{ ['--c' as string]: 3 } as React.CSSProperties}>{['สมาชิก', 'ขายไปแล้ว', 'พร้อมส่ง'].map((x) => <div key={x} className="cv-stat"><b>123</b><small>{x}</small></div>)}</div>;
     case 'products': return <>{head('สินค้าทั้งหมด')}{d.categories.length > 1 && <div className="cv-chips"><span className="on">ทั้งหมด</span>{d.categories.slice(0, 5).map((c) => <span key={c}>{c}</span>)}</div>}<Cards list={d.products.slice(0, 8)} /></>;
     case 'how': return <>{head('ซื้อง่าย 3 ขั้นตอน')}<div className="cv-cols" style={{ ['--c' as string]: 3 } as React.CSSProperties}>{['เลือกแอป', 'สแกนจ่าย', 'ได้รหัสทันที'].map((x, i) => <div key={x} className="cv-stat"><b>{i + 1}</b><small>{x}</small></div>)}</div></>;
-    case 'featured': return <>{head(b.title || 'สินค้าแนะนำ')}<Cards list={pickProducts(b, d.products)} /></>;
+    case 'featured': {
+      const list = pickProducts(b, d.products);
+      return <>{head(b.title)}{b.variant === 'list' && list.length ? <div className="cv-plist">{list.map((p) => <div key={p.id}><AppLogo image={p.image} template={p.template} name={p.name} /><span>{p.name}</span><b>{p.from !== null ? baht(p.from) : ''}</b></div>)}</div>
+        : b.variant === 'scroll' && list.length ? <div className="cv-hscroll">{list.map((p) => <div key={p.id} className="cv-pcard"><AppLogo image={p.image} template={p.template} name={p.name} /><b>{p.name}</b>{p.from !== null && <span>{baht(p.from)}</span>}</div>)}</div>
+        : <Cards list={list} />}</>;
+    }
     case 'cats': return <>{head(b.title)}{d.categories.length ? <div className="cv-cats">{d.categories.map((c) => { const p = d.products.find((x) => x.category === c); return <div key={c}>{p && <AppLogo image={p.image} template={p.template} name={p.name} />}<span>{c}</span></div>; })}</div> : <Ph>ยังไม่มีหมวดสินค้า</Ph>}</>;
     case 'text': return b.title || b.text ? <div className={`cv-card${b.align === 'center' ? ' center' : ''}`}>{b.title && <b>{b.title}</b>}{b.text && <p>{b.text}</p>}</div> : <Ph>📝 พิมพ์ข้อความทางขวา</Ph>;
     case 'image': return b.image ? <img src={b.image} alt="" className="cv-img round" /> : <Ph>🖼️ อัปโหลดรูปทางขวา</Ph>;
@@ -66,6 +76,26 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
     }
     case 'video': { const id = youtubeId(b.video); return <>{head(b.title)}<div className="cv-video" style={id ? { backgroundImage: `url(https://i.ytimg.com/vi/${id}/hqdefault.jpg)` } : undefined}><span>▶</span>{!id && <small>ใส่ลิงก์ YouTube ทางขวา</small>}</div></>; }
     case 'divider': return <hr className="cv-hr" />;
+    case 'heading': return <div className={`cv-heading ${b.size ?? 'm'}${b.align === 'left' ? '' : ' center'}`}>{b.title && <b>{b.title}</b>}{b.text && <p>{b.text}</p>}</div>;
+    case 'slider': { const pics = (b.items ?? []).filter((x) => x.image); return pics.length ? <div className="cv-slider"><img src={pics[0].image} alt="" className="cv-img round" /><div>{pics.map((_, i) => <i key={i} className={i ? '' : 'on'} />)}</div></div> : <Ph>🎞️ เพิ่มรูปสไลด์ทางขวา</Ph>; }
+    case 'cta': return <div className={`cv-cta ${b.tone ?? 'accent'}`} style={b.image ? { backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.7), rgba(0,0,0,.2)), url("${b.image}")` } : undefined}><div>{b.title && <b>{b.title}</b>}{b.text && <p>{b.text}</p>}</div>{b.label && <span className="cv-btn light">{b.label}</span>}</div>;
+    case 'features': case 'numbers': case 'badges': {
+      const list = (b.items ?? []).filter((x) => x.q);
+      if (!list.length) return <Ph>{BLOCK_INFO[b.type].icon} เพิ่มรายการทางขวา</Ph>;
+      return <>{head(b.title)}<div className={`cv-${b.type}`} style={{ ['--c' as string]: b.cols ?? Math.min(4, list.length) } as React.CSSProperties}>{list.map((x, i) => <div key={i}>{x.icon && <span>{x.icon}</span>}<b>{x.q}</b>{x.a && <small>{x.a}</small>}</div>)}</div></>;
+    }
+    case 'steps': { const list = (b.items ?? []).filter((x) => x.q); return <>{head(b.title)}{list.length ? <div className="cv-steps">{list.map((x, i) => <div key={i}><span>{i + 1}</span><div><b>{x.q}</b>{x.a && <small>{x.a}</small>}</div></div>)}</div> : <Ph>🪜 เพิ่มขั้นตอนทางขวา</Ph>}</>; }
+    case 'reviews': { const list = (b.items ?? []).filter((x) => x.q || x.a); return <>{head(b.title)}{list.length ? <div className="cv-reviews">{list.map((x, i) => <div key={i}><span className="cv-stars">{'★'.repeat(x.stars ?? 5)}<i>{'★'.repeat(5 - (x.stars ?? 5))}</i></span><p>{x.a}</p><small>— {x.q}</small></div>)}</div> : <Ph>💬 เพิ่มรีวิวทางขวา</Ph>}</>; }
+    case 'pricelist': { const list = (b.items ?? []).filter((x) => x.q); return <>{head(b.title)}{list.length ? <div className="cv-prices">{list.map((x, i) => <div key={i}><span>{x.q}</span><i /><b>{x.a}</b></div>)}</div> : <Ph>🏷️ เพิ่มรายการทางขวา</Ph>}{b.text && <small className="muted">{b.text}</small>}</>; }
+    case 'marquee': return <div className={`cv-marquee ${b.tone ?? 'dark'}`}><span>{b.text || 'ข้อความวิ่ง'}</span></div>;
+    case 'logos': { const pics = (b.items ?? []).filter((x) => x.image); return <>{head(b.title)}{pics.length ? <div className="cv-logos">{pics.map((x, i) => <img key={i} src={x.image} alt="" />)}</div> : <Ph>🏅 เพิ่มโลโก้ทางขวา</Ph>}</>; }
+    case 'social': { const list = (b.items ?? []).filter((x) => x.kind); return <div className="cv-card center">{b.title && <b>{b.title}</b>}<div className="cv-row">{list.map((x, i) => { const so = SOCIAL[x.kind!]; return <span key={i} className="cv-btn" style={{ background: so.color, opacity: x.link ? 1 : .45 }}>{so.label}</span>; })}</div>{list.some((x) => !x.link) && <small className="muted">ปุ่มที่จาง = ยังไม่ใส่ลิงก์ (หน้าร้านจะไม่แสดง)</small>}</div>; }
+    case 'spotlight': {
+      const p = d.products.find((x) => x.id === b.ids?.[0]) ?? [...d.products].sort((a, z) => z.sold - a.sold)[0];
+      return p ? <div className="cv-card cv-spot"><div><AppLogo image={p.image} template={p.template} name={p.name} size="lg" /></div><div>{b.title && <small className="cv-pill">{b.title}</small>}<b>{p.name}</b>{b.text && <p>{b.text}</p>}<span className="cv-row" style={{ justifyContent: 'flex-start' }}>{p.from !== null && <strong>{baht(p.from)}</strong>}<span className="cv-btn">{b.label || 'ซื้อเลย'}</span></span></div></div> : <Ph>ยังไม่มีสินค้า</Ph>;
+    }
+    case 'quote': return <div className={`cv-quote${b.align === 'left' ? '' : ' center'}`}><b>{b.text || 'ข้อความ'}</b>{b.title && <small>— {b.title}</small>}</div>;
+    case 'linkcards': { const list = (b.items ?? []).filter((x) => x.q); return <>{head(b.title)}{list.length ? <div className="cv-links" style={{ ['--c' as string]: b.cols ?? 3 } as React.CSSProperties}>{list.map((x, i) => <div key={i}>{x.image && <img src={x.image} alt="" />}<div><b>{x.q}</b>{x.a && <small>{x.a}</small>}</div><i>›</i></div>)}</div> : <Ph>🗃️ เพิ่มการ์ดทางขวา</Ph>}</>; }
     case 'space': return <div className={`cv-space ${b.size ?? 'm'}`}>ช่องว่าง</div>;
   }
 }
@@ -74,6 +104,13 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
 export function HomeLayout({ init }: { init: LayoutInit }) {
   const router = useRouter();
   const [blocks, setBlocks] = useState<Block[]>(init.blocks);
+  /** หน้าที่กำลังจัด: 'home' = หน้าแรก · อื่น ๆ = id ของหน้าเพิ่มเติม */
+  const [page, setPage] = useState('home');
+  const [pages, setPages] = useState<PageRow[]>(init.pages.list);
+  const [homeSaved, setHomeSaved] = useState<Block[]>(init.blocks);
+  const [newPage, setNewPage] = useState<{ title: string; slug: string } | null>(null);
+  const [meta, setMeta] = useState<{ title: string; slug: string; in_menu: boolean } | null>(null);
+  const curPage = pages.find((x) => x.id === page) ?? null;
   const [sel, setSel] = useState<string | null>(null);
   const [view, setView] = useState<'pc' | 'phone'>('pc');
   const [busy, setBusy] = useState(false);
@@ -193,33 +230,148 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
     if (urls.length) onFiles.current(urls);
   }
 
-  async function save(list = blocks, done = 'บันทึกหน้าแรกแล้ว ✓') {
+  async function save(list = blocks, done = curPage ? `บันทึกหน้า "${curPage.title}" แล้ว ✓` : 'บันทึกหน้าแรกแล้ว ✓'): Promise<boolean> {
     setBusy(true);
-    const r = await api('/api/admin/settings', { action: 'layout', blocks: list });
+    const r = await api('/api/admin/settings', curPage ? { action: 'layout', page_id: curPage.id, blocks: list } : { action: 'layout', blocks: list });
+    setBusy(false);
+    if (!r.ok) { notify(r.error, 'error'); return false; }
+    if (curPage) setPages((ps) => ps.map((x) => (x.id === curPage.id ? { ...x, blocks: list } : x))); else setHomeSaved(list.length ? list : DEFAULT_LAYOUT);
+    setDirty(false); notify(done); router.refresh();
+    return true;
+  }
+  /** สลับหน้าที่จัด (ยังไม่บันทึก = บันทึกให้ก่อน) */
+  async function openPage(id: string) {
+    if (id === page) return;
+    if (dirty && !(await save())) return;
+    const target = pages.find((x) => x.id === id);
+    setPage(id); setSel(null); setDirty(false); setNewPage(null);
+    setBlocks(target ? target.blocks : homeSaved);
+    setMeta(target ? { title: target.title, slug: target.slug, in_menu: target.in_menu } : null);
+  }
+  async function createPage() {
+    if (!newPage) return;
+    const title = newPage.title.trim(), slug = newPage.slug.trim().toLowerCase();
+    if (!title) { notify('ใส่ชื่อหน้าก่อน', 'error'); return; }
+    if (!PAGE_SLUG.test(slug)) { notify('ลิงก์หน้าใช้ a-z 0-9 และ - เท่านั้น', 'error'); return; }
+    if (dirty && !(await save())) return;
+    setBusy(true);
+    const r = await api<{ page: { id: string; slug: string; title: string; in_menu: boolean } }>('/api/admin/settings', { action: 'page_create', title, slug });
     setBusy(false);
     if (!r.ok) { notify(r.error, 'error'); return; }
-    setDirty(false); notify(done); router.refresh();
+    // หน้าใหม่: ใส่หัวข้อให้ก่อน 1 กล่อง จะได้เห็นว่าเริ่มตรงไหน
+    const first: Block[] = [{ ...newBlock('heading'), title, text: '' }];
+    const row: PageRow = { ...r.data.page, blocks: first };
+    setPages((ps) => [...ps, row]);
+    setPage(row.id); setBlocks(first); setDirty(true); setSel(null); setNewPage(null);
+    setMeta({ title: row.title, slug: row.slug, in_menu: row.in_menu });
+    notify('สร้างหน้าแล้ว ลากกล่องมาวางแล้วกดบันทึก ✓');
   }
+  async function saveMeta() {
+    if (!curPage || !meta) return;
+    setBusy(true);
+    const r = await api('/api/admin/settings', { action: 'page_update', id: curPage.id, ...meta, slug: meta.slug.trim().toLowerCase() });
+    setBusy(false);
+    if (!r.ok) { notify(r.error, 'error'); return; }
+    setPages((ps) => ps.map((x) => (x.id === curPage.id ? { ...x, ...meta, slug: meta.slug.trim().toLowerCase() } : x)));
+    notify('บันทึกข้อมูลหน้าแล้ว ✓'); router.refresh();
+  }
+  async function deletePage() {
+    if (!curPage || !(await ask(`ลบหน้า "${curPage.title}"?`, { text: 'กล่องทั้งหมดในหน้านี้จะหายไป และลิงก์หน้านี้จะใช้ไม่ได้', ok: 'ลบหน้า', danger: true }))) return;
+    setBusy(true);
+    const r = await api('/api/admin/settings', { action: 'page_delete', id: curPage.id });
+    setBusy(false);
+    if (!r.ok) { notify(r.error, 'error'); return; }
+    setPages((ps) => ps.filter((x) => x.id !== curPage.id));
+    setPage('home'); setBlocks(homeSaved); setDirty(false); setSel(null); setMeta(null);
+    notify('ลบหน้าแล้ว'); router.refresh();
+  }
+  const slugFrom = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || `page-${pages.length + 1}`;
   async function reset() {
+    if (curPage) {
+      if (!(await ask(`ล้างกล่องทั้งหมดในหน้า "${curPage.title}"?`, { ok: 'ล้างหน้า', danger: true }))) return;
+      setBlocks([]); setSel(null); save([], 'ล้างหน้าแล้ว ✓');
+      return;
+    }
     if (!(await ask('กลับไปใช้หน้าแรกแบบเดิม?', { text: 'กล่องที่เพิ่มเองจะหายทั้งหมด', ok: 'กลับเป็นแบบเดิม', danger: true }))) return;
     setBlocks(DEFAULT_LAYOUT); setSel(null); save([], 'กลับเป็นหน้าแรกแบบเดิมแล้ว ✓');
   }
 
   const setItem = (b: Block, i: number, p: Partial<BlockItem>) => patch(b.id, { items: (b.items ?? []).map((x, k) => (k === i ? { ...x, ...p } : x)) });
+  const itemsOf = (id: string) => blocksRef.current.find((x) => x.id === id)?.items ?? [];
+  /** แก้รายการย่อย (รูปในแกลเลอรี / สไลด์ · คำถาม · จุดเด่น · รีวิว ฯลฯ) ตาม ITEM_SPEC */
+  function renderItems(b: Block) {
+    const spec = ITEM_SPEC[b.type]!, items = b.items ?? [], hasF = (f: string) => spec.fields.includes(f as never);
+    const picOnly = spec.fields[0] === 'image';
+    const moveItem = (i: number) => { const a = [...items]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; patch(b.id, { items: a }); };
+    return (
+      <div className="field"><span>{spec.noun} ({items.length}/{ITEMS_MAX})</span>
+        <div className={picOnly ? 'lb-gal' : 'lb-items'}>{items.map((x, i) => (
+          <div key={i} className={picOnly ? 'lb-gal-item' : 'lb-item'}>
+            {picOnly ? <div><img src={x.image} alt="" /><button type="button" aria-label="ลบ" onClick={() => patch(b.id, { items: items.filter((_, k) => k !== i) })}>✕</button></div> : (
+              <div className="lb-item-head"><b>{spec.noun} {i + 1}</b>
+                {i > 0 && <button type="button" className="btn ghost sm" aria-label="เลื่อนขึ้น" onClick={() => moveItem(i)}>↑</button>}
+                <button type="button" className="btn ghost sm" aria-label="ลบ" onClick={() => patch(b.id, { items: items.filter((_, k) => k !== i) })}>✕</button></div>)}
+            {hasF('kind') && <select className="input" value={x.kind ?? 'tiktok'} onChange={(e) => setItem(b, i, { kind: e.target.value as SocialKind })}>{(Object.keys(SOCIAL) as SocialKind[]).map((k) => <option key={k} value={k}>{SOCIAL[k].label}</option>)}</select>}
+            {!picOnly && hasF('image') && <div className="lb-row">{x.image && <img src={x.image} alt="" className="lb-thumb" />}
+              <button type="button" className="btn sm" disabled={busy} onClick={() => pickFiles(false, ([u]) => patch(b.id, { items: itemsOf(b.id).map((y, k) => (k === i ? { ...y, image: u } : y)) }))}>{x.image ? 'เปลี่ยนรูป' : b.type === 'reviews' ? 'รูปลูกค้า (ไม่บังคับ)' : 'ใส่รูป'}</button>
+              {x.image && <button type="button" className="btn ghost sm" onClick={() => setItem(b, i, { image: '' })}>เอาออก</button>}</div>}
+            {(hasF('icon') || hasF('q')) && <div className="lb-row lb-iq">
+              {hasF('icon') && <input className="input lb-icon" value={x.icon ?? ''} maxLength={12} placeholder="😀" aria-label="ไอคอน (อีโมจิ)" onChange={(e) => setItem(b, i, { icon: e.target.value })} />}
+              {hasF('q') && <input className="input" value={x.q ?? ''} maxLength={200} placeholder={spec.q} aria-label={spec.q} onChange={(e) => setItem(b, i, { q: e.target.value })} />}</div>}
+            {hasF('stars') && <Seg value={x.stars ?? 5} set={(v) => setItem(b, i, { stars: v })} opts={[[1, '1★'], [2, '2★'], [3, '3★'], [4, '4★'], [5, '5★']]} />}
+            {hasF('a') && (b.type === 'pricelist' || b.type === 'numbers'
+              ? <input className="input" value={x.a ?? ''} maxLength={200} placeholder={spec.a} aria-label={spec.a} onChange={(e) => setItem(b, i, { a: e.target.value })} />
+              : <textarea className="input" rows={2} value={x.a ?? ''} maxLength={1000} placeholder={spec.a} aria-label={spec.a} onChange={(e) => setItem(b, i, { a: e.target.value })} />)}
+            {hasF('link') && <input className="input" value={x.link ?? ''} maxLength={300} placeholder={b.type === 'social' ? 'https://...' : 'ลิงก์ (ไม่บังคับ)'} aria-label="ลิงก์" onChange={(e) => setItem(b, i, { link: e.target.value })} />}
+          </div>))}</div>
+        {items.length < ITEMS_MAX && (picOnly
+          ? <button type="button" className="btn sm" disabled={busy || !init.ready} onClick={() => pickFiles(true, (urls) => patch(b.id, { items: [...itemsOf(b.id), ...urls.map((image) => ({ image, link: '' }))].slice(0, ITEMS_MAX) }))}>＋ เพิ่ม{spec.noun}</button>
+          : <button type="button" className="btn sm" onClick={() => patch(b.id, { items: [...items, { ...spec.add }] })}>＋ เพิ่ม{spec.noun}</button>)}
+      </div>
+    );
+  }
   const dropLine = (i: number) => (ghost && drop === i ? <div key={`drop${i}`} className="cv-drop" /> : null);
 
   return (
     <section className="card lb">
       <div className="lb-top">
-        <div><h2>จัดหน้าแรก</h2><small className="muted">ลากกล่องจากด้านซ้ายไปวางบนหน้าร้าน · กดกล่องเพื่อแก้ไข · ลากกล่องบนหน้าร้านเพื่อย้ายที่</small></div>
+        <div><h2>จัดหน้าร้าน</h2><small className="muted">ลากกล่องจากด้านซ้ายไปวางบนหน้าร้าน · กดกล่องเพื่อแก้ไข · ลากกล่องบนหน้าร้านเพื่อย้ายที่</small></div>
         <div className="lb-top-acts">
           <Seg value={view} set={setView} opts={[['pc', '🖥 คอม'], ['phone', '📱 มือถือ']]} />
-          <button type="button" className="btn ghost sm" disabled={busy || !init.ready} onClick={reset}>กลับเป็นแบบเดิม</button>
-          <a href="/" target="_blank" rel="noopener" className="btn ghost sm">ดูหน้าร้าน ↗</a>
+          <button type="button" className="btn ghost sm" disabled={busy || !init.ready} onClick={reset}>{curPage ? 'ล้างหน้า' : 'กลับเป็นแบบเดิม'}</button>
+          <a href={curPage ? `/s/${curPage.slug}` : '/'} target="_blank" rel="noopener" className="btn ghost sm">ดูหน้านี้ ↗</a>
           <button type="button" className="btn primary sm" disabled={busy || !init.ready} onClick={() => save()}>{busy ? 'กำลังบันทึก…' : dirty ? 'บันทึก •' : 'บันทึก'}</button>
         </div>
       </div>
       {!init.ready && <p className="lb-warn">⚠️ ต้องรัน SQL <code>0034_shop_home_layout.sql</code> ใน Supabase ก่อน ถึงจะบันทึกได้</p>}
+      <div className="lb-pages">
+        <div className="lb-page-tabs" role="tablist" aria-label="หน้าที่จัด">
+          <button type="button" role="tab" aria-selected={page === 'home'} className={page === 'home' ? 'on' : ''} onClick={() => openPage('home')}>🏠 หน้าแรก</button>
+          {pages.map((x) => <button key={x.id} type="button" role="tab" aria-selected={page === x.id} className={page === x.id ? 'on' : ''} onClick={() => openPage(x.id)}>📄 {x.title}</button>)}
+          {init.pages.ready && pages.length < PAGES_MAX && <button type="button" className="add" onClick={() => setNewPage(newPage ? null : { title: '', slug: '' })}>＋ สร้างหน้าใหม่</button>}
+        </div>
+        {!init.pages.ready && <small className="lb-warn" style={{ margin: 0 }}>อยากสร้างหลายหน้า: รัน SQL <code>0035_shop_pages.sql</code> ใน Supabase ก่อน</small>}
+        {newPage && (
+          <div className="lb-page-form">
+            <label className="field"><span>ชื่อหน้า (โชว์ในเมนู)</span><input className="input" autoFocus value={newPage.title} maxLength={60} placeholder="เช่น โปรโมชัน · เกี่ยวกับเรา · วิธีสั่งซื้อ"
+              onChange={(e) => setNewPage({ title: e.target.value, slug: newPage.slug && newPage.slug !== slugFrom(newPage.title) ? newPage.slug : slugFrom(e.target.value) })} /></label>
+            <label className="field"><span>ลิงก์หน้า</span><div className="lb-slug"><small>/s/</small><input className="input" value={newPage.slug} maxLength={40} placeholder="promotion" onChange={(e) => setNewPage({ ...newPage, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} /></div></label>
+            <div className="lb-row"><button type="button" className="btn primary sm" disabled={busy} onClick={createPage}>สร้างหน้า</button><button type="button" className="btn ghost sm" onClick={() => setNewPage(null)}>ยกเลิก</button></div>
+          </div>
+        )}
+        {curPage && meta && !newPage && (
+          <div className="lb-page-form">
+            <label className="field"><span>ชื่อหน้า</span><input className="input" value={meta.title} maxLength={60} onChange={(e) => setMeta({ ...meta, title: e.target.value })} /></label>
+            <label className="field"><span>ลิงก์หน้า</span><div className="lb-slug"><small>/s/</small><input className="input" value={meta.slug} maxLength={40} onChange={(e) => setMeta({ ...meta, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} /></div></label>
+            <label className="lb-check"><input type="checkbox" checked={meta.in_menu} onChange={(e) => setMeta({ ...meta, in_menu: e.target.checked })} />โชว์ในเมนูร้าน</label>
+            <div className="lb-row">
+              <button type="button" className="btn sm" disabled={busy || (meta.title === curPage.title && meta.slug === curPage.slug && meta.in_menu === curPage.in_menu)} onClick={saveMeta}>บันทึกข้อมูลหน้า</button>
+              <button type="button" className="btn ghost sm" onClick={() => { navigator.clipboard?.writeText(`${location.origin}/s/${curPage.slug}`).then(() => notify('คัดลอกลิงก์แล้ว'), () => {}); }}>คัดลอกลิงก์</button>
+              <button type="button" className="btn ghost sm danger" disabled={busy} onClick={deletePage}>ลบหน้านี้</button>
+            </div>
+          </div>
+        )}
+      </div>
       <input ref={file} type="file" accept="image/jpeg,image/png,image/webp" multiple={multi} hidden onChange={(e) => { const fl = [...(e.target.files ?? [])]; e.target.value = ''; upload(fl); }} />
 
       <div className="lb-body">
@@ -292,7 +444,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                 <div className="lb-props-head"><span aria-hidden>{info.icon}</span><div><b>{info.label}</b><small>{info.desc}</small></div>
                   <button type="button" className="btn ghost sm lb-close" aria-label="ปิด" onClick={() => setSel(null)}>✕</button></div>
                 {builtin && <p className="muted lb-note">{b.type === 'hero' || b.type === 'promos' ? 'รูปของกล่องนี้แก้ได้ที่แท็บ "รูปหน้าแรก · ป๊อปอัป"' : b.type === 'products' ? 'ถ้าซ่อนหรือลบกล่องนี้ ลูกค้าที่ค้นหาจะเห็นผลค้นหาบนสุดแทน' : 'กล่องนี้ใช้ข้อมูลจริงของร้าน ไม่ต้องตั้งค่า'}</p>}
-                {(b.type === 'featured' || b.type === 'cats' || b.type === 'text' || b.type === 'video' || b.type === 'imgtext' || b.type === 'contact' || b.type === 'faq' || b.type === 'coupon' || b.type === 'countdown') && txt('title', 'หัวข้อ')}
+                {TITLED.includes(b.type) && txt('title', b.type === 'spotlight' ? 'ป้ายเล็กด้านบน (ไม่บังคับ)' : b.type === 'quote' ? 'ผู้พูด / ที่มา (ไม่บังคับ)' : 'หัวข้อ')}
                 {b.type === 'featured' && <>
                   <div className="field"><span>เลือกสินค้าจาก</span><Seg value={b.pick ?? 'best'} set={(v) => patch(b.id, { pick: v })} opts={[['best', 'ขายดี'], ['cat', 'ตามหมวด'], ['ids', 'เลือกเอง']]} /></div>
                   {b.pick === 'cat' && <label className="field"><span>หมวด</span><select className="input" value={b.category ?? ''} onChange={(e) => patch(b.id, { category: e.target.value })}><option value="">— เลือกหมวด —</option>{init.categories.map((c) => <option key={c}>{c}</option>)}</select></label>}
@@ -301,19 +453,11 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                     return <label key={p.id} className={on ? 'on' : ''}><input type="checkbox" checked={on} onChange={() => patch(b.id, { ids: on ? (b.ids ?? []).filter((x) => x !== p.id) : [...(b.ids ?? []), p.id].slice(0, 24) })} />{p.name}</label>;
                   })}</div></div>}
                   <label className="field"><span>จำนวนที่โชว์</span><select className="input" value={b.limit ?? 4} onChange={(e) => patch(b.id, { limit: Number(e.target.value) })}>{[2, 3, 4, 6, 8, 12].map((n) => <option key={n} value={n}>{n} ชิ้น</option>)}</select></label>
+                  <div className="field"><span>รูปแบบ</span><Seg value={b.variant ?? 'grid'} set={(v) => patch(b.id, { variant: v })} opts={[['grid', 'ตาราง'], ['scroll', 'เลื่อนข้าง'], ['list', 'รายการ']]} /></div>
                 </>}
                 {b.type === 'text' && <>{txt('text', 'ข้อความ', { rows: 5 })}<div className="field"><span>จัดข้อความ</span><Seg value={b.align ?? 'left'} set={(v) => patch(b.id, { align: v })} opts={[['left', 'ชิดซ้าย'], ['center', 'กึ่งกลาง']]} /></div></>}
                 {b.type === 'image' && <>{pic('รูป (แนวนอนสวยสุด เช่น 1200×500)')}{linkField()}</>}
-                {b.type === 'gallery' && <>
-                  <div className="field"><span>รูป ({(b.items ?? []).length}/{ITEMS_MAX})</span>
-                    <div className="lb-gal">{(b.items ?? []).map((x, i) => (
-                      <div key={`${x.image}${i}`} className="lb-gal-item">
-                        <div><img src={x.image} alt="" /><button type="button" aria-label="ลบรูป" onClick={() => patch(b.id, { items: (b.items ?? []).filter((_, k) => k !== i) })}>✕</button></div>
-                        <input className="input" value={x.link ?? ''} maxLength={300} placeholder="ลิงก์ (ไม่บังคับ)" onChange={(e) => setItem(b, i, { link: e.target.value })} />
-                      </div>))}</div>
-                    {(b.items ?? []).length < ITEMS_MAX && <button type="button" className="btn sm" disabled={busy || !init.ready} onClick={() => pickFiles(true, (urls) => patch(b.id, { items: [...(blocksRef.current.find((x) => x.id === b.id)?.items ?? []), ...urls.map((image) => ({ image, link: '' }))].slice(0, ITEMS_MAX) }))}>＋ เพิ่มรูป</button>}</div>
-                  <div className="field"><span>รูปต่อแถว</span><Seg value={b.cols ?? 3} set={(v) => patch(b.id, { cols: v })} opts={[[1, '1'], [2, '2'], [3, '3'], [4, '4']]} /></div>
-                </>}
+                {b.type === 'gallery' && <div className="field"><span>รูปต่อแถว</span><Seg value={b.cols ?? 3} set={(v) => patch(b.id, { cols: v })} opts={[[1, '1'], [2, '2'], [3, '3'], [4, '4']]} /></div>}
                 {b.type === 'imgtext' && <>{pic('รูป')}{txt('text', 'ข้อความ', { rows: 4 })}{txt('label', 'ข้อความบนปุ่ม (ไม่บังคับ)', { max: 40 })}{linkField('ปุ่มไปที่')}
                   <div className="field"><span>รูปอยู่ด้าน</span><Seg value={!!b.flip} set={(v) => patch(b.id, { flip: v })} opts={[[false, 'ซ้าย'], [true, 'ขวา']]} /></div></>}
                 {b.type === 'notice' && <>{txt('text', 'ข้อความประกาศ', { rows: 2, max: 300 })}<div className="field"><span>สี</span><Seg value={b.tone ?? 'accent'} set={(v) => patch(b.id, { tone: v })} opts={TONES} /></div>{linkField()}</>}
@@ -321,14 +465,6 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                 {b.type === 'contact' && <>{txt('text', 'ข้อความ (ไม่บังคับ)', { rows: 2, max: 300 })}
                   <p className="muted lb-note">ปุ่ม LINE / Facebook ใช้ลิงก์จากแท็บ &quot;ข้อมูลร้าน&quot; และ &quot;หน้าตาร้าน&quot; ({init.shop.line ? 'มี LINE' : 'ยังไม่มี LINE'} · {init.shop.facebook ? 'มี Facebook' : 'ยังไม่มี Facebook'})</p>
                   {txt('label', 'ปุ่มเพิ่มเติม (ไม่บังคับ)', { max: 40, ph: 'เช่น Instagram' })}{linkField('ปุ่มเพิ่มเติมไปที่')}</>}
-                {b.type === 'faq' && <div className="field"><span>คำถาม ({(b.items ?? []).length}/{ITEMS_MAX})</span>
-                  {(b.items ?? []).map((x, i) => (
-                    <div key={i} className="lb-qa">
-                      <input className="input" value={x.q ?? ''} maxLength={200} placeholder={`คำถามที่ ${i + 1}`} onChange={(e) => setItem(b, i, { q: e.target.value })} />
-                      <textarea className="input" rows={2} value={x.a ?? ''} maxLength={1000} placeholder="คำตอบ" onChange={(e) => setItem(b, i, { a: e.target.value })} />
-                      <button type="button" className="btn ghost sm" onClick={() => patch(b.id, { items: (b.items ?? []).filter((_, k) => k !== i) })}>ลบคำถามนี้</button>
-                    </div>))}
-                  {(b.items ?? []).length < ITEMS_MAX && <button type="button" className="btn sm" onClick={() => patch(b.id, { items: [...(b.items ?? []), { q: '', a: '' }] })}>＋ เพิ่มคำถาม</button>}</div>}
                 {b.type === 'coupon' && <>{txt('code', 'โค้ด', { max: 40, ph: 'NEW10' })}{txt('text', 'คำอธิบาย (ไม่บังคับ)', { max: 120 })}<p className="muted lb-note">สร้างโค้ดจริงได้ที่เมนู &quot;คูปอง&quot; · กล่องนี้แค่โชว์ให้ลูกค้าคัดลอก</p></>}
                 {b.type === 'countdown' && <>
                   <label className="field"><span>นับถึง (เวลาไทย)</span><input className="input" type="datetime-local" value={b.until ?? ''} onChange={(e) => patch(b.id, { until: e.target.value })} /></label>
@@ -336,6 +472,19 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                   {txt('label', 'ข้อความบนปุ่ม (ไม่บังคับ)', { max: 40 })}{linkField('ปุ่มไปที่')}</>}
                 {b.type === 'video' && <label className="field"><span>ลิงก์ YouTube</span><input className="input" value={b.video ?? ''} maxLength={300} placeholder="https://youtu.be/..." onChange={(e) => patch(b.id, { video: e.target.value })} />
                   {b.video && !youtubeId(b.video) && <small style={{ color: 'var(--bad)' }}>ลิงก์ไม่ใช่คลิป YouTube</small>}</label>}
+                {b.type === 'heading' && <>{txt('text', 'คำอธิบาย (ไม่บังคับ)', { rows: 2, max: 300 })}
+                  <div className="field"><span>ขนาดหัวข้อ</span><Seg value={b.size ?? 'm'} set={(v) => patch(b.id, { size: v })} opts={[['s', 'เล็ก'], ['m', 'กลาง'], ['l', 'ใหญ่']]} /></div>
+                  <div className="field"><span>จัดข้อความ</span><Seg value={b.align ?? 'center'} set={(v) => patch(b.id, { align: v })} opts={[['left', 'ชิดซ้าย'], ['center', 'กึ่งกลาง']]} /></div></>}
+                {b.type === 'cta' && <>{txt('text', 'ข้อความรอง', { rows: 2, max: 300 })}{txt('label', 'ข้อความบนปุ่ม', { max: 40 })}{linkField('ปุ่มไปที่')}{pic('รูปพื้นหลัง (ไม่บังคับ)')}
+                  {!b.image && <div className="field"><span>สีพื้น</span><Seg value={b.tone ?? 'accent'} set={(v) => patch(b.id, { tone: v })} opts={TONES} /></div>}</>}
+                {(b.type === 'features' || b.type === 'numbers' || b.type === 'linkcards') && <div className="field"><span>ต่อแถว (จอคอม)</span><Seg value={b.cols ?? 3} set={(v) => patch(b.id, { cols: v })} opts={[[1, '1'], [2, '2'], [3, '3'], [4, '4']]} /></div>}
+                {b.type === 'pricelist' && txt('text', 'หมายเหตุใต้ตาราง (ไม่บังคับ)', { max: 200 })}
+                {b.type === 'marquee' && <>{txt('text', 'ข้อความวิ่ง', { rows: 2, max: 300 })}<div className="field"><span>สีพื้น</span><Seg value={b.tone ?? 'dark'} set={(v) => patch(b.id, { tone: v })} opts={TONES} /></div></>}
+                {b.type === 'spotlight' && <>
+                  <label className="field"><span>สินค้า</span><select className="input" value={b.ids?.[0] ?? ''} onChange={(e) => patch(b.id, { ids: e.target.value ? [e.target.value] : [] })}><option value="">ขายดีที่สุด (อัตโนมัติ)</option>{init.products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+                  {txt('text', 'คำอธิบาย (ว่าง = ใช้คำอธิบายของสินค้า)', { rows: 3, max: 500 })}{txt('label', 'ข้อความบนปุ่ม', { max: 40 })}</>}
+                {b.type === 'quote' && <>{txt('text', 'ข้อความ', { rows: 3, max: 300 })}<div className="field"><span>จัดข้อความ</span><Seg value={b.align ?? 'center'} set={(v) => patch(b.id, { align: v })} opts={[['left', 'ชิดซ้าย (มีเส้นข้าง)'], ['center', 'กึ่งกลาง']]} /></div></>}
+                {ITEM_SPEC[b.type] && renderItems(b)}
                 {b.type === 'space' && <div className="field"><span>ขนาด</span><Seg value={b.size ?? 'm'} set={(v) => patch(b.id, { size: v })} opts={[['s', 'เล็ก'], ['m', 'กลาง'], ['l', 'ใหญ่']]} /></div>}
                 {HALF_OK.includes(b.type) && <div className="field"><span>ความกว้าง</span><Seg value={!!b.half} set={(v) => patch(b.id, { half: v })} opts={[[false, 'เต็มแถว'], [true, 'ครึ่งแถว']]} />
                   <small className="faint">ครึ่งแถว 2 กล่องติดกัน = วางคู่กันบนจอคอม (มือถือเรียงลงมา)</small></div>}
