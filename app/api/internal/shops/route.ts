@@ -24,14 +24,14 @@ const schema = z.discriminatedUnion('action', [
     admin_username: z.string().trim().min(3).max(40), expires_at: until,
     admin_password: z.string().min(8).max(72).optional(), // ส่งอย่างใดอย่างหนึ่ง
     admin_pass_hash: z.string().regex(/^s1\$[\w-]+\$[\w-]+$/).optional(),
-    plan: z.enum(['starter', 'pro', 'max']).default('starter'),
+    plan: z.enum(['starter', 'pro', 'max']).default('max').transform(() => 'max' as const), // แพ็กเกจเดียว = ครบทุกฟังก์ชัน
     slip_quota: z.number().int().min(0).max(1000).optional(), // ร้านทดลอง: โควตาน้อยกว่าแพ็กเกจ
   }),
   z.object({ action: z.literal('extend'), slug, expires_at: until }),
   z.object({ action: z.enum(['suspend', 'resume']), slug }),
   // ธีมพิเศษทั้งหมดที่ร้านเป็นเจ้าของ (ส่งรายการเต็มทุกครั้ง — ไม่ได้ส่งมา = ถอนสิทธิ์)
-  // เปลี่ยนแพ็กเกจ: starter (ปกติ ฿299) · pro (฿399) · max (฿799) — โควตาสลิปเปลี่ยนตามแพ็กเกจ
-  z.object({ action: z.literal('plan'), slug, plan: z.enum(['starter', 'pro', 'max']) }),
+  // เปลี่ยนแพ็กเกจ: เหลือแพ็กเกจเดียว (฿399 ครบทุกฟังก์ชัน) — ค่าเก่าที่ส่งมายังรับได้ แต่บันทึกเป็น max เสมอ
+  z.object({ action: z.literal('plan'), slug, plan: z.enum(['starter', 'pro', 'max']).transform(() => 'max' as const) }),
   z.object({ action: z.literal('themes'), slug, themes: z.array(z.string().refine((k) => THEMES.some((t) => t.key === k && t.premium), 'ไม่มีธีมนี้')).max(50) }),
 ]);
 

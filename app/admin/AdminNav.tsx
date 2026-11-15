@@ -67,7 +67,7 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
         {staff && <div className="staff-badge">🛡️ คุณเข้าในฐานะแอดมิน · เห็นเฉพาะเมนูที่เจ้าของร้านเปิดให้</div>}
         <nav className="nav">{MENU.map((m) => ({ ...m, items: m.items.filter(allowed) })).filter((m) => m.items.length).map((m) => <div key={m.g}><div className="nav-label">{m.g}</div>{m.items.map(link)}</div>)}</nav>
         <div className="side-foot">
-          <div className="plan-row"><span className={`pill ${plan === 'pro' ? 'accent' : 'plain'}`}>แพ็กเกจ {PLAN_LABEL[isPlan(plan) ? plan : 'starter']}</span><span className="muted num">฿{PLAN_PRICE[isPlan(plan) ? plan : 'starter']}/เดือน</span></div>
+          <div className="plan-row"><span className={`pill accent`}>แพ็กเกจ {PLAN_LABEL[isPlan(plan) ? plan : 'starter']}</span><span className="muted num">฿{PLAN_PRICE[isPlan(plan) ? plan : 'starter']}/เดือน</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><b>ตรวจสลิปเดือนนี้</b><span className="num">{used} / {slip.quota}</span></div>
           <div className={`meter${pct >= 80 ? ' warn' : ''}`}><i style={{ width: `${pct}%` }} /></div>
           <span className="muted" style={{ fontSize: 12 }}>เกินโควตา ฿{slip.overage.toFixed(2)}/สลิป ตัดจากกระเป๋า SysRent · ฟรี {slip.quota} ครั้ง/เดือน</span>
