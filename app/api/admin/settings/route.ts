@@ -11,7 +11,7 @@ import { sendMail, shopSmtp, verifyGmail } from '@/lib/mail';
 import { encConfigured, encrypt } from '@/lib/secret';
 import { fontOf, isEffect, isLoader } from '@/lib/appearance';
 import { parseMusic } from '@/lib/music';
-import { BLOCK_INFO, BUILTIN, LAYOUT_MAX, youtubeId, type BlockType } from '@/lib/home-layout';
+import { BLOCK_INFO, BUILTIN, ITEMS_MAX, LAYOUT_MAX, youtubeId, type BlockType } from '@/lib/home-layout';
 
 const https = (max: number) => z.string().trim().max(max).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์ต้องขึ้นต้นด้วย https://');
 /** ลิงก์ในร้าน (/p/...) หรือ https:// */
@@ -21,8 +21,11 @@ const block = z.object({
   id: z.string().regex(/^[a-z0-9]{1,24}$/), type: z.enum(Object.keys(BLOCK_INFO) as [BlockType, ...BlockType[]]), on: z.boolean(), half: z.boolean().optional(),
   title: z.string().trim().max(80).optional(), text: z.string().trim().max(1000).optional(), image: https(500).optional(), link: link.optional(), label: z.string().trim().max(40).optional(),
   pick: z.enum(['best', 'cat', 'ids']).optional(), category: z.string().trim().max(60).optional(), ids: z.array(z.string().uuid()).max(24).optional(), limit: z.number().int().min(1).max(24).optional(),
-  tone: z.enum(['accent', 'ok', 'warn', 'info']).optional(), align: z.enum(['left', 'center']).optional(), size: z.enum(['s', 'm', 'l']).optional(),
+  tone: z.enum(['accent', 'ok', 'warn', 'info', 'dark']).optional(), align: z.enum(['left', 'center']).optional(), size: z.enum(['s', 'm', 'l']).optional(),
   video: z.string().trim().max(300).refine((u) => !u || !!youtubeId(u), 'ลิงก์ YouTube ไม่ถูกต้อง').optional(),
+  items: z.array(z.object({ image: https(500).optional(), link: link.optional(), q: z.string().trim().max(200).optional(), a: z.string().trim().max(1000).optional() })).max(ITEMS_MAX).optional(),
+  cols: z.number().int().min(1).max(4).optional(), flip: z.boolean().optional(),
+  code: z.string().trim().max(40).optional(), until: z.string().regex(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})?$/, 'วันเวลาไม่ถูกต้อง').optional(),
 });
 const schema = z.discriminatedUnion('action', [
   z.object({

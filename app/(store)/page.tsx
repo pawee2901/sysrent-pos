@@ -8,6 +8,7 @@ import { loadProducts, type Product } from '@/lib/catalog';
 import { db } from '@/lib/db';
 import { AppLogo } from '@/components/AppLogo';
 import { HALF_OK, parseLayout, youtubeId, type Block } from '@/lib/home-layout';
+import { CouponBox, Countdown } from '@/components/HomeBits';
 
 export const dynamic = 'force-dynamic';
 
@@ -133,6 +134,35 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
       return id ? <section className="hb hb-video">{b.title && <div className="sec-head"><h2>{b.title}</h2></div>}<div className="hb-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${id}`} title={b.title || 'วิดีโอ'} loading="lazy" allow="encrypted-media; picture-in-picture" allowFullScreen /></div></section> : null;
     }
     if (b.type === 'space') return <div className={`hb-space ${b.size ?? 'm'}`} aria-hidden />;
+    if (b.type === 'divider') return <hr className="hb hb-hr" />;
+    if (b.type === 'cats') {
+      return cats.length ? <section className="hb">{b.title && <div className="sec-head"><h2>{b.title}</h2></div>}<div className="hb-cats">{cats.map((x) => {
+        const p = products.find((y) => y.category === x);
+        return <Link key={x} href={`/?c=${encodeURIComponent(x)}#cat`} className="card hb-cat">{p && <AppLogo image={p.image} template={p.template} name={p.name} />}<span>{x}</span></Link>;
+      })}</div></section> : null;
+    }
+    if (b.type === 'gallery') {
+      const pics = (b.items ?? []).filter((x) => x.image);
+      return pics.length ? <div className={`hb hb-gallery c${b.cols ?? 3}`} style={{ ['--cols' as string]: Math.min(4, Math.max(1, b.cols ?? 3)) } as React.CSSProperties}>{pics.map((x, i) => <div key={i}>{go(x.link, 'hb-image', <img src={x.image} alt="" loading="lazy" />)}</div>)}</div> : null;
+    }
+    if (b.type === 'imgtext') return (
+      <section className={`card hb hb-imgtext${b.flip ? ' flip' : ''}`}>
+        {b.image && <img src={b.image} alt="" loading="lazy" />}
+        <div>{b.title && <h2>{b.title}</h2>}{b.text && <p>{b.text}</p>}{b.label && b.link && go(b.link, 'btn primary', b.label)}</div>
+      </section>);
+    if (b.type === 'contact') {
+      const links: [string, string, string][] = [];
+      if (shop.line_url) links.push([shop.line_url, 'LINE', 'line']);
+      if (shop.facebook_url) links.push([shop.facebook_url, 'Facebook', 'fb']);
+      if (b.label && b.link) links.push([b.link, b.label, '']);
+      return links.length ? <section className="card hb hb-contact">{b.title && <h2>{b.title}</h2>}{b.text && <p>{b.text}</p>}<div>{links.map(([href, l, k]) => <a key={href} href={href} target="_blank" rel="noopener noreferrer" className={`btn lg ${k}`}>{l}</a>)}</div></section> : null;
+    }
+    if (b.type === 'faq') {
+      const qa = (b.items ?? []).filter((x) => x.q);
+      return qa.length ? <section className="hb hb-faq">{b.title && <div className="sec-head"><h2>{b.title}</h2></div>}{qa.map((x, i) => <details key={i} className="card"><summary>{x.q}</summary>{x.a && <p>{x.a}</p>}</details>)}</section> : null;
+    }
+    if (b.type === 'coupon') return b.code ? <CouponBox title={b.title} code={b.code} text={b.text} /> : null;
+    if (b.type === 'countdown') return b.until ? <Countdown title={b.title} until={b.until} tone={b.tone} label={b.label} link={b.link} /> : null;
     return null;
   }
   // กล่องครึ่งแถวที่อยู่ติดกัน = จับคู่วางข้างกัน (จอคอม)

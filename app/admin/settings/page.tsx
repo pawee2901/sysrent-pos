@@ -4,6 +4,7 @@ import { ownedThemes } from '@/lib/themes';
 import { adminShop } from '@/lib/admin-page';
 import { SettingsClient } from './SettingsClient';
 import { parseLayout } from '@/lib/home-layout';
+import { loadProducts } from '@/lib/catalog';
 import { mergeCategories, shopCategories } from '@/lib/categories';
 
 export default async function AdminSettings() {
@@ -16,10 +17,12 @@ export default async function AdminSettings() {
   const sm = await d.from('shops').select('smtp_user').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0021 = error
   const pc = await d.from('shops').select('promo_cards').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0031 = error
   const hl = await d.from('shops').select('home_layout').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0034 = error
-  const { data: prods } = await d.from('shop_products').select('id, name, category').eq('shop_id', shop.id).eq('active', true).order('sort');
-  const plist = (prods ?? []) as { id: string; name: string; category: string }[];
+  const prods = await loadProducts(shop.id);
+  const plist = prods.map((p) => ({ id: p.id, name: p.name, category: p.category, image: p.image, template: p.template, from: p.from, sold: p.sold }));
+  const promoImgs = (Array.isArray(pc.data?.promo_cards) ? (pc.data.promo_cards as { image?: string }[]) : []).map((x) => x.image ?? '').filter(Boolean);
   const layout = { ready: !hl.error, blocks: parseLayout(hl.data?.home_layout), products: plist,
-    categories: mergeCategories(await shopCategories(shop.id), plist.map((p) => p.category).filter(Boolean)) };
+    categories: mergeCategories(await shopCategories(shop.id), plist.map((p) => p.category).filter(Boolean)).filter((c) => plist.some((p) => p.category === c)),
+    shop: { name: shop.name, tagline: shop.tagline, banner: shop.banner_url ?? '', line: !!shop.line_url, facebook: !!shop.facebook_url }, promos: promoImgs };
   const dc = await d.from('shops').select('discord_webhook, discord_events').eq('id', shop.id).maybeSingle();
   const discord = { ready: !dc.error, set: !!dc.data?.discord_webhook, hint: (dc.data?.discord_webhook ?? '').slice(-6), events: (dc.data?.discord_events as string[] | null) ?? ['order', 'manual', 'topup', 'stock', 'signup', 'report'] };
   return <SettingsClient layout={layout} promos={{ ready: !pc.error, cards: Array.isArray(pc.data?.promo_cards) ? (pc.data.promo_cards as { image: string; link: string }[]) : [] }} initial={{ name: shop.name, tagline: shop.tagline, logo_url: shop.logo_url, accent: shop.accent, line_url: shop.line_url, announcement: shop.announcement,
