@@ -1,3 +1,5 @@
+import { after } from 'next/server';
+import { pushTopup } from '@/lib/push';
 import 'server-only';
 import { db } from '@/lib/db';
 import { slipServiceConfigured, verifySlip } from '@/lib/slip-service';
@@ -45,9 +47,11 @@ export async function verifyTopupSlip(shop: Shop, me: { id: string; username: st
       const { data: o, error: pErr } = await d.rpc('shop_pay_order', { p_order: t.pay_order, p_customer: me.id, p_paid_by: 'promptpay' });
       if (!pErr && o) { notifyOrderPaid(shop, t.pay_order); return { ok: true, amount, order: (o as { code: string }).code }; }
       notifyTopup(shop, me.username, amount); // ออเดอร์จ่ายไม่สำเร็จ แต่เงินเข้ากระเป๋าแล้ว
+      after(() => pushTopup(shop, me.id, amount).catch((e) => console.error('[push] topup', e)));
       return { ok: true, amount, balance, orderError: 'เงินเข้ากระเป๋าแล้ว แต่ออเดอร์จ่ายไม่สำเร็จ (อาจหมดเวลาหรือของหมด) — สั่งใหม่แล้วจ่ายด้วยกระเป๋าได้เลย' };
     }
     notifyTopup(shop, me.username, amount);
+    after(() => pushTopup(shop, me.id, amount).catch((e) => console.error('[push] topup', e)));
     return { ok: true, amount, balance };
   };
 

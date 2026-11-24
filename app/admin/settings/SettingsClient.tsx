@@ -30,7 +30,7 @@ const CARDS: [string, string][] = [['white', 'ขาว'], ['tint', 'ตาม�
 const BG_COLORS = ['#fff1f5', '#fdf2f8', '#f5f3ff', '#eef2ff', '#eff6ff', '#ecfeff', '#f0fdf4', '#f7fee7', '#fefce8', '#fff7ed', '#fdf6ec', '#f4f4f5'];
 
 /** ตั้งค่าร้าน + ตัวอย่างหน้าร้านบนมือถือ (เปลี่ยนแล้วเห็นทันที) */
-export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos, layout, contacts, push }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] }; layout: LayoutInit; contacts: { ready: boolean; list: ContactLink[] }; push: { ready: boolean; devices: number } }) {
+export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos, layout, contacts, push }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] }; layout: LayoutInit; contacts: { ready: boolean; list: ContactLink[] }; push: { ready: boolean; devices: number; eventsReady: boolean; events: string[] } }) {
   const router = useRouter();
   const [f, setF] = useState(initial);
   const [look, setLook] = useState(lookInit);

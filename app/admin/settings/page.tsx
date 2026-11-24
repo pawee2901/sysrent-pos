@@ -6,6 +6,7 @@ import { SettingsClient } from './SettingsClient';
 import { parseLayout } from '@/lib/home-layout';
 import { loadProducts } from '@/lib/catalog';
 import { parseContacts } from '@/lib/contacts';
+import { PUSH_EVENT_KEYS } from '@/lib/push-events';
 import { mergeCategories, shopCategories } from '@/lib/categories';
 
 export default async function AdminSettings() {
@@ -29,7 +30,8 @@ export default async function AdminSettings() {
   const ct = await d.from('shops').select('contact_links').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0037 = error
   const contacts = { ready: !ct.error, list: parseContacts(ct.data?.contact_links) };
   const ps = await d.from('shop_push_subs').select('id', { count: 'exact', head: true }).eq('shop_id', shop.id); // ยังไม่รัน 0038 = error
-  const push = { ready: !ps.error, devices: ps.count ?? 0 };
+  const pe = await d.from('shops').select('push_events').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0039 = error
+  const push = { ready: !ps.error, devices: ps.count ?? 0, eventsReady: !pe.error, events: Array.isArray(pe.data?.push_events) ? (pe.data.push_events as string[]) : PUSH_EVENT_KEYS };
   const dc = await d.from('shops').select('discord_webhook, discord_events').eq('id', shop.id).maybeSingle();
   const discord = { ready: !dc.error, set: !!dc.data?.discord_webhook, hint: (dc.data?.discord_webhook ?? '').slice(-6), events: (dc.data?.discord_events as string[] | null) ?? ['order', 'manual', 'topup', 'stock', 'signup', 'report'] };
   return <SettingsClient push={push} contacts={contacts} layout={layout} promos={{ ready: !pc.error, cards: Array.isArray(pc.data?.promo_cards) ? (pc.data.promo_cards as { image: string; link: string }[]) : [] }} initial={{ name: shop.name, tagline: shop.tagline, logo_url: shop.logo_url, accent: shop.accent, line_url: shop.line_url, announcement: shop.announcement,

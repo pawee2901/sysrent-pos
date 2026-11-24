@@ -1,3 +1,4 @@
+import { pushOrderPaid } from '@/lib/push';
 import { to } from '@/lib/routes';
 import 'server-only';
 import { after } from 'next/server';
@@ -75,6 +76,8 @@ export async function notifyRenewal(shop: Pick<Shop, 'id' | 'name'>, title: stri
 
 /** ออเดอร์จ่ายแล้ว → แจ้งออเดอร์ · มีรายการสั่งทำ = แจ้งแยก (แท็ก @here) · ของใกล้หมด = แจ้งแยก */
 export function notifyOrderPaid(shop: Pick<Shop, 'id' | 'name' | 'slug'>, orderId: string) {
+  // แจ้งลูกค้าในแอปร้านด้วย (ถ้าลูกค้าเปิดรับ + ร้านเปิดเหตุการณ์นี้)
+  after(() => pushOrderPaid(shop, orderId).catch((e) => console.error('[push] paid', e)));
   const load = async () => {
     const { data: o } = await db().from('shop_orders').select('code, total, paid_by, shop_customers(username), shop_order_items(name, qty, total, fulfillment, option_id, product_id)').eq('id', orderId).maybeSingle();
     return o as unknown as { code: string; total: number; paid_by: string | null; shop_customers: { username: string } | null; shop_order_items: { name: string; qty: number; total: number; fulfillment: string; option_id: string; product_id: string }[] } | null;

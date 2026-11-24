@@ -1095,3 +1095,10 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
 .ct-head .input { flex: 1; min-width: 0; }
 .ct-head .btn { flex: none; min-width: 32px; }
 .ct-ic { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 14px; }
+/* เลือกเหตุการณ์แจ้งเตือนในแอปร้าน */
+.push-evs { display: grid; gap: 6px; }
+.push-ev { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; cursor: default; }
+.push-ev > span { display: grid; gap: 1px; min-width: 0; }
+.push-ev b { font-size: 14px; }
+.push-ev small { font-size: 12px; color: var(--muted); }
+.push-ev .toggle { flex: none; }
