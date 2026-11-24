@@ -312,3 +312,233 @@
 /* หน้าต่างลอย (รับรหัส OTP / แจ้งปัญหา) บนการ์ดกระจก = พื้นทึบ อ่านง่าย ไม่เห็นของข้างหลังทะลุ */
 .store[data-card="glass"] .rd { background: rgba(255, 255, 255, .97); }
 .store[data-style="neon"][data-card="glass"] .rd { background: #110f1e; }
+
+/* =========================================================
+   ลูกกวาดสายรุ้ง: พาสเทลหลายสี · ขอบสายรุ้ง · ปุ่มเยลลี่ · การ์ดสลับสี
+   ========================================================= */
+.store[data-style="candy"] {
+  --bg: #fff7fb; --surface: #ffffff; --surface-2: #fff0f7; --line: #ffd9ec;
+  --text: #4a2340; --muted: #8a5a7c; --faint: #c49ab5; --ink: #4a2340;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, #fff);
+  --rainbow: linear-gradient(90deg, #ff8fc7, #ffb86b, #ffe066, #7ee0a8, #7cc4ff, #c39bff);
+  --grad: linear-gradient(135deg, #ff8fc7, #c39bff 55%, #7cc4ff); --glow: 0 8px 22px -8px rgba(255, 143, 199, .7);
+  --radius: 26px; --radius-sm: 18px;
+  --shadow: 0 8px 20px -10px rgba(255, 143, 199, .45); --shadow-lg: 0 24px 48px -20px rgba(195, 155, 255, .6);
+  --font: 'Mali', 'IBM Plex Sans Thai', sans-serif; --font-head: 'Mali', 'Anuphan', sans-serif;
+}
+.store[data-style="candy"] .shop-bg[data-bg="default"] { background:
+  radial-gradient(#ff8fc7 1.6px, transparent 2.2px) 0 0 / 46px 46px,
+  radial-gradient(#7cc4ff 1.6px, transparent 2.2px) 23px 23px / 46px 46px,
+  repeating-linear-gradient(-45deg, rgba(255, 184, 107, .07) 0 22px, transparent 22px 44px),
+  linear-gradient(180deg, #fff0f8, #f4f0ff 50%, #eef8ff); }
+.store[data-style="candy"] h1, .store[data-style="candy"] h2, .store[data-style="candy"] h3 { letter-spacing: 0; font-weight: 700; }
+.store[data-style="candy"] .card { border: 2px solid #fff; box-shadow: var(--shadow); }
+.store[data-style="candy"] .btn { border-radius: 99px; font-weight: 700; border-width: 2px; }
+.store[data-style="candy"] .btn.primary { background: var(--grad); border-color: #fff; color: #fff; text-shadow: 0 1px 2px rgba(74, 35, 64, .25); box-shadow: var(--glow), inset 0 3px 0 rgba(255, 255, 255, .45); transition: transform .15s, filter .15s; }
+.store[data-style="candy"] .btn.primary:hover { transform: translateY(-2px) scale(1.02); filter: saturate(1.2); }
+.store[data-style="candy"] .input, .store[data-style="candy"] .search input { border-radius: 99px; border-width: 2px; }
+.store[data-style="candy"] .top { background: color-mix(in srgb, #fff 82%, transparent); border-bottom: 3px solid transparent; border-image: var(--rainbow) 1; }
+.store[data-style="candy"] .announce { background: var(--rainbow); color: #4a2340; font-weight: 700; }
+.store[data-style="candy"] .shop-mark, .store[data-style="candy"] .badge, .store[data-style="candy"] .avatar { background: var(--grad); box-shadow: none; }
+.store[data-style="candy"] .hero { color: var(--text); border: 4px solid transparent; border-radius: 40px; box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, #fff, #fff7fb) padding-box, var(--rainbow) border-box; }
+.store[data-style="candy"] .hero::after { background-image: radial-gradient(#ffd6ea 2px, transparent 2.6px); background-size: 30px 30px; }
+.store[data-style="candy"] .hero h1 em { background: var(--rainbow); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.store[data-style="candy"] .hero h1 em::after { content: ' ✦'; color: #ffb86b; -webkit-text-fill-color: #ffb86b; font-size: .6em; }
+.store[data-style="candy"] .hero p, .store[data-style="candy"] .hero-ticks { color: var(--muted); }
+.store[data-style="candy"] .hero-ticks span::before { color: #ff8fc7; }
+.store[data-style="candy"] .hero .pill.accent { background: #fff; color: #d9508f; border: 2px solid #ffd9ec; }
+.store[data-style="candy"] .hero .btn:not(.primary) { background: #fff; color: var(--text); border-color: #ffd9ec; }
+.store[data-style="candy"] .hero .btn.primary { background: var(--grad); color: #fff; }
+.store[data-style="candy"] .hero-art .applogo { border: 4px solid #fff; border-radius: 50%; box-shadow: var(--shadow-lg); }
+.store[data-style="candy"] .stat b, .store[data-style="candy"] .sum-row.total b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.store[data-style="candy"] .sec-head h2::before { content: '✦ '; background: var(--rainbow); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.store[data-style="candy"] .chip { border-width: 2px; font-weight: 600; background: #fff; }
+.store[data-style="candy"] .chip.on { background: var(--grad); color: #fff; border-color: #fff; }
+.store[data-style="candy"] .pcard { border-radius: 30px; }
+.store[data-style="candy"] .pcard:hover { transform: translateY(-6px) rotate(-1deg); }
+.store[data-style="candy"] .pcard-img { border-radius: 24px; background: #ffe3f1; }
+.store[data-style="candy"] .grid > :nth-child(6n+2) .pcard-img { background: #ffeed9; }
+.store[data-style="candy"] .grid > :nth-child(6n+3) .pcard-img { background: #fff7cc; }
+.store[data-style="candy"] .grid > :nth-child(6n+4) .pcard-img { background: #dcf7e8; }
+.store[data-style="candy"] .grid > :nth-child(6n+5) .pcard-img { background: #dceeff; }
+.store[data-style="candy"] .grid > :nth-child(6n) .pcard-img { background: #eee3ff; }
+.store[data-style="candy"] .pcard-price { color: #d9508f; }
+.store[data-style="candy"] .how-n { border-radius: 50%; background: var(--grad); }
+.store[data-style="candy"] .banner, .store[data-style="candy"] .popup { border-radius: 36px; border: 4px solid #fff; }
+.store[data-style="candy"] .tabbar { border-radius: 28px; border: 2px solid #fff; }
+
+/* =========================================================
+   เหมียวเหมียว: ครีมอุ่น · ลายรอยเท้าแมว · การ์ดมีหูแมว · หัวข้อมีอุ้งเท้า
+   ========================================================= */
+.store[data-style="kitty"] {
+  --bg: #fff8ef; --surface: #fffdf8; --surface-2: #fff1e0; --line: #f0dcc4;
+  --text: #5a3d2b; --muted: #94735c; --faint: #c4a88f; --ink: #5a3d2b;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, #fffdf8);
+  --grad: linear-gradient(180deg, color-mix(in srgb, var(--accent) 80%, #fff), var(--accent));
+  --press: color-mix(in srgb, var(--accent) 65%, #3b2416); --glow: 0 4px 0 var(--press);
+  --radius: 24px; --radius-sm: 16px;
+  --shadow: 0 6px 16px -8px rgba(122, 82, 52, .3); --shadow-lg: 0 22px 44px -20px rgba(122, 82, 52, .45);
+  --font: 'Mali', 'IBM Plex Sans Thai', sans-serif; --font-head: 'Mali', 'Anuphan', sans-serif;
+}
+.store[data-style="kitty"] .shop-bg[data-bg="default"] { background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Cg fill='%23e9cdb0' fill-opacity='.45'%3E%3Cellipse cx='22' cy='30' rx='7' ry='6'/%3E%3Ccircle cx='13' cy='20' r='3'/%3E%3Ccircle cx='19' cy='15' r='3'/%3E%3Ccircle cx='26' cy='15' r='3'/%3E%3Ccircle cx='32' cy='20' r='3'/%3E%3Cellipse cx='66' cy='72' rx='7' ry='6'/%3E%3Ccircle cx='57' cy='62' r='3'/%3E%3Ccircle cx='63' cy='57' r='3'/%3E%3Ccircle cx='70' cy='57' r='3'/%3E%3Ccircle cx='76' cy='62' r='3'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 90px 90px,
+  linear-gradient(180deg, #fff3e3, var(--bg)); }
+.store[data-style="kitty"] h1, .store[data-style="kitty"] h2, .store[data-style="kitty"] h3 { letter-spacing: 0; font-weight: 700; }
+.store[data-style="kitty"] .card { border: 2px solid var(--line); }
+.store[data-style="kitty"] .btn { border-radius: 18px; border-width: 2px; font-weight: 700; }
+.store[data-style="kitty"] .btn.primary { background: var(--grad); color: #fff; border-color: var(--press); box-shadow: 0 4px 0 var(--press); transition: transform .12s, box-shadow .12s; }
+.store[data-style="kitty"] .btn.primary:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--press); }
+.store[data-style="kitty"] .input, .store[data-style="kitty"] .search input { border-radius: 18px; border-width: 2px; }
+.store[data-style="kitty"] .top { background: color-mix(in srgb, #fffdf8 85%, transparent); border-bottom: 2px dashed var(--line); }
+.store[data-style="kitty"] .announce { background: var(--accent); }
+.store[data-style="kitty"] .announce::before { content: '🐾 '; }
+.store[data-style="kitty"] .shop-mark, .store[data-style="kitty"] .badge, .store[data-style="kitty"] .avatar { background: var(--accent); box-shadow: none; }
+.store[data-style="kitty"] .hero { color: var(--text); border: 2px solid var(--line); border-radius: 36px; box-shadow: var(--shadow-lg);
+  background: radial-gradient(60% 80% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 65%), linear-gradient(160deg, #fffaf2, #fff1e0); }
+.store[data-style="kitty"] .hero::after { content: '🐾'; inset: auto 24px 18px auto; width: auto; height: auto; border-radius: 0; background: none; -webkit-mask-image: none; mask-image: none; font-size: 64px; opacity: .14; transform: rotate(-18deg); }
+.store[data-style="kitty"] .hero h1 em { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.store[data-style="kitty"] .hero h1 em::after { content: ' ฅ^•ﻌ•^ฅ'; font-size: .45em; white-space: nowrap; }
+.store[data-style="kitty"] .hero p, .store[data-style="kitty"] .hero-ticks { color: var(--muted); }
+.store[data-style="kitty"] .hero-ticks span::before { content: '🐾'; color: inherit; }
+.store[data-style="kitty"] .hero .pill.accent { background: #fff; color: var(--accent); border: 2px solid var(--line); }
+.store[data-style="kitty"] .hero .btn:not(.primary) { background: #fff; color: var(--text); border-color: var(--line); }
+.store[data-style="kitty"] .hero .btn.primary { background: var(--grad); color: #fff; border-color: var(--press); }
+.store[data-style="kitty"] .hero-art .applogo { border: 4px solid #fff; border-radius: 30px; box-shadow: var(--shadow-lg); }
+.store[data-style="kitty"] .stat b, .store[data-style="kitty"] .sum-row.total b { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.store[data-style="kitty"] .sec-head h2::after { content: ' 🐾'; font-size: .8em; }
+.store[data-style="kitty"] .chip { border-width: 2px; background: #fffdf8; }
+.store[data-style="kitty"] .chip.on { background: var(--accent); border-color: var(--press); color: #fff; }
+/* การ์ดสินค้ามีหูแมว */
+.store[data-style="kitty"] .pcard { overflow: visible; position: relative; margin-top: 14px; border-radius: 28px; }
+.store[data-style="kitty"] .pcard::before, .store[data-style="kitty"] .pcard::after { content: ''; position: absolute; top: -15px; width: 34px; height: 30px; background: var(--surface); border: 2px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); z-index: 0; }
+.store[data-style="kitty"] .pcard::before { left: 22px; transform: rotate(-14deg); }
+.store[data-style="kitty"] .pcard::after { right: 22px; transform: rotate(14deg); }
+.store[data-style="kitty"] .pcard > * { position: relative; z-index: 1; }
+.store[data-style="kitty"] .pcard-img { border-radius: 22px; }
+.store[data-style="kitty"] .pcard:hover { transform: translateY(-4px); }
+.store[data-style="kitty"] .pcard:hover::before { transform: rotate(-24deg); }
+.store[data-style="kitty"] .pcard:hover::after { transform: rotate(24deg); }
+.store[data-style="kitty"] .pcard-price { color: var(--accent); }
+.store[data-style="kitty"] .how-n { border-radius: 50%; background: var(--accent); box-shadow: 0 3px 0 var(--press); }
+.store[data-style="kitty"] .banner, .store[data-style="kitty"] .popup { border-radius: 32px; border: 3px solid #fff; }
+.store[data-style="kitty"] .tabbar { border-radius: 26px; border-width: 2px; }
+
+/* =========================================================
+   ปุยเมฆฟ้าใส: ท้องฟ้าไล่สี · ก้อนเมฆลอย · การ์ดฟูนุ่มลอยได้ · ปุ่มเงาวาว
+   ========================================================= */
+.store[data-style="cloud"] {
+  --bg: #eef7ff; --surface: #ffffff; --surface-2: #f2f8ff; --line: #dcecfb;
+  --text: #24425e; --muted: #5f7d99; --faint: #9bb3c9; --ink: #24425e;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, #fff);
+  --grad: linear-gradient(180deg, color-mix(in srgb, var(--accent) 65%, #fff), var(--accent));
+  --glow: 0 10px 24px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+  --radius: 30px; --radius-sm: 20px;
+  --shadow: 0 14px 30px -18px rgba(36, 66, 94, .35); --shadow-lg: 0 30px 60px -26px rgba(36, 66, 94, .45);
+  --font-head: 'Mali', 'Anuphan', sans-serif;
+}
+.store[data-style="cloud"] .shop-bg[data-bg="default"] { background:
+  radial-gradient(120px 46px at 12% 18%, #fff 70%, transparent 72%),
+  radial-gradient(80px 40px at 17% 14%, #fff 70%, transparent 72%),
+  radial-gradient(150px 56px at 84% 30%, rgba(255, 255, 255, .9) 70%, transparent 72%),
+  radial-gradient(90px 44px at 79% 26%, rgba(255, 255, 255, .9) 70%, transparent 72%),
+  radial-gradient(110px 40px at 40% 70%, rgba(255, 255, 255, .7) 70%, transparent 72%),
+  linear-gradient(180deg, #bfe3ff 0%, #e3f2ff 45%, #f6fbff 100%);
+  background-attachment: fixed; }
+.store[data-style="cloud"] h1, .store[data-style="cloud"] h2, .store[data-style="cloud"] h3 { letter-spacing: 0; font-weight: 700; }
+.store[data-style="cloud"] .card { border: 0; box-shadow: var(--shadow); }
+.store[data-style="cloud"] .btn { border-radius: 99px; font-weight: 600; }
+.store[data-style="cloud"] .btn.primary { background: var(--grad); color: #fff; border: 0; box-shadow: var(--glow), inset 0 2px 0 rgba(255, 255, 255, .55); }
+.store[data-style="cloud"] .btn.primary:hover { transform: translateY(-2px); }
+.store[data-style="cloud"] .input, .store[data-style="cloud"] .search input { border-radius: 99px; background: #fff; }
+.store[data-style="cloud"] .top { background: rgba(255, 255, 255, .7); border-bottom: 0; box-shadow: 0 8px 24px -18px rgba(36, 66, 94, .5); }
+.store[data-style="cloud"] .announce { background: var(--grad); }
+.store[data-style="cloud"] .shop-mark, .store[data-style="cloud"] .badge, .store[data-style="cloud"] .avatar { background: var(--grad); box-shadow: none; }
+.store[data-style="cloud"] .hero { color: var(--text); border: 0; border-radius: 48px; box-shadow: var(--shadow-lg); background: linear-gradient(180deg, #ffffff, #f4faff); }
+.store[data-style="cloud"] .hero::after { inset: auto -40px -60px auto; width: 340px; height: 160px; border-radius: 0; -webkit-mask-image: none; mask-image: none;
+  background: radial-gradient(70px 56px at 30% 60%, color-mix(in srgb, var(--accent) 12%, #fff) 70%, transparent 72%), radial-gradient(90px 70px at 60% 45%, color-mix(in srgb, var(--accent) 10%, #fff) 70%, transparent 72%), radial-gradient(70px 50px at 85% 65%, color-mix(in srgb, var(--accent) 12%, #fff) 70%, transparent 72%); }
+.store[data-style="cloud"] .hero h1 em { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.store[data-style="cloud"] .hero h1 em::after { content: ' ☁'; font-size: .6em; opacity: .7; }
+.store[data-style="cloud"] .hero p, .store[data-style="cloud"] .hero-ticks { color: var(--muted); }
+.store[data-style="cloud"] .hero-ticks span::before { color: var(--accent); }
+.store[data-style="cloud"] .hero .pill.accent { background: var(--accent-soft); color: var(--accent); border: 0; }
+.store[data-style="cloud"] .hero .btn:not(.primary) { background: #fff; color: var(--text); border-color: var(--line); }
+.store[data-style="cloud"] .hero .btn.primary { background: var(--grad); color: #fff; }
+.store[data-style="cloud"] .hero-art .applogo { border-radius: 50%; border: 5px solid #fff; box-shadow: var(--shadow-lg); animation: float 5s ease-in-out infinite; }
+.store[data-style="cloud"] .stat b, .store[data-style="cloud"] .sum-row.total b { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.store[data-style="cloud"] .sec-head h2::after { content: ' ✧'; color: var(--accent); }
+.store[data-style="cloud"] .chip { border: 0; background: #fff; box-shadow: 0 6px 14px -10px rgba(36, 66, 94, .5); }
+.store[data-style="cloud"] .chip.on { background: var(--grad); color: #fff; }
+.store[data-style="cloud"] .pcard { border-radius: 32px; }
+.store[data-style="cloud"] .pcard:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); }
+.store[data-style="cloud"] .pcard-img { border-radius: 26px; background: linear-gradient(180deg, #eaf5ff, #fff); }
+.store[data-style="cloud"] .pcard-price { color: var(--accent); }
+.store[data-style="cloud"] .how-n { border-radius: 50%; background: var(--grad); box-shadow: var(--glow); }
+.store[data-style="cloud"] .live { border: 0; box-shadow: var(--shadow); }
+.store[data-style="cloud"] .banner, .store[data-style="cloud"] .popup { border-radius: 40px; border: 0; }
+.store[data-style="cloud"] .tabbar { border: 0; border-radius: 30px; box-shadow: var(--shadow-lg); }
+
+/* =========================================================
+   สมุดสติกเกอร์: กระดาษตาราง · การ์ดเอียงนิด ๆ · เทปกาวสีร้าน · ไฮไลต์หัวข้อ · ฟอนต์ลายมือ
+   ========================================================= */
+.store[data-style="sticker"] {
+  --bg: #fbf8f1; --surface: #ffffff; --surface-2: #f6f1e6; --line: #e3d9c6;
+  --text: #2f2a24; --muted: #6f665a; --faint: #a59b8c; --ink: #2f2a24;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, #fff);
+  --grad: linear-gradient(var(--accent), var(--accent)); --glow: 2px 3px 0 rgba(47, 42, 36, .9);
+  --radius: 14px; --radius-sm: 10px;
+  --shadow: 2px 4px 0 rgba(47, 42, 36, .08), 0 8px 18px -12px rgba(47, 42, 36, .3); --shadow-lg: 4px 8px 0 rgba(47, 42, 36, .08), 0 22px 40px -22px rgba(47, 42, 36, .45);
+  --font: 'Itim', 'IBM Plex Sans Thai', sans-serif; --font-head: 'Itim', 'Anuphan', sans-serif;
+  --tape: color-mix(in srgb, var(--accent) 45%, rgba(255, 255, 255, .4));
+}
+.store[data-style="sticker"] .shop-bg[data-bg="default"] { background:
+  linear-gradient(rgba(120, 160, 200, .16) 1px, transparent 1px) 0 0 / 26px 26px,
+  linear-gradient(90deg, rgba(120, 160, 200, .16) 1px, transparent 1px) 0 0 / 26px 26px,
+  var(--bg); }
+.store[data-style="sticker"] h1, .store[data-style="sticker"] h2, .store[data-style="sticker"] h3 { letter-spacing: 0; font-weight: 400; }
+.store[data-style="sticker"] .card { border: 2px solid var(--text); }
+.store[data-style="sticker"] .btn { border: 2px solid var(--text); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; font-size: 1.05em; }
+.store[data-style="sticker"] .btn.primary { background: var(--accent); color: #fff; box-shadow: var(--glow); transition: transform .1s, box-shadow .1s; }
+.store[data-style="sticker"] .btn.primary:hover { transform: rotate(-1.5deg); }
+.store[data-style="sticker"] .btn.primary:active { transform: translate(2px, 3px); box-shadow: none; }
+.store[data-style="sticker"] .input, .store[data-style="sticker"] .search input { border: 2px solid var(--text); border-radius: 12px; }
+.store[data-style="sticker"] .top { background: color-mix(in srgb, var(--bg) 90%, transparent); border-bottom: 2px solid var(--text); }
+.store[data-style="sticker"] .announce { background: var(--text); color: #fbf8f1; }
+.store[data-style="sticker"] .shop-mark, .store[data-style="sticker"] .badge, .store[data-style="sticker"] .avatar { background: var(--accent); border: 2px solid var(--text); box-shadow: none; }
+.store[data-style="sticker"] .hero { color: var(--text); border: 2px solid var(--text); border-radius: 18px; box-shadow: var(--shadow-lg); background: #fff; overflow: visible; transform: rotate(-.6deg); }
+.store[data-style="sticker"] .hero::after { inset: -14px auto auto 40px; width: 120px; height: 30px; border-radius: 2px; -webkit-mask-image: none; mask-image: none; z-index: 2; transform: rotate(-4deg);
+  background: repeating-linear-gradient(45deg, var(--tape) 0 8px, color-mix(in srgb, var(--tape) 70%, #fff) 8px 16px); opacity: .9; }
+.store[data-style="sticker"] .hero > * { transform: rotate(.6deg); }
+.store[data-style="sticker"] .hero h1 em { background: linear-gradient(transparent 58%, color-mix(in srgb, var(--accent) 35%, transparent) 58%); color: var(--text); -webkit-text-fill-color: currentColor; padding: 0 4px; }
+.store[data-style="sticker"] .hero p, .store[data-style="sticker"] .hero-ticks { color: var(--muted); }
+.store[data-style="sticker"] .hero-ticks span::before { content: '✎'; color: var(--accent); }
+.store[data-style="sticker"] .hero .pill.accent { background: var(--accent-soft); color: var(--text); border: 2px dashed var(--text); }
+.store[data-style="sticker"] .hero .btn:not(.primary) { background: #fff; color: var(--text); }
+.store[data-style="sticker"] .hero-art .applogo { border: 4px solid #fff; outline: 2px solid var(--text); border-radius: 18px; box-shadow: var(--shadow); rotate: -6deg; animation: none; }
+.store[data-style="sticker"] .hero-art .applogo:nth-child(2n) { rotate: 5deg; }
+.store[data-style="sticker"] .stat b, .store[data-style="sticker"] .sum-row.total b { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.store[data-style="sticker"] .sec-head h2 { display: inline; background: linear-gradient(transparent 55%, color-mix(in srgb, var(--accent) 30%, transparent) 55%); padding: 0 6px; }
+.store[data-style="sticker"] .chip { border: 2px solid var(--text); background: #fff; }
+.store[data-style="sticker"] .chip.on { background: var(--accent); color: #fff; }
+/* การ์ดสินค้า = สติกเกอร์เอียงนิด ๆ + เทปกาว */
+.store[data-style="sticker"] .pcard { overflow: visible; position: relative; border-radius: 16px; }
+.store[data-style="sticker"] .grid > .pcard:nth-child(odd) { transform: rotate(-1.2deg); }
+.store[data-style="sticker"] .grid > .pcard:nth-child(even) { transform: rotate(1deg); }
+.store[data-style="sticker"] .grid > .pcard:hover { transform: rotate(0) translateY(-4px); }
+.store[data-style="sticker"] .pcard::before { content: ''; position: absolute; top: -12px; left: 50%; width: 70px; height: 22px; margin-left: -35px; z-index: 2; transform: rotate(-3deg); background: repeating-linear-gradient(45deg, var(--tape) 0 7px, color-mix(in srgb, var(--tape) 70%, #fff) 7px 14px); opacity: .85; }
+.store[data-style="sticker"] .pcard-img { border-radius: 10px; border: 2px dashed var(--line); }
+.store[data-style="sticker"] .pcard-price { color: var(--accent); font-size: 1.1em; }
+.store[data-style="sticker"] .how-n { border-radius: 50%; background: var(--accent); border: 2px solid var(--text); box-shadow: none; }
+.store[data-style="sticker"] .banner, .store[data-style="sticker"] .popup { border-radius: 16px; border: 2px solid var(--text); }
+.store[data-style="sticker"] .tabbar { border: 2px solid var(--text); border-radius: 18px; }
+
+/* ตัวอย่างย่อในหน้าตั้งค่า */
+.store[data-style="candy"].theme-mini .tm-hero { background: linear-gradient(#fff, #fff) padding-box, var(--rainbow) border-box; border: 3px solid transparent; color: var(--text); }
+.store[data-style="kitty"].theme-mini .tm-hero { background: linear-gradient(160deg, #fffaf2, #fff1e0); color: var(--text); border: 2px solid var(--line); }
+.store[data-style="kitty"].theme-mini .tm-row .card { position: relative; overflow: visible; }
+.store[data-style="kitty"].theme-mini .tm-row .card::before { content: '▲ ▲'; position: absolute; top: -11px; left: 0; right: 0; text-align: center; font-size: 10px; letter-spacing: 18px; color: var(--line); }
+.store[data-style="cloud"].theme-mini .tm-hero { background: #fff; color: var(--text); box-shadow: var(--shadow); }
+.store[data-style="sticker"].theme-mini .tm-hero { background: #fff; color: var(--text); border: 2px solid var(--text); transform: rotate(-1deg); }
+.store[data-style="sticker"].theme-mini .tm-row .card:first-child { transform: rotate(-2deg); }
+.store[data-style="sticker"].theme-mini .tm-row .card:last-child { transform: rotate(2deg); }
+.store[data-style="kitty"] .hb-scroll, .store[data-style="sticker"] .hb-scroll { padding-top: 16px; }

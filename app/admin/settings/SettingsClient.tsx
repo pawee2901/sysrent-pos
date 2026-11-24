@@ -147,7 +147,7 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
                 <div key={t.key} className={`theme-card${theme === t.key ? ' on' : ''}${ok ? '' : ' locked'}`}>
                   <div className="store theme-mini" data-style={t.key} style={accentVars(f.accent) as React.CSSProperties}>
                     <span className="shop-bg" data-bg="default" />
-                    <div className="tm-hero"><b>แอปพรีเมียม{t.key === 'cute' ? ' ♡' : ''}</b><span className="btn primary sm">ซื้อเลย</span></div>
+                    <div className="tm-hero"><b>แอปพรีเมียม{({ cute: ' ♡', candy: ' ✦', kitty: ' 🐾', cloud: ' ☁', sticker: ' ✎' } as Record<string, string>)[t.key] ?? ''}</b><span className="btn primary sm">ซื้อเลย</span></div>
                     <div className="tm-row"><span className="card" /><span className="card" /></div>
                   </div>
                   <div className="theme-meta">

@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Mali:wght@500;600;700&family=Kanit:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Noto+Serif+Thai:wght@500;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Mali:wght@500;600;700&family=Itim&family=Kanit:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Noto+Serif+Thai:wght@500;700&display=swap" rel="stylesheet" />
       </head>
       <body>
         {shop ? children : (

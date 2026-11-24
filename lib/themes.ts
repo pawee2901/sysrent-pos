@@ -14,6 +14,10 @@ export const THEMES: Theme[] = [
   { key: 'pop', name: 'ป๊อปคอมิก', desc: 'ขอบดำหนา เงาแข็ง สีสดแบบการ์ตูน กดแล้วปุ่มยุบ', premium: true, accent: 'orange' },
   { key: 'neon', name: 'นีออนราตรี', desc: 'พื้นมืด ขอบและตัวหนังสือเรืองแสงสีร้าน สไตล์เกมมิ่ง', premium: true, accent: 'violet' },
   { key: 'luxe', name: 'หรูหรา', desc: 'พื้นงาช้าง หัวข้อตัวอักษรมีเชิง มุมคม กรอบเส้นบาง', premium: true, accent: 'brown' },
+  { key: 'candy', name: 'ลูกกวาดสายรุ้ง', desc: 'พาสเทลหลายสี ขอบสายรุ้ง ปุ่มเยลลี่ การ์ดสินค้าสลับสี', premium: true, accent: 'pink' },
+  { key: 'kitty', name: 'เหมียวเหมียว', desc: 'โทนครีมอุ่น ลายรอยเท้าแมว การ์ดสินค้ามีหูแมว', premium: true, accent: 'orange' },
+  { key: 'cloud', name: 'ปุยเมฆฟ้าใส', desc: 'ท้องฟ้าไล่สี ก้อนเมฆ การ์ดฟูนุ่มลอยได้ ปุ่มเงาวาว', premium: true, accent: 'sky' },
+  { key: 'sticker', name: 'สมุดสติกเกอร์', desc: 'กระดาษตาราง ฟอนต์ลายมือ การ์ดเอียงติดเทปกาว ไฮไลต์หัวข้อ', premium: true, accent: 'rose' },
 ];
 
 export const themeOf = (key: string) => THEMES.find((t) => t.key === key);
