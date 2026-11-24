@@ -27,6 +27,8 @@ export type Block = {
   items?: BlockItem[]; cols?: number; flip?: boolean; code?: string; until?: string;
   /** สินค้าแนะนำ: ตาราง / เลื่อนข้าง / รายการ */
   variant?: 'grid' | 'scroll' | 'list' | 'bar' | 'feed' | 'ticker';
+  /** ป้ายมุมขวา (การ์ดกิจกรรม: "อัปเดตสด") */
+  badge?: string;
 };
 
 /** กล่องของระบบ (มีได้อย่างละ 1) */

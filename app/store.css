@@ -783,3 +783,4 @@ a.hb-link:hover { transform: translateY(-2px); border-color: var(--accent); }
   .hb-feed-txt { font-size: 14px; }
   .hb-feed time { font-size: 12px; }
 }
+.hb-feed-head p { margin: 6px 0 0; color: var(--muted); font-size: 14px; white-space: pre-line; }

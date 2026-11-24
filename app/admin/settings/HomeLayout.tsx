@@ -52,7 +52,7 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
       const names = (d.products.length ? d.products : [{ name: 'สินค้า' }]).map((p) => p.name);
       const who = ['p', 'k', 'n', 'm', 's'];
       if (b.variant === 'feed') return (
-        <div className="cv-feed"><div className="cv-feed-head"><div><small>STORE FEED</small><b>{b.title || 'กิจกรรมล่าสุด'}</b></div><span><i />อัปเดตสด</span></div>
+        <div className="cv-feed"><div className="cv-feed-head"><div>{(b.label ?? 'STORE FEED') && <small>{b.label ?? 'STORE FEED'}</small>}<b>{b.title || 'กิจกรรมล่าสุด'}</b>{b.text && <p>{b.text}</p>}</div>{(b.badge ?? 'อัปเดตสด') && <span><i />{b.badge ?? 'อัปเดตสด'}</span>}</div>
           {who.slice(0, Math.min(5, b.limit ?? 5)).map((w, i) => <div key={w} className="cv-feed-row"><span>{w.toUpperCase()}</span><p><b>{w}•••••</b> ซื้อ {names[i % names.length]}</p><small>{[3, 9, 33, 41, 42][i]} นาทีที่แล้ว</small></div>)}</div>);
       if (b.variant === 'ticker') return <div className="cv-marquee dark"><span>🟢 @s***a ซื้อ {names[0]} · 5 นาทีที่แล้ว     🟢 @k***n ซื้อ {names[1 % names.length]} · 9 นาทีที่แล้ว</span></div>;
       return <div className="cv-live"><i />@s***a ซื้อ {names[0]} · 5 นาทีที่แล้ว</div>;
@@ -469,7 +469,12 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                   <button type="button" className="btn ghost sm lb-close" aria-label="ปิด" onClick={() => setSel(null)}>✕</button></div>
                 {b.type === 'live' && <>
                   <div className="field"><span>รูปแบบ</span><Seg value={b.variant ?? 'bar'} set={(v) => patch(b.id, { variant: v })} opts={[['bar', 'แถบ'], ['feed', 'การ์ดกิจกรรม'], ['ticker', 'ตัวหนังสือวิ่ง']]} /></div>
-                  {b.variant === 'feed' && txt('title', 'หัวข้อการ์ด', { ph: 'กิจกรรมล่าสุด' })}
+                  {b.variant === 'feed' && <>
+                    <label className="field"><span>ป้ายเล็กด้านบน (ลบให้ว่าง = ไม่แสดง)</span><input className="input" value={b.label ?? 'STORE FEED'} maxLength={40} onChange={(e) => patch(b.id, { label: e.target.value })} /></label>
+                    {txt('title', 'หัวข้อการ์ด', { ph: 'กิจกรรมล่าสุด' })}
+                    {txt('text', 'คำอธิบายใต้หัวข้อ (ไม่บังคับ)', { rows: 2, max: 200, ph: 'เช่น ลูกค้าซื้อจริงทุกวัน ส่งอัตโนมัติ 24 ชม.' })}
+                    <label className="field"><span>ป้ายมุมขวา (ลบให้ว่าง = ไม่แสดง)</span><input className="input" value={b.badge ?? 'อัปเดตสด'} maxLength={30} onChange={(e) => patch(b.id, { badge: e.target.value })} /></label>
+                  </>}
                   {b.variant !== undefined && b.variant !== 'bar' && <label className="field"><span>จำนวนรายการ</span><select className="input" value={b.limit ?? 5} onChange={(e) => patch(b.id, { limit: Number(e.target.value) })}>{[3, 5, 8, 10].map((n) => <option key={n} value={n}>{n} รายการ</option>)}</select></label>}
                   <p className="muted lb-note">ใช้ออเดอร์จริงของร้าน ชื่อลูกค้าถูกปิดบางส่วนให้อัตโนมัติ · ตัวอย่างในหน้านี้เป็นข้อมูลสมมติ</p>
                 </>}

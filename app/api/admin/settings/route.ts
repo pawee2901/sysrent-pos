@@ -25,7 +25,7 @@ const block = z.object({
   video: z.string().trim().max(300).refine((u) => !u || !!youtubeId(u), 'ลิงก์ YouTube ไม่ถูกต้อง').optional(),
   items: z.array(z.object({ image: https(500).optional(), link: link.optional(), q: z.string().trim().max(200).optional(), a: z.string().trim().max(1000).optional(),
     icon: z.string().trim().max(12).optional(), stars: z.number().int().min(1).max(5).optional(), kind: z.enum(Object.keys(SOCIAL) as [SocialKind, ...SocialKind[]]).optional() })).max(ITEMS_MAX).optional(),
-  variant: z.enum(['grid', 'scroll', 'list', 'bar', 'feed', 'ticker']).optional(),
+  variant: z.enum(['grid', 'scroll', 'list', 'bar', 'feed', 'ticker']).optional(), badge: z.string().trim().max(30).optional(),
   cols: z.number().int().min(1).max(4).optional(), flip: z.boolean().optional(),
   code: z.string().trim().max(40).optional(), until: z.string().regex(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})?$/, 'วันเวลาไม่ถูกต้อง').optional(),
 });

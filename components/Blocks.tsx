@@ -130,7 +130,7 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
       if (!list.length) return null;
       if (b.variant === 'feed') return (
         <section className="hb hb-feed">
-          <div className="hb-feed-head"><div><small>STORE FEED</small><h2>{b.title || 'กิจกรรมล่าสุด'}</h2></div><span className="hb-feed-live"><i />อัปเดตสด</span></div>
+          <div className="hb-feed-head"><div>{(b.label ?? 'STORE FEED') && <small>{b.label ?? 'STORE FEED'}</small>}<h2>{b.title || 'กิจกรรมล่าสุด'}</h2>{b.text && <p>{b.text}</p>}</div>{(b.badge ?? 'อัปเดตสด') && <span className="hb-feed-live"><i />{b.badge ?? 'อัปเดตสด'}</span>}</div>
           <ul>{list.map((l, i) => <li key={i}><span className="hb-feed-av">{l.initial}</span><span className="hb-feed-txt"><b>{l.dots}</b> ซื้อ {l.full}</span><time>{l.when}</time></li>)}</ul>
         </section>);
       if (b.variant === 'ticker') return (
