@@ -799,3 +799,12 @@ a.hb-link:hover { transform: translateY(-2px); border-color: var(--accent); }
 .hb-st.st-r :is(.card, .hb-image, .hb-feed, .hb-cta, .hb-notice, .hb-count, .hb-coupon, .hb-code, .hb-frame, .hb-slides, .banner, .hero, .promo, .hb-marquee, .hb-quote, .live, .hb-badges, .hb-spot, .hb-link, .pcard, .hb-feed-av, .hb-spot-img, .btn, .chip, .stat, .hb-count-n span) { border-radius: var(--hb-r); }
 .hb-st .hb-feed-head { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
 @media (max-width: 760px) { .hb-st { margin-top: 22px; } .hb-st.st-bg { padding: var(--hb-pad, 18px); } }
+/* ปุ่มลอยติดต่อ: หลายช่องทาง + คำอธิบาย */
+.contact-pop { min-width: 230px; max-width: min(300px, calc(100vw - 32px)); max-height: 60vh; overflow-y: auto; }
+.contact-pop-h { padding: 2px 6px 4px; color: var(--muted); font-size: 12px; }
+.contact-pop a.contact-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; color: var(--text); background: none; text-align: left; font-weight: 400; }
+.contact-pop a.contact-row:hover { background: var(--surface-2); }
+.contact-row-ic { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 14px; }
+.contact-row-t { display: grid; min-width: 0; }
+.contact-row-t b { font-size: 14px; }
+.contact-row-t small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

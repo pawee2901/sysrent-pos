@@ -1088,3 +1088,10 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
 .lb-range b { color: var(--accent); font-weight: 600; }
 .lb-range input { width: 100%; accent-color: var(--accent); }
 .lb-range-ends { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 11px; }
+/* ช่องทางติดต่อร้าน */
+.ct-list { display: grid; gap: 10px; }
+.ct-item { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2, var(--bg)); }
+.ct-head { display: flex; align-items: center; gap: 8px; }
+.ct-head .input { flex: 1; min-width: 0; }
+.ct-head .btn { flex: none; min-width: 32px; }
+.ct-ic { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 14px; }

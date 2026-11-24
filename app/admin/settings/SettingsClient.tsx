@@ -9,6 +9,8 @@ import { MailCard, type MailInit } from './MailCard';
 import { AppearanceCard, type AppearanceInit } from './AppearanceCard';
 import { PromoCards, type Promo } from './PromoCards';
 import { HomeLayout, type LayoutInit } from './HomeLayout';
+import { ContactLinks } from './ContactLinks';
+import type { ContactLink } from '@/lib/contacts';
 
 /** ตัวแปร CSS ของชั้นพื้นหลัง (รูป / สี) สำหรับตัวอย่าง */
 const bgVars = (k: string, l: { bg_image: string; bg_color: string }): React.CSSProperties | undefined =>
@@ -27,7 +29,7 @@ const CARDS: [string, string][] = [['white', 'ขาว'], ['tint', 'ตาม�
 const BG_COLORS = ['#fff1f5', '#fdf2f8', '#f5f3ff', '#eef2ff', '#eff6ff', '#ecfeff', '#f0fdf4', '#f7fee7', '#fefce8', '#fff7ed', '#fdf6ec', '#f4f4f5'];
 
 /** ตั้งค่าร้าน + ตัวอย่างหน้าร้านบนมือถือ (เปลี่ยนแล้วเห็นทันที) */
-export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos, layout }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] }; layout: LayoutInit }) {
+export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos, layout, contacts }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] }; layout: LayoutInit; contacts: { ready: boolean; list: ContactLink[] } }) {
   const router = useRouter();
   const [f, setF] = useState(initial);
   const [look, setLook] = useState(lookInit);
@@ -132,11 +134,10 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
                 {f.logo_url && <button type="button" className="btn ghost sm" onClick={() => setLogo('')}>เอาออก</button>}
                 <input ref={file} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} />
               </div></div>
-              <div className="two"><label className="field"><span>ลิงก์ LINE ร้าน (ปุ่มลอย)</span><input className="input" value={f.line_url} maxLength={200} placeholder="https://lin.ee/xxxx" onChange={(e) => setF({ ...f, line_url: e.target.value })} /></label>
-                <label className="field"><span>ประกาศแถบบน (ไม่บังคับ)</span><input className="input" value={f.announcement} maxLength={120} placeholder="เช่น 🎉 Netflix ลด 20%" onChange={(e) => setF({ ...f, announcement: e.target.value })} /></label></div>
-              <label className="field"><span>เพจ Facebook ร้าน (ปุ่มลอย + ท้ายเว็บ)</span><input className="input" value={look.facebook_url} maxLength={200} placeholder="https://facebook.com/..." onChange={(e) => setLook({ ...look, facebook_url: e.target.value })} /></label>
+              <label className="field"><span>ประกาศแถบบน (ไม่บังคับ)</span><input className="input" value={f.announcement} maxLength={120} placeholder="เช่น 🎉 Netflix ลด 20%" onChange={(e) => setF({ ...f, announcement: e.target.value })} /></label>
               <p className="muted" style={{ margin: 0, fontSize: 13 }}>🔗 เวลาแชร์ลิงก์ร้านใน LINE / Facebook จะแสดงรูปหน้าแรก (ไม่มีรูป = ใช้โลโก้)</p>
             </div></section>}
+          {tab === 'shop' && <ContactLinks init={contacts.list.length ? contacts.list : ([['line', initial.line_url], ['facebook', lookInit.facebook_url]] as const).filter(([, u]) => u).map(([kind, url]): ContactLink => ({ kind, url, label: '', note: '' }))} ready={contacts.ready} onSaved={(line, facebook) => { setF((x) => ({ ...x, line_url: line })); setLook((x) => ({ ...x, facebook_url: facebook })); }} />}
 
           {tab === 'look' && <>
           <AppearanceCard init={appearance} logo={f.logo_url} />

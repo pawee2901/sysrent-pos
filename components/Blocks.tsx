@@ -10,6 +10,8 @@ import { db } from '@/lib/db';
 import { AppLogo } from '@/components/AppLogo';
 import { HALF_OK, SOCIAL, blockStyle, youtubeId, type Block } from '@/lib/home-layout';
 import { CouponBox, Countdown, Slider } from '@/components/HomeBits';
+import { shopContacts } from '@/lib/contacts-server';
+import { CONTACT_KINDS, contactHref } from '@/lib/contacts';
 
 const mask = (u: string) => (u.length <= 2 ? u[0] + '*' : `${u[0]}***${u[u.length - 1]}`);
 const ago = (iso: string) => {
@@ -45,6 +47,7 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
     d.from('shops').select('promo_cards').eq('id', shop.id).maybeSingle(), // ยังไม่รัน 0031 = ไม่แสดงกล่องรูป
   ]);
   const layout = input.filter((b) => b.on);
+  const contacts = layout.some((b) => b.type === 'contact') ? await shopContacts(shop) : [];
   const promos = (Array.isArray(pc?.promo_cards) ? pc.promo_cards as { image?: string; link?: string }[] : []).filter((x) => x.image);
   // ตัวแทน (ร้าน Pro): เห็นราคาตัวแทน · ราคาปกติขีดฆ่า
   const agent = await getAgent(shop, me?.id);
@@ -231,11 +234,9 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
         <div>{b.title && <h2>{b.title}</h2>}{b.text && <p>{b.text}</p>}{b.label && b.link && go(b.link, 'btn primary', b.label)}</div>
       </section>);
     if (b.type === 'contact') {
-      const links: [string, string, string][] = [];
-      if (shop.line_url) links.push([shop.line_url, 'LINE', 'line']);
-      if (shop.facebook_url) links.push([shop.facebook_url, 'Facebook', 'fb']);
-      if (b.label && b.link) links.push([b.link, b.label, '']);
-      return links.length ? <section className="card hb hb-contact">{b.title && <h2>{b.title}</h2>}{b.text && <p>{b.text}</p>}<div>{links.map(([href, l, k]) => <a key={href} href={href} target="_blank" rel="noopener noreferrer" className={`btn lg ${k}`}>{l}</a>)}</div></section> : null;
+      const links: { href: string; label: string; color?: string }[] = contacts.map((c) => ({ href: contactHref(c), label: c.label || CONTACT_KINDS[c.kind].label, color: CONTACT_KINDS[c.kind].color }));
+      if (b.label && b.link) links.push({ href: b.link, label: b.label });
+      return links.length ? <section className="card hb hb-contact">{b.title && <h2>{b.title}</h2>}{b.text && <p>{b.text}</p>}<div>{links.map((l, i) => <a key={i} href={l.href} target="_blank" rel="noopener noreferrer" className="btn lg" style={l.color ? { background: l.color, borderColor: l.color, color: '#fff' } : undefined}>{l.label}</a>)}</div></section> : null;
     }
     if (b.type === 'faq') {
       const qa = (b.items ?? []).filter((x) => x.q);

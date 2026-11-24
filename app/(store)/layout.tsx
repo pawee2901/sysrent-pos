@@ -18,6 +18,8 @@ import { Popup } from '@/components/Popup';
 import { activeTheme, ownedThemes } from '@/lib/themes';
 import { can } from '@/lib/plan';
 import { TabBar } from './TabBar';
+import { shopContacts } from '@/lib/contacts-server';
+import { CONTACT_KINDS, contactHref } from '@/lib/contacts';
 import '../store.css';
 
 /** โครงหน้าร้าน: หัวเว็บ · เนื้อหา · ท้ายเว็บ · ปุ่ม LINE · เมนูล่าง (มือถือ) */
@@ -31,6 +33,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   // หน้าเพิ่มเติมที่ร้านเปิดไว้ในเมนู (ยังไม่รัน 0035 = ไม่มีเมนู)
   const { data: pageRows } = await db().from('shop_pages').select('slug, title').eq('shop_id', shop.id).eq('in_menu', true).order('sort').order('created_at').limit(20);
   const pages = (pageRows ?? []) as { slug: string; title: string }[];
+  const contacts = await shopContacts(shop);
   const [isAdmin, agent, email] = me ? await Promise.all([isShopAdmin(), getAgent(shop, me.id), customerEmail(me.id)]) : [false, null, ''];
   const look = apErr || !can(shop.plan, 'appearance') ? null : ap;
   const font = fontOf(look?.font ?? '');
@@ -80,10 +83,10 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         <div className="wrap">
           <span>© {new Date().getFullYear()} {shop.name} · ร้านค้าบน <b>SysRent</b></span>
           <span><Link href="/">หน้าแรก</Link> · <Link href={to('/orders')}>ออเดอร์</Link> · <Link href={to('/terms')}>เงื่อนไขการใช้งาน</Link>{pages.map((p) => <span key={p.slug}> · <Link href={to(`/page/${p.slug}`)}>{p.title}</Link></span>)}
-            {shop.facebook_url && <> · <a href={shop.facebook_url} target="_blank" rel="noopener noreferrer">Facebook</a></>}{shop.line_url && <> · <a href={shop.line_url} target="_blank" rel="noopener noreferrer">LINE</a></>}</span>
+            {contacts.map((c, i) => <span key={i}> · <a href={contactHref(c)} target={c.kind === 'phone' || c.kind === 'email' ? undefined : '_blank'} rel="noopener noreferrer">{c.label || CONTACT_KINDS[c.kind].label}</a></span>)}</span>
         </div>
       </footer>
-      <ContactFab line={shop.line_url} facebook={shop.facebook_url} />
+      <ContactFab links={contacts} />
       {(shop.popup_text || shop.popup_image) && <Popup shop={shop.slug} text={shop.popup_text} image={shop.popup_image} link={shop.popup_link} />}
       <TabBar loggedIn={!!me} otp={can(shop.plan, 'otp')} />
     </div>

@@ -11,6 +11,7 @@ import { sendMail, shopSmtp, verifyGmail } from '@/lib/mail';
 import { encConfigured, encrypt } from '@/lib/secret';
 import { fontOf, isEffect, isLoader } from '@/lib/appearance';
 import { parseMusic } from '@/lib/music';
+import { CONTACTS_MAX, contactError, isContactKind } from '@/lib/contacts';
 import { BLOCK_INFO, BUILTIN, HEX6, ITEMS_MAX, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, SOCIAL, youtubeId, type BlockType, type SocialKind } from '@/lib/home-layout';
 
 const https = (max: number) => z.string().trim().max(max).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์ต้องขึ้นต้นด้วย https://');
@@ -78,6 +79,11 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('page_create'), title: pageTitle, slug: pageSlug }),
   z.object({ action: z.literal('page_update'), id: z.string().uuid(), title: pageTitle, slug: pageSlug, in_menu: z.boolean() }),
   z.object({ action: z.literal('page_delete'), id: z.string().uuid() }),
+  // ช่องทางติดต่อร้าน (หลายลิงก์ หลายแอป)
+  z.object({ action: z.literal('contacts'), links: z.array(z.object({
+    kind: z.string().refine(isContactKind, 'ไม่มีแอปนี้'), url: z.string().trim().max(300),
+    label: z.string().trim().max(40).default(''), note: z.string().trim().max(80).default(''),
+  }).superRefine((c, ctx) => { const e = contactError(c); if (e) ctx.addIssue({ code: 'custom', message: e }); })).max(CONTACTS_MAX) }),
   z.object({ action: z.literal('admin'), username: z.string().trim().min(3, 'ชื่อผู้ดูแลอย่างน้อย 3 ตัว').max(40), password: z.string().min(8, 'รหัสผ่านอย่างน้อย 8 ตัว').max(72) }),
 ]);
 
@@ -138,6 +144,13 @@ export async function POST(req: Request) {
   if (b.data.action === 'promos') {
     const { error } = await d.from('shops').update({ promo_cards: b.data.cards }).eq('id', a.shop.id);
     return error ? fail(/promo_cards/.test(error.message) ? 'ยังไม่ได้รัน SQL 0031_shop_promo_cards.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
+  if (b.data.action === 'contacts') {
+    const links = b.data.links;
+    // LINE / Facebook ตัวแรก = ช่องเดิม (ส่วนอื่นของร้านที่ยังใช้ line_url / facebook_url)
+    const line = links.find((c) => c.kind === 'line')?.url ?? '', facebook = links.find((c) => c.kind === 'facebook')?.url ?? '';
+    const { error } = await d.from('shops').update({ contact_links: links, line_url: line, facebook_url: facebook }).eq('id', a.shop.id);
+    return error ? fail(/contact_links/.test(error.message) ? 'ยังไม่ได้รัน SQL 0037_shop_contact_links.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
   }
   if (b.data.action === 'layout' && b.data.page_id) {
     const { data, error } = await d.from('shop_pages').update({ blocks: b.data.blocks, updated_at: new Date().toISOString() }).eq('id', b.data.page_id).eq('shop_id', a.shop.id).select('id');
