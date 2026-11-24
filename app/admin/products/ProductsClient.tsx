@@ -1,12 +1,10 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { to } from '@/lib/routes';
 import { ask, input, notify } from '@/components/dialog';
 import { api, baht } from '@/components/Cart';
 import { AppLogo } from '@/components/AppLogo';
-import { FULFILL_LABEL, TEMPLATES, templateOf } from '@/lib/templates';
+import { FULFILL_LABEL } from '@/lib/templates';
 import type { Product } from '@/lib/catalog';
 import { CategoriesCard } from './CategoriesCard';
 import { Delivered } from '@/components/Delivered';
@@ -74,7 +72,6 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   const counts = products.reduce<Record<string, number>>((m, p) => ({ ...m, [p.category]: (m[p.category] ?? 0) + 1 }), {});
   const router = useRouter();
   const [f, setF] = useState<Form | null>(null);
-  const [pick, setPick] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [stock, setStock] = useState<StockForm | null>(null);
@@ -91,12 +88,6 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
     setStock(stockOptionId ? newStock(stockOptionId) : null);
   }
 
-  function fromTemplate(key: string) {
-    const t = templateOf(key)!;
-    setF({ ...blank(), name: t.name, category: t.category, description: t.description, template: t.key, fulfillment: 'slot',
-      options: t.plans.map(([n, price, days]) => ({ name: n, price: String(price), compare_at: '', cost: '', duration_days: String(days), agent_price: '', active: true })) });
-    setPick(false); setMsg(''); setUsage(''); setUsageImgs([]); setGallery([]); setOtpApp('');
-  }
   async function save() {
     if (!f) return;
     setBusy(true); setMsg('');
@@ -186,7 +177,6 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                 <td className="r num m-hide">{p.sold.toLocaleString('th-TH')}</td>
                 <td className="m-tog"><button type="button" className={`toggle${p.active ? ' on' : ''}`} aria-label="เปิด/ปิดขาย" onClick={(e) => { e.stopPropagation(); simple({ action: 'toggle', id: p.id, active: !p.active }); }} /></td>
                 <td className="m-acts" onClick={(e) => e.stopPropagation()}><div className="row-acts">
-                  {p.fulfillment === 'slot' && <Link href={to(`/admin/accounts?p=${p.id}`)} className="btn soft sm">+ เพิ่มสต็อก</Link>}
                   {p.fulfillment === 'stock' && <button type="button" className="btn soft sm" onClick={() => openProduct(p, (p.options.find((o) => o.active) ?? p.options[0])?.id)}>+ เพิ่มสต็อก</button>}
                   <button type="button" className="btn sm" onClick={() => openProduct(p)}>แก้ไข</button>
                 </div></td>
@@ -195,22 +185,6 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
           </table>
         )}
       </section>
-
-      {pick && (
-        <div className="cmd-bg open" onClick={(e) => { if (e.target === e.currentTarget) setPick(false); }}>
-          <div className="card cmd" role="dialog" aria-label="ระบบแบ่งจอ เลือกแอป" style={{ padding: 18 }}>
-            <h2 style={{ fontSize: 18, marginBottom: 12 }}>ระบบแบ่งจอ · เลือกแอป</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
-              {TEMPLATES.map((t) => (
-                <button key={t.key} type="button" className="btn" style={{ height: 'auto', padding: 12, flexDirection: 'column', gap: 6 }} onClick={() => fromTemplate(t.key)}>
-                  <AppLogo template={t.key} name={t.name} /><b style={{ fontSize: 13 }}>{t.name}</b>
-                </button>
-              ))}
-            </div>
-            <p className="muted" style={{ fontSize: 12, margin: '12px 0 0' }}>เลือกแล้วแก้ชื่อ ราคา และรายละเอียดได้ทั้งหมด · อัปโหลดรูปโลโก้จริงได้</p>
-          </div>
-        </div>
-      )}
 
       <div className={`drawer-bg${f ? ' open' : ''}`} onClick={() => setF(null)} />
       <aside className={`drawer pe-full${f ? ' open' : ''}`} aria-hidden={!f}>
@@ -249,7 +223,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
             <label className="field"><span>วิธีส่งของ</span>
               <select className="input" value={f.fulfillment} onChange={(e) => setF({ ...f, fulfillment: e.target.value as Form['fulfillment'] })} disabled={!!editing}>
                 {/* ปิดการสร้างแบบแบ่งจอแล้ว · สินค้าแบ่งจอเดิมยังต้องแสดงค่าของมัน */}
-                {f.fulfillment === 'slot' && <option value="slot">แบ่งจอ — เพิ่มบัญชีหลักที่เมนู &quot;คลังบัญชี&quot; ระบบจัดจอให้เอง</option>}
+                {f.fulfillment === 'slot' && <option value="slot">แบ่งจอ (ระบบเดิม เลิกใช้แล้ว)</option>}
                 <option value="stock">ส่งอัตโนมัติ — เตรียมบัญชี / รหัสไว้ก่อน ลูกค้าจ่ายแล้วได้ของทันที</option>
                 <option value="manual">สั่งทำ — ลูกค้าจ่ายแล้วรอร้านทำให้ ส่งของที่หน้าออเดอร์ (แท็บ รอส่ง)</option>
               </select>
@@ -329,7 +303,6 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
               ))}
               <button type="button" className="btn sm" onClick={() => setF({ ...f, options: [...f.options, { name: '', price: '', compare_at: '', cost: '', duration_days: '', agent_price: '', active: true }] })}>+ เพิ่มแพ็กเกจ</button>
             </div>
-            {f.fulfillment === 'slot' && <p className="muted" style={{ fontSize: 13, margin: 0 }}>💡 บันทึกแล้วไปที่เมนู <b>คลังบัญชี</b> เพื่อเพิ่มบัญชีหลัก + จอ</p>}
             {msg && <p style={{ color: msg.startsWith('เพิ่มสต็อก') ? 'var(--ok)' : 'var(--bad)', margin: 0 }} role="alert">{msg}</p>}
             </div>
           </div>

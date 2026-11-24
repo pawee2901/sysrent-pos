@@ -7,7 +7,6 @@ const CLIPS: Record<string, { title: string; src: string }> = {
   '/orders': { title: 'วิธีจัดการออเดอร์', src: '/tutorials/orders.mp4' },
   '/reports': { title: 'วิธีจัดการเรื่องแจ้งปัญหา', src: '/tutorials/reports.mp4' },
   '/products': { title: 'วิธีเพิ่มและจัดการสินค้า', src: '/tutorials/products.mp4' },
-  '/accounts': { title: 'วิธีใช้คลังบัญชี', src: '/tutorials/accounts.mp4' },
   '/coupons': { title: 'วิธีสร้างคูปองส่วนลด', src: '/tutorials/coupons.mp4' },
   '/customers': { title: 'วิธีจัดการลูกค้า', src: '/tutorials/customers.mp4' },
   '/agents': { title: 'วิธีจัดการตัวแทน', src: '/tutorials/agents.mp4' },

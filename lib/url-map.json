@@ -15,7 +15,6 @@
   },
   "admin": {
     "/accounting": "/ledger",
-    "/accounts": "/pool",
     "/agents": "/resellers",
     "/coupons": "/promos",
     "/customers": "/members",

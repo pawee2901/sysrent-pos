@@ -14,12 +14,10 @@ export default async function Dashboard() {
   if (!shop) return null;
   const d = db();
   const today = bkkMidnight(), week = bkkMidnight(6);
-  const [{ data: paid }, { count: newCust }, { data: queued }, { count: reset }, { data: renew }, { data: usage }, { data: latest }, products] = await Promise.all([
+  const [{ data: paid }, { count: newCust }, { data: queued }, { data: usage }, { data: latest }, products] = await Promise.all([
     d.from('shop_orders').select('total, paid_at').eq('shop_id', shop.id).gte('paid_at', week),
     d.from('shop_customers').select('id', { count: 'exact', head: true }).eq('shop_id', shop.id).gte('created_at', today),
     d.from('shop_order_items').select('id, name, shop_orders!inner(shop_id, code)').eq('status', 'queued').eq('shop_orders.shop_id', shop.id).limit(20),
-    d.from('shop_slots').select('id, shop_accounts!inner(shop_id)', { count: 'exact', head: true }).eq('status', 'reset').eq('shop_accounts.shop_id', shop.id),
-    d.from('shop_accounts').select('login, cost, renew_at').eq('shop_id', shop.id).eq('status', 'active').not('renew_at', 'is', null).lte('renew_at', new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10)).limit(5),
     d.from('shop_slip_usage').select('used, charged').eq('shop_id', shop.id).eq('month', thMonth()).maybeSingle(),
     d.from('shop_orders').select('code, status, total, created_at, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(6),
     loadProducts(shop.id),
@@ -33,14 +31,11 @@ export default async function Dashboard() {
     return [i === 6 ? 'วันนี้' : DAYS[new Date(new Date(from).getTime() + 7 * 3_600_000).getUTCDay()], v] as const;
   });
   const max = Math.max(1, ...days.map((x) => x[1]));
-  const freeSlots = products.filter((p) => p.fulfillment === 'slot').reduce((s, p) => s + (p.left ?? 0), 0);
   const out = products.filter((p) => !p.inStock);
   const used = usage?.used ?? 0, pct = Math.min(100, Math.round((used / shop.slip_quota) * 100));
   const todo = [
     ...(queued?.length ? [{ ic: '🛠️', cls: 'warn', t: `ออเดอร์สั่งทำรอส่ง ${queued.length} รายการ`, s: [...new Set(queued.map((q) => q.name.split(' · ')[0]))].slice(0, 3).join(', '), href: to('/admin/orders?s=queued'), btn: 'ทำเลย' }] : []),
-    ...(reset ? [{ ic: '🔑', cls: 'acc', t: `จอรอเปลี่ยน PIN ${reset} จอ`, s: 'ลูกค้าเดิมหมดอายุ เปลี่ยน PIN แล้วกดพร้อมขาย', href: to('/admin/accounts'), btn: 'ดู' }] : []),
-    ...out.slice(0, 3).map((p) => ({ ic: '📦', cls: 'bad', t: `${p.name} หมดสต็อก`, s: 'ลูกค้ากดซื้อไม่ได้', href: p.fulfillment === 'slot' ? to('/admin/accounts') : to('/admin/products'), btn: 'เพิ่ม' })),
-    ...(renew ?? []).map((a) => ({ ic: '💳', cls: 'warn', t: `จ่ายค่าบัญชี ${a.login}`, s: `ครบ ${a.renew_at}${a.cost ? ` · ${baht(Number(a.cost))}` : ''}`, href: to('/admin/accounts'), btn: 'ดู' })),
+    ...out.slice(0, 3).map((p) => ({ ic: '📦', cls: 'bad', t: `${p.name} หมดสต็อก`, s: 'ลูกค้ากดซื้อไม่ได้', href: to('/admin/products'), btn: 'เพิ่ม' })),
   ];
   type L = { code: string; status: string; total: number; created_at: string; shop_customers: { username: string } | null; shop_order_items: { name: string }[] };
 
@@ -52,7 +47,7 @@ export default async function Dashboard() {
         <div className="card kpi"><span className="lbl">ยอดขายวันนี้<span className="kpi-ic">฿</span></span><span className="val num">{baht(todaySales)}</span><span className="delta mute">{todayOrders} ออเดอร์</span></div>
         <div className="card kpi"><span className="lbl">ยอดขาย 7 วัน<span className="kpi-ic">📈</span></span><span className="val num">{baht(rows.reduce((s, r) => s + Number(r.total), 0))}</span><span className="delta mute">{rows.length} ออเดอร์</span></div>
         <div className="card kpi"><span className="lbl">ลูกค้าใหม่วันนี้<span className="kpi-ic">👤</span></span><span className="val num">{newCust ?? 0}</span><span className="delta mute">สมัครสมาชิกในร้าน</span></div>
-        <div className="card kpi"><span className="lbl">จอว่างพร้อมขาย<span className="kpi-ic">🔑</span></span><span className="val num">{freeSlots}</span><span className="delta mute">จากคลังบัญชี</span></div>
+        <div className="card kpi"><span className="lbl">สินค้าหมด<span className="kpi-ic">📦</span></span><span className="val num">{out.length}</span><span className="delta mute">รายการ · ลูกค้ากดซื้อไม่ได้</span></div>
       </div>
       <div className="cols">
         <div className="stack">

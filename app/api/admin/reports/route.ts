@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     if (!slot) return fail('ไม่พบจอ', 404);
     // ต้องเป็นการเช่าที่ยังใช้อยู่ของรายการนี้ — จอที่หมดอายุแล้วอาจเป็นของลูกค้าคนใหม่
     const { data: sub } = await d.from('shop_subscriptions').select('id').eq('order_item_id', x.itemId).eq('slot_id', x.slotId).eq('status', 'active').gt('ends_at', new Date().toISOString()).maybeSingle();
-    if (!sub) return fail('การเช่านี้หมดอายุแล้ว แก้บัญชีที่เมนู "คลังบัญชี"', 409);
+    if (!sub) return fail('การเช่านี้หมดอายุแล้ว แก้ไม่ได้', 409);
     if (x.password && !encConfigured()) return fail('ระบบยังไม่ได้ตั้งกุญแจเข้ารหัส กรุณาติดต่อ SysRent', 503);
     const acc: Record<string, unknown> = { login: x.login };
     if (x.password) acc.secret_enc = encrypt(x.password);
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     // รายการต้องเป็นของร้านนี้ และส่งของไปแล้ว (แบบแบ่งจอใช้ edit_slot เพราะข้อมูลอยู่ที่บัญชีหลัก ไม่ใช่ในรายการ)
     const { data: it } = await d.from('shop_order_items').select('id, status, fulfillment, shop_orders!inner(shop_id)').eq('id', x.itemId).eq('shop_orders.shop_id', a.shop.id).maybeSingle();
     if (!it) return fail('ไม่พบรายการ', 404);
-    if (it.fulfillment === 'slot') return fail('สินค้าแบบแบ่งจอ แก้รหัสที่เมนู "คลังบัญชี"', 400);
+    if (it.fulfillment === 'slot') return fail('สินค้าแบบแบ่งจอ แก้รหัสที่กล่องจอด้านบน', 400);
     if (it.status !== 'delivered') return fail('รายการนี้ยังไม่ได้ส่งของ — ส่งของที่หน้าออเดอร์', 400);
     const { error } = await d.from('shop_order_items').update({ delivered: x.delivered }).eq('id', x.itemId); // ไม่แตะ updated_at: สินค้าสั่งทำนับประกันจากเวลาส่งของ
     return error ? fail('บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });

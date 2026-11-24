@@ -24,14 +24,14 @@ const ICON: Record<string, string> = Object.fromEntries(MENU.flatMap((m) => m.it
 
 /** โครงหลังบ้าน: แถบซ้าย + แถบบน + เมนูล่าง (มือถือ) */
 export function AdminNav({ shop, counts, slip, plan, perms, staff = false, children }: {
-  shop: { name: string; slug: string; logo: string }; counts: { orders: number; accounts: number };
+  shop: { name: string; slug: string; logo: string }; counts: { orders: number };
   slip: { used: number; quota: number; overage: number }; plan: string; perms: string[]; staff?: boolean; children: React.ReactNode;
 }) {
   const path = fromPublic(usePathname() ?? '/');
   // เมนูที่เข้าได้ (เจ้าของร้าน = ทุกเมนู · แอดมิน = ตามสิทธิ์) — key ของสิทธิ์ = path เมนู ('' = ภาพรวม)
   const allowed = ([h]: [string, string, string]) => perms.includes(PERM_OF[h] ?? '');
   const cur = path.replace(/^\/admin/, '').split('/').slice(0, 2).join('/');
-  const badge = (h: string) => (h === '/orders' ? queue : h === '/accounts' ? counts.accounts : h === '/reports' ? reports : 0);
+  const badge = (h: string) => (h === '/orders' ? queue : h === '/reports' ? reports : 0);
   // ตัวนับสลิป: layout ไม่โหลดใหม่ตอนเปลี่ยนเมนู → ดึงตัวเลขใหม่เองทุกครั้งที่เปลี่ยนหน้า
   const [used, setUsed] = useState(slip.used);
   const [reports, setReports] = useState(0);

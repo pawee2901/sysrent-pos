@@ -103,7 +103,7 @@ function SlotBox({ item, slot: s, onSaved }: { item: ReportItem; slot: SlotInfo;
           </div>
         </div>
       ) : <Delivered content={`อีเมล: ${s.login}\nรหัสผ่าน: ${s.password}\nโปรไฟล์: ${s.profile}${s.pin ? `\nPIN: ${s.pin}` : ''}`} />}
-      <small className="faint">{s.active ? 'แบ่งจอ: รหัสใช้ร่วมกันทุกจอในบัญชีนี้ · ย้ายจอที่ ' : 'การเช่านี้หมดอายุแล้ว จอนี้อาจเป็นของลูกค้าคนอื่น · จัดการที่ '}<Link href={to('/admin/accounts')} style={{ color: 'var(--accent)', fontWeight: 600 }}>คลังบัญชี</Link></small>
+      <small className="faint">{s.active ? 'แบ่งจอ: รหัสใช้ร่วมกันทุกจอในบัญชีนี้' : 'การเช่านี้หมดอายุแล้ว จอนี้อาจเป็นของลูกค้าคนอื่น'}</small>
     </div>
   );
 }
