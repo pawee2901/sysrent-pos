@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon } from '@/components/Icon';
 import { api } from '@/components/Cart';
-import { PLAN_LABEL, PLAN_PRICE, can, isPlan, type Feature } from '@/lib/plan';
+import { can, type Feature } from '@/lib/plan';
 import { PERMS } from '@/lib/perms';
 import { TutorialButton } from './TutorialButton';
 
@@ -24,7 +24,7 @@ const ICON: Record<string, string> = Object.fromEntries(MENU.flatMap((m) => m.it
 
 /** โครงหลังบ้าน: แถบซ้าย + แถบบน + เมนูล่าง (มือถือ) */
 export function AdminNav({ shop, counts, slip, plan, perms, staff = false, children }: {
-  shop: { name: string; slug: string; logo: string }; counts: { orders: number };
+  shop: { name: string; slug: string; logo: string; expires: string | null }; counts: { orders: number };
   slip: { used: number; quota: number; overage: number }; plan: string; perms: string[]; staff?: boolean; children: React.ReactNode;
 }) {
   const path = fromPublic(usePathname() ?? '/');
@@ -67,7 +67,8 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
         {staff && <div className="staff-badge">🛡️ คุณเข้าในฐานะแอดมิน · เห็นเฉพาะเมนูที่เจ้าของร้านเปิดให้</div>}
         <nav className="nav">{MENU.map((m) => ({ ...m, items: m.items.filter(allowed) })).filter((m) => m.items.length).map((m) => <div key={m.g}><div className="nav-label">{m.g}</div>{m.items.map(link)}</div>)}</nav>
         <div className="side-foot">
-          <div className="plan-row"><span className={`pill accent`}>แพ็กเกจ {PLAN_LABEL[isPlan(plan) ? plan : 'starter']}</span><span className="muted num">฿{PLAN_PRICE[isPlan(plan) ? plan : 'starter']}/เดือน</span></div>
+          {/* ราคาที่จ่ายจริงอยู่ที่เว็บหลัก (มีทั้งทดลอง / โปร) → แสดงแค่วันหมดอายุ ไม่แสดงราคา */}
+          <div className="plan-row"><span className="pill accent">ร้านใช้งานได้ทุกฟังก์ชัน</span>{shop.expires && <span className="muted">ถึง {new Date(shop.expires).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: '2-digit' })}</span>}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><b>ตรวจสลิปเดือนนี้</b><span className="num">{used} / {slip.quota}</span></div>
           <div className={`meter${pct >= 80 ? ' warn' : ''}`}><i style={{ width: `${pct}%` }} /></div>
           <span className="muted" style={{ fontSize: 12 }}>เกินโควตา ฿{slip.overage.toFixed(2)}/สลิป ตัดจากกระเป๋า SysRent · ฟรี {slip.quota} ครั้ง/เดือน</span>

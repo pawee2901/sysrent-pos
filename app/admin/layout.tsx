@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     d.from('shop_slip_usage').select('used').eq('shop_id', shop.id).eq('month', month()).maybeSingle(),
   ]);
   return (
-    <AdminNav shop={{ name: shop.name, slug: shop.slug, logo: shop.logo_url }} counts={{ orders: queue ?? 0 }}
+    <AdminNav shop={{ name: shop.name, slug: shop.slug, logo: shop.logo_url, expires: shop.expires_at }} counts={{ orders: queue ?? 0 }}
       slip={{ used: usage?.used ?? 0, quota: shop.slip_quota, overage: shop.slip_overage }} plan={shop.plan} perms={await adminPerms()} staff={(await adminKind()) === 'staff'}>
       {children}
     </AdminNav>
