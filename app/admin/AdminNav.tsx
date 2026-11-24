@@ -29,7 +29,8 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
 }) {
   const path = fromPublic(usePathname() ?? '/');
   // เมนูที่เข้าได้ (เจ้าของร้าน = ทุกเมนู · แอดมิน = ตามสิทธิ์) — key ของสิทธิ์ = path เมนู ('' = ภาพรวม)
-  const allowed = ([h]: [string, string, string]) => perms.includes(PERM_OF[h] ?? '');
+  // + แพ็กเกจของร้านต้องมีฟีเจอร์นั้น (ใช้ไม่ได้ = ซ่อนเมนูไปเลย ไม่แสดงแบบติดกุญแจ)
+  const allowed = ([h]: [string, string, string]) => perms.includes(PERM_OF[h] ?? '') && (!LOCKS[h] || can(plan, LOCKS[h]));
   const cur = path.replace(/^\/admin/, '').split('/').slice(0, 2).join('/');
   const badge = (h: string) => (h === '/orders' ? queue : h === '/reports' ? reports : 0);
   // ตัวนับสลิป: layout ไม่โหลดใหม่ตอนเปลี่ยนเมนู → ดึงตัวเลขใหม่เองทุกครั้งที่เปลี่ยนหน้า
@@ -40,7 +41,7 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
   const pct = Math.min(100, Math.round((used / Math.max(1, slip.quota)) * 100));
   const link = ([h, l, i]: [string, string, string]) => (
     <Link key={h} href={to(`/admin${h}`)} className={cur === h ? 'on' : ''} aria-current={cur === h ? 'page' : undefined}>
-      <Icon name={i} />{l}{LOCKS[h] && !can(plan, LOCKS[h]) && <span className="nav-lock" title="อัปเกรดแพ็กเกจเพื่อใช้งาน">🔒</span>}{badge(h) > 0 && <span className="count">{badge(h)}</span>}
+      <Icon name={i} />{l}{badge(h) > 0 && <span className="count">{badge(h)}</span>}
     </Link>
   );
   // จอเล็ก: เมนูที่ไม่อยู่ในแถบล่าง รวมไว้ในปุ่มสามจุดที่แถบบน
