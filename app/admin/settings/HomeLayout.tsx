@@ -1,10 +1,11 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, baht } from '@/components/Cart';
 import { ask, notify } from '@/components/dialog';
 import { AppLogo } from '@/components/AppLogo';
 import { splitLeft, untilMs } from '@/components/HomeBits';
+import { LAYOUT_TEMPLATES, type LayoutTemplate } from '@/lib/layout-templates';
 import { BLOCK_INFO, BUILTIN, DEFAULT_LAYOUT, HALF_OK, ITEMS_MAX, ITEM_SPEC, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, PALETTE, SOCIAL, newBlock, newBlockId, youtubeId, type Block, type BlockItem, type BlockType, type SocialKind } from '@/lib/home-layout';
 
 type P = { id: string; name: string; category: string; image: string; template: string; from: number | null; sold: number };
@@ -108,7 +109,10 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
   const [page, setPage] = useState('home');
   const [pages, setPages] = useState<PageRow[]>(init.pages.list);
   const [homeSaved, setHomeSaved] = useState<Block[]>(init.blocks);
-  const [newPage, setNewPage] = useState<{ title: string; slug: string } | null>(null);
+  const [newPage, setNewPage] = useState<{ title: string; slug: string; tpl: string } | null>(null);
+  const [tplOpen, setTplOpen] = useState(false);
+  /** ไอคอนกล่องของแต่ละแม่แบบ (ไว้วาดผังย่อในการ์ด) */
+  const tplShapes = useMemo(() => Object.fromEntries(LAYOUT_TEMPLATES.map((t) => [t.key, t.build()])), []);
   const [meta, setMeta] = useState<{ title: string; slug: string; in_menu: boolean } | null>(null);
   const curPage = pages.find((x) => x.id === page) ?? null;
   const [sel, setSel] = useState<string | null>(null);
@@ -258,8 +262,9 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
     const r = await api<{ page: { id: string; slug: string; title: string; in_menu: boolean } }>('/api/admin/settings', { action: 'page_create', title, slug });
     setBusy(false);
     if (!r.ok) { notify(r.error, 'error'); return; }
-    // หน้าใหม่: ใส่หัวข้อให้ก่อน 1 กล่อง จะได้เห็นว่าเริ่มตรงไหน
-    const first: Block[] = [{ ...newBlock('heading'), title, text: '' }];
+    // หน้าใหม่: เริ่มจากแม่แบบที่เลือก (ไม่เลือก = หัวข้อ 1 กล่อง)
+    const tpl = LAYOUT_TEMPLATES.find((t) => t.key === newPage.tpl);
+    const first: Block[] = tpl ? tpl.build().map((b, i) => (i === 0 && b.type === 'heading' ? { ...b, title } : b)) : [{ ...newBlock('heading'), title, text: '' }];
     const row: PageRow = { ...r.data.page, blocks: first };
     setPages((ps) => [...ps, row]);
     setPage(row.id); setBlocks(first); setDirty(true); setSel(null); setNewPage(null);
@@ -284,6 +289,12 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
     setPages((ps) => ps.filter((x) => x.id !== curPage.id));
     setPage('home'); setBlocks(homeSaved); setDirty(false); setSel(null); setMeta(null);
     notify('ลบหน้าแล้ว'); router.refresh();
+  }
+  async function applyTemplate(t: LayoutTemplate) {
+    const has = blocksRef.current.length > 0;
+    if (has && !(await ask(`ใช้แม่แบบ "${t.name}"?`, { text: 'กล่องที่จัดไว้ในหน้านี้จะถูกแทนที่ (ถ้ายังไม่พอใจ ปิดหน้านี้โดยไม่กดบันทึกได้)', ok: 'ใช้แม่แบบนี้' }))) return;
+    update(t.build()); setSel(null); setTplOpen(false);
+    notify(`ใช้แม่แบบ "${t.name}" แล้ว · แก้ต่อแล้วกดบันทึก`);
   }
   const slugFrom = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || `page-${pages.length + 1}`;
   async function reset() {
@@ -337,6 +348,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
       <div className="lb-top">
         <div><h2>จัดหน้าร้าน</h2><small className="muted">ลากกล่องจากด้านซ้ายไปวางบนหน้าร้าน · กดกล่องเพื่อแก้ไข · ลากกล่องบนหน้าร้านเพื่อย้ายที่</small></div>
         <div className="lb-top-acts">
+          <button type="button" className="btn sm lb-tpl-btn" onClick={() => setTplOpen(true)}>🎨 แม่แบบ</button>
           <Seg value={view} set={setView} opts={[['pc', '🖥 คอม'], ['phone', '📱 มือถือ']]} />
           <button type="button" className="btn ghost sm" disabled={busy || !init.ready} onClick={reset}>{curPage ? 'ล้างหน้า' : 'กลับเป็นแบบเดิม'}</button>
           <a href={curPage ? `/s/${curPage.slug}` : '/'} target="_blank" rel="noopener" className="btn ghost sm">ดูหน้านี้ ↗</a>
@@ -348,14 +360,18 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
         <div className="lb-page-tabs" role="tablist" aria-label="หน้าที่จัด">
           <button type="button" role="tab" aria-selected={page === 'home'} className={page === 'home' ? 'on' : ''} onClick={() => openPage('home')}>🏠 หน้าแรก</button>
           {pages.map((x) => <button key={x.id} type="button" role="tab" aria-selected={page === x.id} className={page === x.id ? 'on' : ''} onClick={() => openPage(x.id)}>📄 {x.title}</button>)}
-          {init.pages.ready && pages.length < PAGES_MAX && <button type="button" className="add" onClick={() => setNewPage(newPage ? null : { title: '', slug: '' })}>＋ สร้างหน้าใหม่</button>}
+          {init.pages.ready && pages.length < PAGES_MAX && <button type="button" className="add" onClick={() => setNewPage(newPage ? null : { title: '', slug: '', tpl: '' })}>＋ สร้างหน้าใหม่</button>}
         </div>
         {!init.pages.ready && <small className="lb-warn" style={{ margin: 0 }}>อยากสร้างหลายหน้า: รัน SQL <code>0035_shop_pages.sql</code> ใน Supabase ก่อน</small>}
         {newPage && (
           <div className="lb-page-form">
             <label className="field"><span>ชื่อหน้า (โชว์ในเมนู)</span><input className="input" autoFocus value={newPage.title} maxLength={60} placeholder="เช่น โปรโมชัน · เกี่ยวกับเรา · วิธีสั่งซื้อ"
-              onChange={(e) => setNewPage({ title: e.target.value, slug: newPage.slug && newPage.slug !== slugFrom(newPage.title) ? newPage.slug : slugFrom(e.target.value) })} /></label>
+              onChange={(e) => setNewPage({ ...newPage, title: e.target.value, slug: newPage.slug && newPage.slug !== slugFrom(newPage.title) ? newPage.slug : slugFrom(e.target.value) })} /></label>
             <label className="field"><span>ลิงก์หน้า</span><div className="lb-slug"><small>/s/</small><input className="input" value={newPage.slug} maxLength={40} placeholder="promotion" onChange={(e) => setNewPage({ ...newPage, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} /></div></label>
+            <label className="field"><span>เริ่มจากแม่แบบ</span><select className="input" value={newPage.tpl} onChange={(e) => {
+              const t = LAYOUT_TEMPLATES.find((x) => x.key === e.target.value);
+              setNewPage({ ...newPage, tpl: e.target.value, title: newPage.title || (t?.name ?? ''), slug: newPage.slug || (t ? t.key : '') });
+            }}><option value="">หน้าว่าง</option>{LAYOUT_TEMPLATES.filter((t) => t.kind === 'page').map((t) => <option key={t.key} value={t.key}>{t.icon} {t.name}</option>)}</select></label>
             <div className="lb-row"><button type="button" className="btn primary sm" disabled={busy} onClick={createPage}>สร้างหน้า</button><button type="button" className="btn ghost sm" onClick={() => setNewPage(null)}>ยกเลิก</button></div>
           </div>
         )}
@@ -499,6 +515,22 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
         </aside>
       </div>
       {ghost && <div className="lb-ghost" style={{ left: ghost.x, top: ghost.y }}>{ghost.label}</div>}
+      {tplOpen && (
+        <div className="cmd-bg open lb-tpl-bg" onClick={(e) => { if (e.target === e.currentTarget) setTplOpen(false); }}>
+          <div className="card lb-tpl" role="dialog" aria-label="เลือกแม่แบบ">
+            <div className="lb-tpl-head"><div><h2>เลือกแม่แบบ</h2><small className="muted">กดใช้แล้วกล่องในหน้า &quot;{curPage ? curPage.title : 'หน้าแรก'}&quot; จะถูกแทนที่ · แก้ข้อความ รูป ลิงก์ต่อได้ทุกกล่อง · ยังไม่บันทึกจนกว่าจะกด &quot;บันทึก&quot;</small></div>
+              <button type="button" className="btn ghost sm" aria-label="ปิด" onClick={() => setTplOpen(false)}>✕</button></div>
+            {(curPage ? [['page', 'แม่แบบหน้าเพิ่มเติม'], ['home', 'แม่แบบหน้าแรก']] as const : [['home', 'แม่แบบหน้าแรก'], ['page', 'แม่แบบหน้าเพิ่มเติม']] as const).map(([kind, label]) => (
+              <div key={kind} className="lb-tpl-group"><b>{label}</b>
+                <div className="lb-tpl-grid">{LAYOUT_TEMPLATES.filter((t) => t.kind === kind).map((t) => (
+                  <button key={t.key} type="button" className="lb-tpl-card" onClick={() => applyTemplate(t)}>
+                    <div className="lb-tpl-map" aria-hidden>{tplShapes[t.key].slice(0, 9).map((b, i) => <span key={i} className={`t-${b.type}${b.half ? ' half' : ''}`}>{BLOCK_INFO[b.type].icon}</span>)}</div>
+                    <b>{t.icon} {t.name}</b><small>{t.desc}</small>
+                  </button>))}</div>
+              </div>))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

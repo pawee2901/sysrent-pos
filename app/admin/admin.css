@@ -1025,3 +1025,25 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
 .lb-canvas.phone .cv-features, .lb-canvas.phone .cv-links { grid-template-columns: 1fr; }
 .lb-canvas.phone .cv-numbers { grid-template-columns: repeat(2, 1fr); }
 .cv-block.half .cv-features, .cv-block.half .cv-numbers, .cv-block.half .cv-links { grid-template-columns: repeat(2, 1fr); }
+/* แม่แบบ */
+.lb-tpl-btn { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-weight: 600; }
+.lb-tpl-bg { z-index: 120; align-items: flex-start; overflow-y: auto; padding: 40px 16px; }
+.lb-tpl { width: min(980px, 100%); margin: 0 auto; padding: 20px; display: grid; gap: 18px; }
+.lb-tpl-head { display: flex; align-items: flex-start; gap: 12px; }
+.lb-tpl-head > div { flex: 1; display: grid; gap: 2px; }
+.lb-tpl-head h2 { margin: 0; font-size: 19px; }
+.lb-tpl-group { display: grid; gap: 10px; }
+.lb-tpl-group > b { font-size: 14px; color: var(--muted); }
+.lb-tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.lb-tpl-card { display: grid; gap: 6px; align-content: start; text-align: left; padding: 10px 10px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: inherit; font: inherit; cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+.lb-tpl-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 12px 26px -16px var(--accent); }
+.lb-tpl-card > b { font-size: 14px; padding: 0 2px; }
+.lb-tpl-card > small { font-size: 12px; color: var(--muted); line-height: 1.45; padding: 0 2px; }
+.lb-tpl-map { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 8px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); height: 132px; overflow: hidden; align-content: start; }
+.lb-tpl-map span { grid-column: span 2; height: 13px; border-radius: 4px; background: var(--surface); border: 1px solid var(--line); font-size: 8px; line-height: 11px; text-align: center; }
+.lb-tpl-map span.half { grid-column: span 1; }
+.lb-tpl-map .t-hero, .lb-tpl-map .t-slider, .lb-tpl-map .t-cta { height: 28px; line-height: 26px; background: var(--accent-soft); border-color: transparent; font-size: 11px; }
+.lb-tpl-map .t-products, .lb-tpl-map .t-featured, .lb-tpl-map .t-reviews, .lb-tpl-map .t-gallery, .lb-tpl-map .t-features { height: 22px; line-height: 20px; }
+.lb-tpl-map .t-marquee, .lb-tpl-map .t-notice, .lb-tpl-map .t-countdown { background: var(--text); color: var(--bg); border-color: transparent; }
+.lb-tpl-map .t-space, .lb-tpl-map .t-divider { height: 5px; border-style: dashed; font-size: 0; }
+.lb-tpl-map .t-heading { height: 16px; background: transparent; border: 0; font-weight: 700; }
