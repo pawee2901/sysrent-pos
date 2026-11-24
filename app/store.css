@@ -808,3 +808,12 @@ a.hb-link:hover { transform: translateY(-2px); border-color: var(--accent); }
 .contact-row-t { display: grid; min-width: 0; }
 .contact-row-t b { font-size: 14px; }
 .contact-row-t small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ดาวน์โหลดแอปร้าน + แจ้งเตือน */
+.app-install { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 16px 18px; margin-bottom: 14px; background: linear-gradient(135deg, var(--accent-soft), var(--surface) 70%); }
+.app-install-ic { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; background: var(--surface); box-shadow: var(--shadow); }
+.app-install-txt { flex: 1 1 220px; display: grid; gap: 2px; min-width: 0; }
+.app-install-txt span { font-size: 13px; color: var(--muted); }
+.app-install-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.app-install-acts small { font-size: 12px; max-width: 280px; }
+.app-install-help { flex-basis: 100%; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-size: 14px; }
+.app-install-help ol { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 4px; }

@@ -1,3 +1,4 @@
+import { pushReport } from '@/lib/push';
 import { NextResponse, after } from 'next/server';
 import { lineReportNotice } from '@/lib/line-shop';
 import { z } from 'zod';
@@ -53,5 +54,6 @@ export async function POST(req: Request) {
   if (!data?.length) return fail('ไม่พบเรื่องนี้', 404);
   // ลูกค้ามาจาก LINE ร้าน + ร้านเปิด "ร้านตอบเรื่องที่ลูกค้าแจ้งปัญหา" (หลังบ้าน → บอท LINE) → แจ้งในแชท
   if (x.reply) after(() => lineReportNotice(a.shop, x.id).catch((e) => console.error('[line] report notice', e)));
+  if (x.reply) after(() => pushReport(a.shop, x.id).catch((e) => console.error('[push] report', e)));
   return NextResponse.json({ ok: true });
 }

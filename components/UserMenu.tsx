@@ -46,6 +46,7 @@ export function UserMenu({ username, contact, balance, isAdmin, isAgent = false,
           </div>
           <Link role="menuitem" href={to('/wallet')}><Icon name="wallet" />กระเป๋าเงิน<b className="umenu-amt">{balance}</b></Link>
           <Link role="menuitem" href={to('/orders')}><Icon name="receipt" />ประวัติการซื้อ · ดูรหัส</Link>
+          <Link role="menuitem" href={`${to('/orders')}#app`}><span aria-hidden style={{ width: 20, textAlign: 'center' }}>📲</span>ดาวน์โหลดแอป · แจ้งเตือน</Link>
           <Link role="menuitem" href={to('/cart')}><Icon name="bag" />ตะกร้าสินค้า</Link>
           {otpOn && <Link role="menuitem" href={to('/otp')}><Icon name="lock" />ค้นหา OTP</Link>}
           {mailOn && <button type="button" role="menuitem" onClick={editMail}><Icon name="mail" />{mail ? 'เปลี่ยนอีเมลแจ้งเตือน' : 'เพิ่มอีเมลแจ้งเตือน'}</button>}

@@ -10,6 +10,7 @@ import { canReport } from '@/lib/reports';
 import { productMedia } from '@/lib/media';
 import { HistoryCard, type HOrder } from './HistoryCard';
 import { otpApps, otpEmails } from '@/lib/otp-button';
+import { AppInstall } from '@/components/AppInstall';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,6 +78,7 @@ export default async function Orders() {
   return (
     <div className="hist-wrap">
       <div className="sec-head hist-head"><h1 style={{ fontSize: 26 }}>ประวัติการซื้อ</h1><span className="muted" style={{ fontSize: 14 }}>{orders.length} ออเดอร์ · กด &quot;แสดงไอดี&quot; เพื่อดูรหัส</span></div>
+      <div id="app"><AppInstall shopName={shop.name} compact /></div>
       {can(shop.plan, 'mail') && orders.some((o) => o.items.some((i) => i.queued)) && !(await customerEmail(me.id)) && <EmailPrompt />}
       {!orders.length ? <div className="card success"><p className="muted">ยังไม่มีออเดอร์</p><Link href="/" className="btn primary">ไปเลือกสินค้า</Link></div>
         : <div className="hcards">{orders.map((o) => <HistoryCard key={o.code} o={o} canReport={canReport(shop.plan)} />)}</div>}

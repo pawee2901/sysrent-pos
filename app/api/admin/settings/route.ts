@@ -12,6 +12,7 @@ import { encConfigured, encrypt } from '@/lib/secret';
 import { fontOf, isEffect, isLoader } from '@/lib/appearance';
 import { parseMusic } from '@/lib/music';
 import { CONTACTS_MAX, contactError, isContactKind } from '@/lib/contacts';
+import { pushShop } from '@/lib/push';
 import { BLOCK_INFO, BUILTIN, HEX6, ITEMS_MAX, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, SOCIAL, youtubeId, type BlockType, type SocialKind } from '@/lib/home-layout';
 
 const https = (max: number) => z.string().trim().max(max).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์ต้องขึ้นต้นด้วย https://');
@@ -79,6 +80,8 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('page_create'), title: pageTitle, slug: pageSlug }),
   z.object({ action: z.literal('page_update'), id: z.string().uuid(), title: pageTitle, slug: pageSlug, in_menu: z.boolean() }),
   z.object({ action: z.literal('page_delete'), id: z.string().uuid() }),
+  // ส่งแจ้งเตือนถึงลูกค้าที่เปิดรับในแอปร้าน
+  z.object({ action: z.literal('push_all'), title: z.string().trim().min(1, 'ใส่หัวข้อ').max(60), body: z.string().trim().min(1, 'ใส่ข้อความ').max(160), url: z.string().trim().max(300).refine((u) => !u || /^\/(?!\/)/.test(u), 'ลิงก์ต้องเป็นหน้าในร้าน ขึ้นต้นด้วย /').default('/') }),
   // ช่องทางติดต่อร้าน (หลายลิงก์ หลายแอป)
   z.object({ action: z.literal('contacts'), links: z.array(z.object({
     kind: z.string().refine(isContactKind, 'ไม่มีแอปนี้'), url: z.string().trim().max(300),
@@ -144,6 +147,10 @@ export async function POST(req: Request) {
   if (b.data.action === 'promos') {
     const { error } = await d.from('shops').update({ promo_cards: b.data.cards }).eq('id', a.shop.id);
     return error ? fail(/promo_cards/.test(error.message) ? 'ยังไม่ได้รัน SQL 0031_shop_promo_cards.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
+  if (b.data.action === 'push_all') {
+    const sent = await pushShop(a.shop.id, { title: b.data.title, body: b.data.body, url: b.data.url || '/', tag: 'promo' });
+    return NextResponse.json({ ok: true, sent });
   }
   if (b.data.action === 'contacts') {
     const links = b.data.links;

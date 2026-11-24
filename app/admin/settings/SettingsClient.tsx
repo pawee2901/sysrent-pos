@@ -10,6 +10,7 @@ import { AppearanceCard, type AppearanceInit } from './AppearanceCard';
 import { PromoCards, type Promo } from './PromoCards';
 import { HomeLayout, type LayoutInit } from './HomeLayout';
 import { ContactLinks } from './ContactLinks';
+import { PushCard } from './PushCard';
 import type { ContactLink } from '@/lib/contacts';
 
 /** ตัวแปร CSS ของชั้นพื้นหลัง (รูป / สี) สำหรับตัวอย่าง */
@@ -29,7 +30,7 @@ const CARDS: [string, string][] = [['white', 'ขาว'], ['tint', 'ตาม�
 const BG_COLORS = ['#fff1f5', '#fdf2f8', '#f5f3ff', '#eef2ff', '#eff6ff', '#ecfeff', '#f0fdf4', '#f7fee7', '#fefce8', '#fff7ed', '#fdf6ec', '#f4f4f5'];
 
 /** ตั้งค่าร้าน + ตัวอย่างหน้าร้านบนมือถือ (เปลี่ยนแล้วเห็นทันที) */
-export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos, layout, contacts }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] }; layout: LayoutInit; contacts: { ready: boolean; list: ContactLink[] } }) {
+export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos, layout, contacts, push }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] }; layout: LayoutInit; contacts: { ready: boolean; list: ContactLink[] }; push: { ready: boolean; devices: number } }) {
   const router = useRouter();
   const [f, setF] = useState(initial);
   const [look, setLook] = useState(lookInit);
@@ -222,7 +223,7 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
               <p className="muted" style={{ margin: 0, fontSize: 13 }}>✓ ตรวจสลิปอัตโนมัติโดย SysRent — ระบบเช็กว่าโอนเข้าเลขพร้อมเพย์ / ชื่อบัญชีนี้จริง · เงินเข้าบัญชีร้านโดยตรง</p>
             </div></section>}
 
-          {tab === 'notify' && <><MailCard init={mail} /><DiscordCard init={discord} /></>}
+          {tab === 'notify' && <><PushCard init={push} /><MailCard init={mail} /><DiscordCard init={discord} /></>}
 
           {tab === 'admin' && <section className="card"><div className="card-head"><h2>บัญชีหลังบ้าน</h2></div>
             <div className="form">
