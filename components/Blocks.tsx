@@ -8,7 +8,7 @@ import { getShop, baht } from '@/lib/shop';
 import { loadProducts, type Product } from '@/lib/catalog';
 import { db } from '@/lib/db';
 import { AppLogo } from '@/components/AppLogo';
-import { HALF_OK, SOCIAL, youtubeId, type Block } from '@/lib/home-layout';
+import { HALF_OK, SOCIAL, blockStyle, youtubeId, type Block } from '@/lib/home-layout';
 import { CouponBox, Countdown, Slider } from '@/components/HomeBits';
 
 const mask = (u: string) => (u.length <= 2 ? u[0] + '*' : `${u[0]}***${u[u.length - 1]}`);
@@ -245,6 +245,12 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
     if (b.type === 'countdown') return b.until ? <Countdown title={b.title} until={b.until} tone={b.tone} label={b.label} link={b.link} /> : null;
     return null;
   }
+  /** กล่อง + สไตล์ที่ร้านปรับเอง (สี · ความมน · ขอบ · เงา) */
+  function styled(b: Block): React.ReactNode {
+    const out = render(b);
+    const st = out ? blockStyle(b.style) : null;
+    return st ? <div className={st.className} style={st.style as React.CSSProperties}>{out}</div> : out;
+  }
   // กล่องครึ่งแถวที่อยู่ติดกัน = จับคู่วางข้างกัน (จอคอม)
   const rows: React.ReactNode[] = [];
   for (let i = 0; i < blocks.length; i++) {
@@ -253,8 +259,8 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
     if (half(b)) {
       const pair = half(n) ? [b, n!] : [b];
       if (pair.length === 2) i++;
-      rows.push(<div key={b.id} className={`hb-pair${pair.length === 1 ? ' solo' : ''}`}>{pair.map((x) => <div key={x.id} className="hb-cell">{render(x)}</div>)}</div>);
-    } else rows.push(<div key={b.id} className="hb-row">{render(b)}</div>);
+      rows.push(<div key={b.id} className={`hb-pair${pair.length === 1 ? ' solo' : ''}`}>{pair.map((x) => <div key={x.id} className="hb-cell">{styled(x)}</div>)}</div>);
+    } else rows.push(<div key={b.id} className="hb-row">{styled(b)}</div>);
   }
 
   return <>{rows}</>;

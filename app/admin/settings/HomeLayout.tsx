@@ -6,7 +6,7 @@ import { ask, notify } from '@/components/dialog';
 import { AppLogo } from '@/components/AppLogo';
 import { splitLeft, untilMs } from '@/components/HomeBits';
 import { LAYOUT_TEMPLATES, type LayoutTemplate } from '@/lib/layout-templates';
-import { BLOCK_INFO, BUILTIN, DEFAULT_LAYOUT, HALF_OK, ITEMS_MAX, ITEM_SPEC, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, PALETTE, SOCIAL, newBlock, newBlockId, youtubeId, type Block, type BlockItem, type BlockType, type SocialKind } from '@/lib/home-layout';
+import { blockStyle, hasStyle, type BlockStyle, BLOCK_INFO, BUILTIN, DEFAULT_LAYOUT, HALF_OK, ITEMS_MAX, ITEM_SPEC, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, PALETTE, SOCIAL, newBlock, newBlockId, youtubeId, type Block, type BlockItem, type BlockType, type SocialKind } from '@/lib/home-layout';
 
 type P = { id: string; name: string; category: string; image: string; template: string; from: number | null; sold: number };
 export type LayoutInit = {
@@ -18,6 +18,8 @@ export type LayoutInit = {
 export type PageRow = { id: string; slug: string; title: string; in_menu: boolean; blocks: Block[] };
 type Drag = { kind: 'new'; type: BlockType } | { kind: 'move'; id: string };
 
+/** สีแนะนำในสไตล์กล่อง */
+const SWATCHES = ['#ffffff', '#f8fafc', '#111827', '#0f172a', '#14532d', '#1e3a8a', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#f59e0b', '#16a34a', '#0ea5e9', '#fdf2f8', '#ecfdf5', '#fef3c7'];
 /** กล่องที่มีช่อง "หัวข้อ" */
 const TITLED: BlockType[] = ['featured', 'cats', 'text', 'video', 'imgtext', 'contact', 'faq', 'coupon', 'countdown', 'heading', 'cta', 'features', 'steps', 'reviews', 'pricelist', 'numbers', 'logos', 'social', 'spotlight', 'quote', 'linkcards'];
 const TONES: [NonNullable<Block['tone']>, string][] = [['accent', 'สีร้าน'], ['dark', 'ดำ'], ['ok', 'เขียว'], ['warn', 'ส้ม'], ['info', 'ฟ้า']];
@@ -316,6 +318,41 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
   }
 
   const setItem = (b: Block, i: number, p: Partial<BlockItem>) => patch(b.id, { items: (b.items ?? []).map((x, k) => (k === i ? { ...x, ...p } : x)) });
+  /** ส่วน "สไตล์กล่อง": สี · ความมน · ระยะขอบ · เส้นขอบ · เงา */
+  function styleEditor(b: Block) {
+    const s = b.style ?? {};
+    const setS = (p: Partial<BlockStyle>) => {
+      const next = { ...s, ...p };
+      (Object.keys(next) as (keyof BlockStyle)[]).forEach((k) => { if (next[k] === undefined || next[k] === '') delete next[k]; });
+      patch(b.id, { style: Object.keys(next).length ? next : undefined });
+    };
+    const colorRow = (k: 'bg' | 'fg' | 'accent' | 'card', label: string) => (
+      <div className="lb-color"><span>{label}</span>
+        <div className="lb-swatches">{SWATCHES.map((c) => <button key={c} type="button" className={s[k] === c ? 'on' : ''} style={{ background: c }} aria-label={`${label} ${c}`} onClick={() => setS({ [k]: c })} />)}
+          <label className="lb-pick" title="เลือกสีเอง"><input type="color" value={s[k] ?? '#888888'} onChange={(e) => setS({ [k]: e.target.value })} />🎨</label>
+          {s[k] && <button type="button" className="lb-clear" onClick={() => setS({ [k]: undefined })}>ตามธีม</button>}</div>
+      </div>);
+    return (
+      <details className="lb-style" open={hasStyle(b.style)}>
+        <summary>🎨 สไตล์กล่อง{hasStyle(b.style) && <small> · ปรับแล้ว</small>}</summary>
+        <div className="lb-style-body">
+          {colorRow('bg', 'สีพื้นกล่อง')}
+          {colorRow('fg', 'สีตัวอักษร')}
+          {colorRow('accent', 'สีหลัก (ปุ่ม · ราคา · ไฮไลต์)')}
+          {colorRow('card', 'สีการ์ดด้านใน')}
+          <label className="lb-range"><span>ความมนของมุม <b>{s.radius ?? 'ตามธีม'}{s.radius !== undefined && 'px'}</b></span>
+            <input type="range" min={0} max={48} step={2} value={s.radius ?? 20} onChange={(e) => setS({ radius: Number(e.target.value) })} />
+            <span className="lb-range-ends"><small>เหลี่ยม</small>{s.radius !== undefined && <button type="button" className="lb-clear" onClick={() => setS({ radius: undefined })}>ตามธีม</button>}<small>มนมาก</small></span></label>
+          <label className="lb-range"><span>ระยะขอบด้านใน <b>{s.pad ?? 'อัตโนมัติ'}{s.pad !== undefined && 'px'}</b></span>
+            <input type="range" min={0} max={64} step={4} value={s.pad ?? (s.bg ? 24 : 0)} onChange={(e) => setS({ pad: Number(e.target.value) })} />
+            {s.pad !== undefined && <button type="button" className="lb-clear" onClick={() => setS({ pad: undefined })}>อัตโนมัติ</button>}</label>
+          <div className="field"><span>เส้นขอบ</span><Seg value={s.border ?? 'none'} set={(v) => setS({ border: v === 'none' ? undefined : v })} opts={[['none', 'ไม่มี'], ['line', 'เส้นบาง'], ['accent', 'สีหลัก']]} /></div>
+          <div className="field"><span>เงา</span><Seg value={s.shadow ?? 'none'} set={(v) => setS({ shadow: v === 'none' ? undefined : v })} opts={[['none', 'ไม่มี'], ['soft', 'นุ่ม'], ['strong', 'เข้ม']]} /></div>
+          {hasStyle(b.style) && <button type="button" className="btn ghost sm" onClick={() => patch(b.id, { style: undefined })}>ล้างสไตล์ทั้งหมด (กลับไปตามธีม)</button>}
+        </div>
+      </details>
+    );
+  }
   const itemsOf = (id: string) => blocksRef.current.find((x) => x.id === id)?.items ?? [];
   /** แก้รายการย่อย (รูปในแกลเลอรี / สไลด์ · คำถาม · จุดเด่น · รีวิว ฯลฯ) ตาม ITEM_SPEC */
   function renderItems(b: Block) {
@@ -439,7 +476,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                         <button type="button" aria-label="ลบ" title="ลบ" onClick={() => remove(i)}>🗑</button>
                       </div>
                     )}
-                    <div className="cv-body"><Preview b={b} d={init} /></div>
+                    <div className="cv-body">{(() => { const st = blockStyle(b.style); return st ? <div className={st.className} style={st.style as React.CSSProperties}><Preview b={b} d={init} /></div> : <Preview b={b} d={init} />; })()}</div>
                   </div>
                 )];
               })}
@@ -521,6 +558,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                 {b.type === 'quote' && <>{txt('text', 'ข้อความ', { rows: 3, max: 300 })}<div className="field"><span>จัดข้อความ</span><Seg value={b.align ?? 'center'} set={(v) => patch(b.id, { align: v })} opts={[['left', 'ชิดซ้าย (มีเส้นข้าง)'], ['center', 'กึ่งกลาง']]} /></div></>}
                 {ITEM_SPEC[b.type] && renderItems(b)}
                 {b.type === 'space' && <div className="field"><span>ขนาด</span><Seg value={b.size ?? 'm'} set={(v) => patch(b.id, { size: v })} opts={[['s', 'เล็ก'], ['m', 'กลาง'], ['l', 'ใหญ่']]} /></div>}
+                {b.type !== 'space' && b.type !== 'divider' && styleEditor(b)}
                 {HALF_OK.includes(b.type) && <div className="field"><span>ความกว้าง</span><Seg value={!!b.half} set={(v) => patch(b.id, { half: v })} opts={[[false, 'เต็มแถว'], [true, 'ครึ่งแถว']]} />
                   <small className="faint">ครึ่งแถว 2 กล่องติดกัน = วางคู่กันบนจอคอม (มือถือเรียงลงมา)</small></div>}
                 <div className="lb-row lb-props-foot">

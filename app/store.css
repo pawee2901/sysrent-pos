@@ -784,3 +784,18 @@ a.hb-link:hover { transform: translateY(-2px); border-color: var(--accent); }
   .hb-feed time { font-size: 12px; }
 }
 .hb-feed-head p { margin: 6px 0 0; color: var(--muted); font-size: 14px; white-space: pre-line; }
+
+/* ---------- สไตล์กล่องที่ร้านปรับเอง ---------- */
+.hb-st { margin-top: 28px; }
+.hb-st > :first-child { margin-top: 0; }
+.hb-st.st-bg { background: var(--hb-bg); padding: var(--hb-pad, 24px); border-radius: var(--hb-r, 24px); }
+.hb-st.st-pad { padding: var(--hb-pad); }
+.hb-st.st-r { border-radius: var(--hb-r); }
+.hb-st.st-b-line { border: 1px solid var(--line); }
+.hb-st.st-b-accent { border: 2px solid var(--accent); }
+.hb-st:is(.st-b-line, .st-b-accent, .st-sh-soft, .st-sh-strong):not(.st-bg):not(.st-pad) { padding: 16px; border-radius: var(--hb-r, 22px); }
+.hb-st.st-sh-soft { box-shadow: 0 12px 32px -16px rgba(0, 0, 0, .28); }
+.hb-st.st-sh-strong { box-shadow: 0 26px 56px -20px rgba(0, 0, 0, .55); }
+.hb-st.st-r :is(.card, .hb-image, .hb-feed, .hb-cta, .hb-notice, .hb-count, .hb-coupon, .hb-code, .hb-frame, .hb-slides, .banner, .hero, .promo, .hb-marquee, .hb-quote, .live, .hb-badges, .hb-spot, .hb-link, .pcard, .hb-feed-av, .hb-spot-img, .btn, .chip, .stat, .hb-count-n span) { border-radius: var(--hb-r); }
+.hb-st .hb-feed-head { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+@media (max-width: 760px) { .hb-st { margin-top: 22px; } .hb-st.st-bg { padding: var(--hb-pad, 18px); } }

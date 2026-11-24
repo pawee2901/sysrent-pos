@@ -29,7 +29,37 @@ export type Block = {
   variant?: 'grid' | 'scroll' | 'list' | 'bar' | 'feed' | 'ticker';
   /** ป้ายมุมขวา (การ์ดกิจกรรม: "อัปเดตสด") */
   badge?: string;
+  /** สไตล์ที่ร้านปรับเอง (ไม่ใส่ = ตามธีม) */
+  style?: BlockStyle;
 };
+
+export type BlockStyle = {
+  /** สีพื้นกล่อง · สีตัวอักษร · สีหลัก (ปุ่ม / ราคา / ไฮไลต์) · สีการ์ดด้านใน (#rrggbb) */
+  bg?: string; fg?: string; accent?: string; card?: string;
+  /** ความมนของมุม (px) · ระยะขอบด้านใน (px) */
+  radius?: number; pad?: number;
+  border?: 'none' | 'line' | 'accent'; shadow?: 'none' | 'soft' | 'strong';
+};
+export const HEX6 = /^#[0-9a-f]{6}$/i;
+/** มีการปรับสไตล์อย่างน้อย 1 อย่าง */
+export const hasStyle = (s?: BlockStyle) => !!s && Object.values(s).some((v) => v !== undefined && v !== '');
+
+/** สไตล์ของกล่อง → className + ตัวแปร CSS (ใช้ทั้งหน้าร้านและหน้าจัดร้าน) */
+export function blockStyle(s?: BlockStyle): { className: string; style: Record<string, string> } | null {
+  if (!hasStyle(s)) return null;
+  const v: Record<string, string> = {};
+  const cls = ['hb-st'];
+  const ok = (c?: string) => !!c && HEX6.test(c);
+  if (ok(s!.bg)) { v['--hb-bg'] = s!.bg!; cls.push('st-bg'); }
+  if (ok(s!.fg)) { v['--text'] = s!.fg!; v['--muted'] = `color-mix(in srgb, ${s!.fg} 68%, transparent)`; v.color = s!.fg!; }
+  if (ok(s!.accent)) { v['--accent'] = s!.accent!; v['--accent-2'] = s!.accent!; v['--accent-soft'] = `color-mix(in srgb, ${s!.accent} 14%, transparent)`; v['--grad'] = s!.accent!; }
+  if (ok(s!.card)) { v['--surface'] = s!.card!; v['--surface-2'] = s!.card!; }
+  if (typeof s!.radius === 'number') { v['--hb-r'] = `${s!.radius}px`; cls.push('st-r'); }
+  if (typeof s!.pad === 'number') { v['--hb-pad'] = `${s!.pad}px`; cls.push('st-pad'); }
+  if (s!.border && s!.border !== 'none') cls.push(`st-b-${s!.border}`);
+  if (s!.shadow && s!.shadow !== 'none') cls.push(`st-sh-${s!.shadow}`);
+  return { className: cls.join(' '), style: v };
+}
 
 /** กล่องของระบบ (มีได้อย่างละ 1) */
 export const BUILTIN: BlockType[] = ['hero', 'promos', 'live', 'stats', 'products', 'how'];

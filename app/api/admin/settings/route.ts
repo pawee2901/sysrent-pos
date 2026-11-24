@@ -11,11 +11,12 @@ import { sendMail, shopSmtp, verifyGmail } from '@/lib/mail';
 import { encConfigured, encrypt } from '@/lib/secret';
 import { fontOf, isEffect, isLoader } from '@/lib/appearance';
 import { parseMusic } from '@/lib/music';
-import { BLOCK_INFO, BUILTIN, ITEMS_MAX, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, SOCIAL, youtubeId, type BlockType, type SocialKind } from '@/lib/home-layout';
+import { BLOCK_INFO, BUILTIN, HEX6, ITEMS_MAX, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, SOCIAL, youtubeId, type BlockType, type SocialKind } from '@/lib/home-layout';
 
 const https = (max: number) => z.string().trim().max(max).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์ต้องขึ้นต้นด้วย https://');
 /** ลิงก์ในร้าน (/p/...) หรือ https:// */
 const link = z.string().trim().max(300).refine((u) => !u || /^https:\/\//.test(u) || /^\/(?!\/)/.test(u), 'ลิงก์ต้องขึ้นต้นด้วย https:// หรือ / (หน้าในร้าน)');
+const color = z.string().trim().refine((c) => !c || HEX6.test(c), 'สีไม่ถูกต้อง').optional();
 /** กล่องหน้าแรก 1 กล่อง (เก็บเฉพาะช่องที่รู้จัก) */
 const block = z.object({
   id: z.string().regex(/^[a-z0-9]{1,24}$/), type: z.enum(Object.keys(BLOCK_INFO) as [BlockType, ...BlockType[]]), on: z.boolean(), half: z.boolean().optional(),
@@ -26,6 +27,11 @@ const block = z.object({
   items: z.array(z.object({ image: https(500).optional(), link: link.optional(), q: z.string().trim().max(200).optional(), a: z.string().trim().max(1000).optional(),
     icon: z.string().trim().max(12).optional(), stars: z.number().int().min(1).max(5).optional(), kind: z.enum(Object.keys(SOCIAL) as [SocialKind, ...SocialKind[]]).optional() })).max(ITEMS_MAX).optional(),
   variant: z.enum(['grid', 'scroll', 'list', 'bar', 'feed', 'ticker']).optional(), badge: z.string().trim().max(30).optional(),
+  style: z.object({
+    bg: color, fg: color, accent: color, card: color,
+    radius: z.number().int().min(0).max(48).optional(), pad: z.number().int().min(0).max(64).optional(),
+    border: z.enum(['none', 'line', 'accent']).optional(), shadow: z.enum(['none', 'soft', 'strong']).optional(),
+  }).optional(),
   cols: z.number().int().min(1).max(4).optional(), flip: z.boolean().optional(),
   code: z.string().trim().max(40).optional(), until: z.string().regex(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})?$/, 'วันเวลาไม่ถูกต้อง').optional(),
 });

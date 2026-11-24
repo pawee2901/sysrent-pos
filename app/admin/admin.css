@@ -1058,3 +1058,33 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
 .cv-feed-row p { flex: 1; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cv-feed-row small { flex: none; font-size: 10px; color: var(--muted); }
 .cv-feed-head p { margin: 2px 0 0; font-size: 10.5px; color: var(--muted); }
+/* สไตล์กล่องบนผืนผ้าใบ (ย่อจากหน้าร้าน) */
+.cv-body .hb-st.st-bg { background: var(--hb-bg); padding: calc(var(--hb-pad, 24px) * .6); border-radius: calc(var(--hb-r, 24px) * .7); }
+.cv-body .hb-st.st-pad { padding: calc(var(--hb-pad) * .6); }
+.cv-body .hb-st.st-r { border-radius: calc(var(--hb-r) * .7); }
+.cv-body .hb-st.st-b-line { border: 1px solid var(--line); }
+.cv-body .hb-st.st-b-accent { border: 2px solid var(--accent); }
+.cv-body .hb-st:is(.st-b-line, .st-b-accent, .st-sh-soft, .st-sh-strong):not(.st-bg):not(.st-pad) { padding: 10px; border-radius: calc(var(--hb-r, 22px) * .7); }
+.cv-body .hb-st.st-sh-soft { box-shadow: 0 8px 22px -12px rgba(0, 0, 0, .3); }
+.cv-body .hb-st.st-sh-strong { box-shadow: 0 16px 36px -14px rgba(0, 0, 0, .55); }
+.cv-body .hb-st { color: var(--text); }
+.cv-body .hb-st.st-r :is(.cv-card, .cv-img, .cv-hero, .cv-cta, .cv-feed, .cv-notice, .cv-count, .cv-coupon, .cv-video, .cv-pcard, .cv-stat, .cv-live, .cv-quote, .cv-marquee, .cv-prices, .cv-plist, .cv-empty, .cv-btn, .cv-feed-row > span, .cv-features > div, .cv-numbers > div, .cv-reviews > div, .cv-steps > div, .cv-links > div, .cv-cats > div, .cv-faq) { border-radius: calc(var(--hb-r) * .7); }
+/* แผงสไตล์ */
+.lb-style { border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2, var(--bg)); }
+.lb-style > summary { cursor: pointer; padding: 10px 12px; font-weight: 600; font-size: 13.5px; list-style: none; }
+.lb-style > summary::-webkit-details-marker { display: none; }
+.lb-style > summary::after { content: '▾'; float: right; color: var(--muted); }
+.lb-style[open] > summary::after { content: '▴'; }
+.lb-style > summary small { color: var(--accent); font-weight: 500; }
+.lb-style-body { display: grid; gap: 12px; padding: 0 12px 12px; }
+.lb-color { display: grid; gap: 6px; font-size: 13px; }
+.lb-swatches { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.lb-swatches > button:not(.lb-clear) { width: 22px; height: 22px; border-radius: 7px; border: 1px solid rgba(0, 0, 0, .15); cursor: pointer; padding: 0; }
+.lb-swatches > button.on { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lb-pick { position: relative; width: 28px; height: 22px; display: grid; place-items: center; border-radius: 7px; border: 1px dashed var(--line); cursor: pointer; font-size: 12px; overflow: hidden; }
+.lb-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.lb-clear { border: 0; background: none; color: var(--accent); font: inherit; font-size: 12px; cursor: pointer; padding: 2px 4px; }
+.lb-range { display: grid; gap: 4px; font-size: 13px; }
+.lb-range b { color: var(--accent); font-weight: 600; }
+.lb-range input { width: 100%; accent-color: var(--accent); }
+.lb-range-ends { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 11px; }
