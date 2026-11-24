@@ -1,6 +1,6 @@
 -- =============================================================
--- SysRent Shop · 0036 เก็บแพ็กเกจที่ร้านซื้อจริง (starter / pro / max) · ทุกแพ็กเกจใช้ได้ทุกฟังก์ชัน
---   ระบบตัวแทนราคาส่ง: ไม่เช็กแพ็กเกจแล้ว (เดิมเฉพาะ pro / max)
+-- SysRent Shop · 0036 กลับมาใช้ 3 แพ็กเกจตามที่ร้านซื้อจริง (starter / pro / max)
+--   ระบบตัวแทนราคาส่ง: เฉพาะ Pro / Max (ใครรันไฟล์นี้รุ่นแรกไปแล้ว รันใหม่ได้ — คืนการเช็กแพ็กเกจ)
 --   ร้านที่ 0033 เปลี่ยนเป็น max ไปแล้ว: ให้เว็บหลักส่งแพ็กเกจจริงมาใหม่ (action plan) เพื่อแก้กลับ
 -- รันใน Supabase → SQL Editor หลัง 0035 (รันซ้ำได้)
 -- =============================================================
@@ -16,7 +16,7 @@ begin
   if jsonb_typeof(p_lines) <> 'array' or jsonb_array_length(p_lines) = 0 then raise exception 'EMPTY_CART'; end if;
   if jsonb_array_length(p_lines) > 20 then raise exception 'CART_TOO_BIG'; end if;
   select a.id into ag from public.shop_agents a join public.shops s on s.id = a.shop_id
-   where a.shop_id = p_shop and a.customer_id = p_customer and a.active and s.active;
+   where a.shop_id = p_shop and a.customer_id = p_customer and a.active and s.plan in ('pro', 'max');
   insert into public.shop_orders (shop_id, customer_id, total) values (p_shop, p_customer, 0) returning * into o;
   for line in select * from jsonb_array_elements(p_lines) loop
     select * into opt from public.shop_options where id = (line->>'option_id')::uuid and active;
