@@ -1,16 +1,16 @@
 /* =============================================================
-   แพ็กเกจร้าน: ราคาเดียว ฿399/เดือน ได้ทุกฟังก์ชัน
-   (shops.plan ยังเก็บ starter / pro / max ไว้เพื่อให้ข้อมูลเก่าใช้ได้ แต่ทุกค่าได้เท่ากันหมด)
+   แพ็กเกจร้าน (shops.plan = ที่ซื้อจริงจากเว็บหลัก): starter / pro / max
+   ทุกแพ็กเกจใช้ได้ทุกฟังก์ชัน · ต่างกันที่โควตาตรวจสลิป · ราคาตั้งที่เว็บหลัก (ไม่แสดงในร้าน)
    ตรวจสลิปเกินโควตาคิดเท่ากันทุกแพ็กเกจ (shops.slip_overage)
    ใช้ได้ทั้งฝั่งเซิร์ฟเวอร์และหน้าเว็บ (ไม่มีข้อมูลลับ)
    ============================================================= */
 
 export type Plan = 'starter' | 'pro' | 'max';
 export const PLANS: Plan[] = ['starter', 'pro', 'max'];
-export const PLAN_LABEL: Record<Plan, string> = { starter: 'ครบทุกฟังก์ชัน', pro: 'ครบทุกฟังก์ชัน', max: 'ครบทุกฟังก์ชัน' };
+export const PLAN_LABEL: Record<Plan, string> = { starter: 'Starter', pro: 'Pro', max: 'Max' };
 export const PLAN_PRICE: Record<Plan, number> = { starter: 399, pro: 399, max: 399 };
 /** ตรวจสลิปฟรีต่อเดือน */
-export const SLIP_QUOTA: Record<Plan, number> = { starter: 500, pro: 500, max: 500 };
+export const SLIP_QUOTA: Record<Plan, number> = { starter: 50, pro: 200, max: 500 };
 /** จำนวนคูปองสูงสุด (null = ไม่จำกัด) */
 export const COUPON_LIMIT: Record<Plan, number | null> = { starter: null, pro: null, max: null };
 
