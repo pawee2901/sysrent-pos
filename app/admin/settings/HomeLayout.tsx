@@ -48,7 +48,15 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
       : <div className="cv-hero"><small>✨ ส่งอัตโนมัติ 24 ชั่วโมง</small><b>{d.shop.tagline || d.shop.name}</b><span className="cv-btn light">เลือกซื้อเลย</span></div>;
     case 'promos': return d.promos.length ? <div className="cv-cols" style={{ ['--c' as string]: Math.min(4, d.promos.length) } as React.CSSProperties}>{d.promos.map((s, i) => <img key={i} src={s} alt="" className="cv-img" />)}</div>
       : <Ph>🎁 ยังไม่มีรูปโปร · ตั้งที่แท็บ &quot;รูปหน้าแรก · ป๊อปอัป&quot;</Ph>;
-    case 'live': return <div className="cv-live"><i />@s***a ซื้อ {d.products[0]?.name ?? 'สินค้า'} · 5 นาทีที่แล้ว</div>;
+    case 'live': {
+      const names = (d.products.length ? d.products : [{ name: 'สินค้า' }]).map((p) => p.name);
+      const who = ['p', 'k', 'n', 'm', 's'];
+      if (b.variant === 'feed') return (
+        <div className="cv-feed"><div className="cv-feed-head"><div><small>STORE FEED</small><b>{b.title || 'กิจกรรมล่าสุด'}</b></div><span><i />อัปเดตสด</span></div>
+          {who.slice(0, Math.min(5, b.limit ?? 5)).map((w, i) => <div key={w} className="cv-feed-row"><span>{w.toUpperCase()}</span><p><b>{w}•••••</b> ซื้อ {names[i % names.length]}</p><small>{[3, 9, 33, 41, 42][i]} นาทีที่แล้ว</small></div>)}</div>);
+      if (b.variant === 'ticker') return <div className="cv-marquee dark"><span>🟢 @s***a ซื้อ {names[0]} · 5 นาทีที่แล้ว     🟢 @k***n ซื้อ {names[1 % names.length]} · 9 นาทีที่แล้ว</span></div>;
+      return <div className="cv-live"><i />@s***a ซื้อ {names[0]} · 5 นาทีที่แล้ว</div>;
+    }
     case 'stats': return <div className="cv-cols" style={{ ['--c' as string]: 3 } as React.CSSProperties}>{['สมาชิก', 'ขายไปแล้ว', 'พร้อมส่ง'].map((x) => <div key={x} className="cv-stat"><b>123</b><small>{x}</small></div>)}</div>;
     case 'products': return <>{head('สินค้าทั้งหมด')}{d.categories.length > 1 && <div className="cv-chips"><span className="on">ทั้งหมด</span>{d.categories.slice(0, 5).map((c) => <span key={c}>{c}</span>)}</div>}<Cards list={d.products.slice(0, 8)} /></>;
     case 'how': return <>{head('ซื้อง่าย 3 ขั้นตอน')}<div className="cv-cols" style={{ ['--c' as string]: 3 } as React.CSSProperties}>{['เลือกแอป', 'สแกนจ่าย', 'ได้รหัสทันที'].map((x, i) => <div key={x} className="cv-stat"><b>{i + 1}</b><small>{x}</small></div>)}</div></>;
@@ -459,7 +467,13 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
               <div className="lb-props">
                 <div className="lb-props-head"><span aria-hidden>{info.icon}</span><div><b>{info.label}</b><small>{info.desc}</small></div>
                   <button type="button" className="btn ghost sm lb-close" aria-label="ปิด" onClick={() => setSel(null)}>✕</button></div>
-                {builtin && <p className="muted lb-note">{b.type === 'hero' || b.type === 'promos' ? 'รูปของกล่องนี้แก้ได้ที่แท็บ "รูปหน้าแรก · ป๊อปอัป"' : b.type === 'products' ? 'ถ้าซ่อนหรือลบกล่องนี้ ลูกค้าที่ค้นหาจะเห็นผลค้นหาบนสุดแทน' : 'กล่องนี้ใช้ข้อมูลจริงของร้าน ไม่ต้องตั้งค่า'}</p>}
+                {b.type === 'live' && <>
+                  <div className="field"><span>รูปแบบ</span><Seg value={b.variant ?? 'bar'} set={(v) => patch(b.id, { variant: v })} opts={[['bar', 'แถบ'], ['feed', 'การ์ดกิจกรรม'], ['ticker', 'ตัวหนังสือวิ่ง']]} /></div>
+                  {b.variant === 'feed' && txt('title', 'หัวข้อการ์ด', { ph: 'กิจกรรมล่าสุด' })}
+                  {b.variant !== undefined && b.variant !== 'bar' && <label className="field"><span>จำนวนรายการ</span><select className="input" value={b.limit ?? 5} onChange={(e) => patch(b.id, { limit: Number(e.target.value) })}>{[3, 5, 8, 10].map((n) => <option key={n} value={n}>{n} รายการ</option>)}</select></label>}
+                  <p className="muted lb-note">ใช้ออเดอร์จริงของร้าน ชื่อลูกค้าถูกปิดบางส่วนให้อัตโนมัติ · ตัวอย่างในหน้านี้เป็นข้อมูลสมมติ</p>
+                </>}
+                {builtin && b.type !== 'live' && <p className="muted lb-note">{b.type === 'hero' || b.type === 'promos' ? 'รูปของกล่องนี้แก้ได้ที่แท็บ "รูปหน้าแรก · ป๊อปอัป"' : b.type === 'products' ? 'ถ้าซ่อนหรือลบกล่องนี้ ลูกค้าที่ค้นหาจะเห็นผลค้นหาบนสุดแทน' : 'กล่องนี้ใช้ข้อมูลจริงของร้าน ไม่ต้องตั้งค่า'}</p>}
                 {TITLED.includes(b.type) && txt('title', b.type === 'spotlight' ? 'ป้ายเล็กด้านบน (ไม่บังคับ)' : b.type === 'quote' ? 'ผู้พูด / ที่มา (ไม่บังคับ)' : 'หัวข้อ')}
                 {b.type === 'featured' && <>
                   <div className="field"><span>เลือกสินค้าจาก</span><Seg value={b.pick ?? 'best'} set={(v) => patch(b.id, { pick: v })} opts={[['best', 'ขายดี'], ['cat', 'ตามหมวด'], ['ids', 'เลือกเอง']]} /></div>

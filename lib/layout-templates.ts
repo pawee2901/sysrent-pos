@@ -20,6 +20,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
     build: () => [
       B('marquee', { text: '⚡ ส่งอัตโนมัติภายใน 1 นาที · 🛡️ รับประกันตลอดอายุ · 💬 แอดมินตอบไว ทุกวัน' }),
       B('hero'), B('badges'),
+      B('live', { variant: 'feed', limit: 5 }),
       B('featured', { title: '🔥 ขายดีประจำสัปดาห์', variant: 'scroll', limit: 8 }),
       B('cats'), B('products'), B('reviews'), B('faq'), B('contact'),
     ],

@@ -26,13 +26,13 @@ export type Block = {
   tone?: 'accent' | 'ok' | 'warn' | 'info' | 'dark'; align?: 'left' | 'center'; size?: 's' | 'm' | 'l'; video?: string;
   items?: BlockItem[]; cols?: number; flip?: boolean; code?: string; until?: string;
   /** สินค้าแนะนำ: ตาราง / เลื่อนข้าง / รายการ */
-  variant?: 'grid' | 'scroll' | 'list';
+  variant?: 'grid' | 'scroll' | 'list' | 'bar' | 'feed' | 'ticker';
 };
 
 /** กล่องของระบบ (มีได้อย่างละ 1) */
 export const BUILTIN: BlockType[] = ['hero', 'promos', 'live', 'stats', 'products', 'how'];
 /** กล่องที่ตั้งเป็นครึ่งแถวได้ */
-export const HALF_OK: BlockType[] = ['featured', 'cats', 'text', 'image', 'gallery', 'notice', 'button', 'contact', 'faq', 'coupon', 'countdown', 'video',
+export const HALF_OK: BlockType[] = ['live', 'featured', 'cats', 'text', 'image', 'gallery', 'notice', 'button', 'contact', 'faq', 'coupon', 'countdown', 'video',
   'heading', 'slider', 'cta', 'features', 'steps', 'reviews', 'pricelist', 'numbers', 'logos', 'social', 'spotlight', 'quote', 'linkcards', 'badges'];
 export const LAYOUT_MAX = 60;
 export const PAGES_MAX = 50;
@@ -43,7 +43,7 @@ export const ITEMS_MAX = 12;
 export const BLOCK_INFO: Record<BlockType, { icon: string; label: string; desc: string }> = {
   hero: { icon: '🏠', label: 'หัวเว็บ', desc: 'ข้อความต้อนรับ / รูปหน้าแรกที่อัปไว้' },
   promos: { icon: '🎁', label: 'กล่องรูปโปร', desc: 'รูปจากแท็บ "รูปหน้าแรก · ป๊อปอัป"' },
-  live: { icon: '🟢', label: 'คนเพิ่งซื้อ', desc: 'แถบลูกค้าที่เพิ่งซื้อ' },
+  live: { icon: '🟢', label: 'คนเพิ่งซื้อ', desc: 'ลูกค้าที่เพิ่งซื้อ · แถบ / การ์ดกิจกรรม / ตัวหนังสือวิ่ง' },
   stats: { icon: '📊', label: 'ตัวเลขร้าน', desc: 'สมาชิก · ขายแล้ว · พร้อมส่ง' },
   products: { icon: '🛍️', label: 'สินค้าทั้งหมด', desc: 'สินค้าทุกชิ้น + ปุ่มหมวด' },
   how: { icon: '🧭', label: 'ซื้อง่าย 3 ขั้นตอน', desc: 'อธิบายวิธีซื้อ' },

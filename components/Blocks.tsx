@@ -40,7 +40,7 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
   const [all, { count: members }, { data: recent }, me, { data: pc }] = await Promise.all([
     loadProducts(shop.id),
     d.from('shop_customers').select('id', { count: 'exact', head: true }).eq('shop_id', shop.id),
-    d.from('shop_orders').select('paid_at, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(4),
+    d.from('shop_orders').select('paid_at, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(10),
     getCustomer(),
     d.from('shops').select('promo_cards').eq('id', shop.id).maybeSingle(), // ยังไม่รัน 0031 = ไม่แสดงกล่องรูป
   ]);
@@ -57,7 +57,16 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
   const sold = products.reduce((s, p) => s + p.sold, 0);
   const ready = products.reduce((s, p) => s + (p.left ?? 0), 0);
   type R = { paid_at: string; shop_customers: { username: string } | null; shop_order_items: { name: string }[] };
-  const live = ((recent ?? []) as unknown as R[]).map((r) => ({ who: r.shop_customers ? `@${mask(r.shop_customers.username)}` : 'ลูกค้า', what: (r.shop_order_items[0]?.name ?? 'สินค้า').split(' · ')[0], when: ago(r.paid_at) }));
+  const live = ((recent ?? []) as unknown as R[]).map((r) => {
+    const u = r.shop_customers?.username ?? '';
+    const items = r.shop_order_items.map((x) => x.name);
+    return {
+      who: u ? `@${mask(u)}` : 'ลูกค้า', what: (items[0] ?? 'สินค้า').split(' · ')[0], when: ago(r.paid_at),
+      // การ์ดกิจกรรม: ตัวแรกของชื่อ + จุดปิดที่เหลือ · ชื่อสินค้าเต็ม (หลายชิ้น = + อีก n)
+      dots: u ? `${u[0]}${'•'.repeat(Math.min(10, Math.max(3, u.length - 1)))}` : 'ลูกค้า', initial: (u[0] ?? '?').toUpperCase(),
+      full: `${items[0] ?? 'สินค้า'}${items.length > 1 ? ` + อีก ${items.length - 1}` : ''}`,
+    };
+  });
 
   const builtin: Record<string, React.ReactNode> = {
     hero: (shop.banner_url ? (shop.banner_link
@@ -78,9 +87,7 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
           ? <a key={i} href={x.link} className="promo"><img src={x.image} alt="" loading={i > 3 ? 'lazy' : undefined} /></a>
           : <div key={i} className="promo"><img src={x.image} alt="" loading={i > 3 ? 'lazy' : undefined} /></div>)}</div>
       ),
-    live: live.length > 0 && (
-        <div className="live"><span className="live-dot" />{live.map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> ซื้อ {l.what} · {l.when}</span>)}</div>
-      ),
+    live: null, // แสดงตามแบบที่เลือก (ดู render)
     stats: (<div className="stats">
         <div className="card stat"><b className="num">{(members ?? 0).toLocaleString('th-TH')}</b><span>สมาชิก</span></div>
         <div className="card stat"><b className="num">{sold.toLocaleString('th-TH')}</b><span>ขายไปแล้ว</span></div>
@@ -118,6 +125,18 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
     ? (href.startsWith('/') ? <Link href={href} className={cls}>{inner}</Link> : <a href={href} className={cls} target="_blank" rel="noopener noreferrer">{inner}</a>)
     : <div className={cls}>{inner}</div>;
   function render(b: Block): React.ReactNode {
+    if (b.type === 'live') {
+      const list = live.slice(0, Math.min(10, Math.max(3, b.limit ?? (b.variant === 'feed' ? 5 : 4))));
+      if (!list.length) return null;
+      if (b.variant === 'feed') return (
+        <section className="hb hb-feed">
+          <div className="hb-feed-head"><div><small>STORE FEED</small><h2>{b.title || 'กิจกรรมล่าสุด'}</h2></div><span className="hb-feed-live"><i />อัปเดตสด</span></div>
+          <ul>{list.map((l, i) => <li key={i}><span className="hb-feed-av">{l.initial}</span><span className="hb-feed-txt"><b>{l.dots}</b> ซื้อ {l.full}</span><time>{l.when}</time></li>)}</ul>
+        </section>);
+      if (b.variant === 'ticker') return (
+        <div className="hb hb-marquee hb-ticker" aria-label="ลูกค้าที่เพิ่งซื้อ"><div aria-hidden>{[0, 1].map((k) => <span key={k}>{list.map((l) => `🟢 ${l.who} ซื้อ ${l.what} · ${l.when}`).join('     ')}</span>)}</div></div>);
+      return <div className="live"><span className="live-dot" />{list.slice(0, 4).map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> ซื้อ {l.what} · {l.when}</span>)}</div>;
+    }
     if (b.type in builtin) return builtin[b.type];
     if (b.type === 'featured') {
       const list = pickOf(b);
