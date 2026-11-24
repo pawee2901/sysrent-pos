@@ -164,7 +164,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   return (
     <>
       <div className="page-head"><div><h1>สินค้า</h1><p>สินค้าและแพ็กเกจที่ขายในร้าน · กดแถวเพื่อแก้ไข</p></div>
-        <div className="acts"><button type="button" className="btn" onClick={() => setPick(true)}>ระบบแบ่งจอ</button><button type="button" className="btn primary" onClick={() => { setF(blank()); setUsage(''); setUsageImgs([]); setGallery([]); setOtpApp(''); setMsg(''); }}>+ เพิ่มสินค้า</button></div></div>
+        <div className="acts"><button type="button" className="btn primary" onClick={() => { setF(blank()); setUsage(''); setUsageImgs([]); setGallery([]); setOtpApp(''); setMsg(''); }}>+ เพิ่มสินค้า</button></div></div>
       <div className="kpis">
         <div className="card kpi"><span className="lbl">เปิดขาย</span><span className="val num">{live.length}</span><span className="delta mute">จาก {products.length} สินค้า</span></div>
         <div className="card kpi"><span className="lbl">ของหมด</span><span className="val num">{live.filter((p) => !p.inStock).length}</span><span className="delta mute">{live.filter((p) => !p.inStock).map((p) => p.name).slice(0, 2).join(', ') || 'ไม่มี 👍'}</span></div>
@@ -174,7 +174,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
       <CategoriesCard categories={categories} counts={counts} />
       <section className="card">
         <div className="toolbar"><input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 ค้นหาสินค้า" /></div>
-        {!products.length ? <div className="card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีสินค้า — กด &quot;ระบบแบ่งจอ&quot; หรือ &quot;+ เพิ่มสินค้า&quot; เพื่อเริ่มต้น</p></div> : (
+        {!products.length ? <div className="card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีสินค้า — กด &quot;+ เพิ่มสินค้า&quot; เพื่อเริ่มต้น</p></div> : (
           <table className="tbl ptbl">
             <thead><tr><th>สินค้า</th><th>วิธีส่งของ</th><th className="r">ราคา</th><th>สต็อก</th><th className="r">ขายแล้ว</th><th>เปิดขาย</th><th className="r">จัดการ</th></tr></thead>
             <tbody>{shown.map((p) => (
@@ -248,12 +248,12 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
             </div>
             <label className="field"><span>วิธีส่งของ</span>
               <select className="input" value={f.fulfillment} onChange={(e) => setF({ ...f, fulfillment: e.target.value as Form['fulfillment'] })} disabled={!!editing}>
-                {/* แบ่งจอสร้างจากแม่แบบเท่านั้น · สินค้าแบ่งจอเดิมยังต้องแสดงค่าของมัน */}
-                {(f.template || f.fulfillment === 'slot') && <option value="slot">แบ่งจอ — เพิ่มบัญชีหลักที่เมนู &quot;คลังบัญชี&quot; ระบบจัดจอให้เอง</option>}
+                {/* ปิดการสร้างแบบแบ่งจอแล้ว · สินค้าแบ่งจอเดิมยังต้องแสดงค่าของมัน */}
+                {f.fulfillment === 'slot' && <option value="slot">แบ่งจอ — เพิ่มบัญชีหลักที่เมนู &quot;คลังบัญชี&quot; ระบบจัดจอให้เอง</option>}
                 <option value="stock">ส่งอัตโนมัติ — เตรียมบัญชี / รหัสไว้ก่อน ลูกค้าจ่ายแล้วได้ของทันที</option>
                 <option value="manual">สั่งทำ — ลูกค้าจ่ายแล้วรอร้านทำให้ ส่งของที่หน้าออเดอร์ (แท็บ รอส่ง)</option>
               </select>
-              {!f.id && !f.template && <small className="faint" style={{ fontSize: 12 }}>ต้องการขายแบบแบ่งจอ ให้ปิดหน้านี้แล้วกด &quot;ระบบแบ่งจอ&quot;</small>}</label>
+</label>
             <label className="field"><span>ขอข้อมูลจากลูกค้าตอนสั่ง (ไม่บังคับ)</span><input className="input" value={f.askInfo} maxLength={60} placeholder="เช่น อีเมลสำหรับเชิญเข้าครอบครัว" onChange={(e) => setF({ ...f, askInfo: e.target.value })} />
               <small className="faint" style={{ fontSize: 12 }}>ใส่หัวข้อแล้วลูกค้าต้องกรอกในตะกร้าก่อนจ่าย · ดูได้ในหน้าออเดอร์</small></label>
             <label className="field"><span>รายละเอียด (ลูกค้าเห็นก่อนซื้อ)</span><textarea className="input" rows={4} value={f.description} maxLength={3000} onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
