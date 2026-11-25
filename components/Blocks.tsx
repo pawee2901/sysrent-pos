@@ -22,12 +22,12 @@ const ago = (iso: string) => {
 function Card({ p }: { p: Product }) {
   const compare = Math.max(0, ...p.options.map((o) => o.compareAt ?? 0));
   return (
-    <Link href={to(`/p/${p.id}`)} className={`card pcard${p.inStock ? '' : ' out'}`}>
-      <div className="pcard-img"><AppLogo image={p.image} template={p.template} name={p.name} size="xl" />{p.badge && <span className="pill accent plain tag">{p.badge}</span>}</div>
+    <Link href={to(`/p/${p.id}`)} className={`card pcard${p.inStock || p.preorder ? '' : ' out'}`}>
+      <div className="pcard-img"><AppLogo image={p.image} template={p.template} name={p.name} size="xl" />{!p.inStock && p.preorder ? <span className="pill warn tag">📦 พรีออเดอร์</span> : p.badge && <span className="pill accent plain tag">{p.badge}</span>}</div>
       <div className="pcard-body">
         <span className="pcard-name">{p.name}</span>
         <span className="pcard-price">{p.from !== null && <>{p.options.length > 1 && <small>เริ่ม </small>}{baht(p.from)}</>}{compare > (p.from ?? 0) && <s className="faint" style={{ fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{baht(compare)}</s>}</span>
-        <span className="pcard-meta"><span>{p.left === null ? 'พร้อมส่ง' : p.left ? `เหลือ ${p.left}` : 'หมด'}</span><span>ขายแล้ว {p.sold.toLocaleString('th-TH')}</span></span>
+        <span className="pcard-meta"><span>{p.left === null ? 'พร้อมส่ง' : p.left ? `เหลือ ${p.left}` : p.preorder ? 'เปิดจอง' : 'หมด'}</span><span>ขายแล้ว {p.sold.toLocaleString('th-TH')}</span></span>
       </div>
     </Link>
   );

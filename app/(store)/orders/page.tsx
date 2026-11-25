@@ -67,7 +67,7 @@ export default async function Orders() {
         const app = otp.get(i.product_id), emails = otpMail.get(i.id) ?? [];
         return {
           otp: app && emails.length && i.status === 'delivered' ? { ...app, emails } : null,
-          id: i.id, name: i.name, total: Number(i.total), queued: i.status === 'queued', delivered: i.status === 'delivered' ? i.delivered : null,
+          id: i.id, name: i.name, total: Number(i.total), queued: i.status === 'queued', pre: i.status === 'queued' && i.fulfillment === 'stock', delivered: i.status === 'delivered' ? i.delivered : null,
           warranty: ends[k] ? `${thDate(ends[k]!)}` : null, usage: p?.usage ?? '', usageImages: p?.usageImages ?? [],
           sub: sub ? { id: sub.id, active: sub.status === 'active', startsAt: sub.starts_at, endsAt: sub.ends_at, productId: sub.shop_products?.id ?? '', image: sub.shop_products?.image ?? '', template: sub.shop_products?.template ?? '' } : null,
         };

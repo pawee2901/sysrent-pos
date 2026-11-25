@@ -11,7 +11,7 @@ import { Delivered } from '@/components/Delivered';
 import { markPlain } from '@/lib/fields';
 
 type OptF = { id?: string; name: string; price: string; compare_at: string; cost: string; duration_days: string; agent_price: string; active: boolean };
-type Form = { id?: string; name: string; category: string; description: string; image: string; template: string; fulfillment: 'stock' | 'slot' | 'manual'; badge: string; askInfo: string; active: boolean; options: OptF[] };
+type Form = { id?: string; name: string; category: string; description: string; image: string; template: string; fulfillment: 'stock' | 'slot' | 'manual'; badge: string; askInfo: string; active: boolean; options: OptF[]; preorder: boolean; preorderNote: string; preorderLimit: string };
 const num = (s: string) => (s.trim() === '' ? null : Number(s));
 type StockForm = { optionId: string; mode: 'fields' | 'block'; text: string; repeat: string; cols: string[]; rows: string[][]; otp: string[]; otpAll: string };
 const DEFAULT_COLS = ['อีเมล', 'รหัสผ่าน', 'โปรไฟล์'];
@@ -45,9 +45,9 @@ function stockCount(st: StockForm) {
   const n = new Set(t.split(/^\s*-{3,}\s*$/m).map((s) => s.replace(/^\n+|\s+$/g, '')).filter((s) => s.trim())).size * Math.max(1, Number(st.repeat) || 1);
   return `จะเพิ่ม ${n.toLocaleString('th-TH')} ชิ้น`;
 }
-const blank = (): Form => ({ name: '', category: '', description: '', image: '', template: '', fulfillment: 'stock', badge: '', askInfo: '', active: true, options: [{ name: '30 วัน', price: '', compare_at: '', cost: '', duration_days: '30', agent_price: '', active: true }] });
+const blank = (): Form => ({ name: '', category: '', description: '', image: '', template: '', fulfillment: 'stock', badge: '', askInfo: '', active: true, preorder: false, preorderNote: '', preorderLimit: '', options: [{ name: '30 วัน', price: '', compare_at: '', cost: '', duration_days: '30', agent_price: '', active: true }] });
 const fromProduct = (p: Product, ap: Record<string, number> = {}): Form => ({
-  id: p.id, name: p.name, category: p.category, description: p.description, image: p.image, template: p.template, fulfillment: p.fulfillment, badge: p.badge, askInfo: p.askInfo, active: p.active,
+  id: p.id, name: p.name, category: p.category, description: p.description, image: p.image, template: p.template, fulfillment: p.fulfillment, badge: p.badge, askInfo: p.askInfo, active: p.active, preorder: p.preorder, preorderNote: p.preorderNote, preorderLimit: p.preorderLimit ? String(p.preorderLimit) : '',
   options: p.options.map((o) => ({ id: o.id, name: o.name, price: String(o.price), compare_at: o.compareAt?.toString() ?? '', cost: o.cost?.toString() ?? '', duration_days: o.durationDays?.toString() ?? '', agent_price: ap[o.id]?.toString() ?? '', active: o.active })),
 });
 
@@ -93,6 +93,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
     setBusy(true); setMsg('');
     const r = await api<{ id: string }>('/api/admin/products', { action: 'save', id: f.id, data: {
       name: f.name, category: f.category, description: f.description, image: f.image, template: f.template, fulfillment: f.fulfillment, badge: f.badge, ask_info: f.askInfo, active: f.active,
+      preorder: f.fulfillment === 'stock' && f.preorder, preorder_note: f.preorderNote.trim(), preorder_limit: f.preorderLimit ? Number(f.preorderLimit) : null,
       options: f.options.map((o) => ({ id: o.id, name: o.name, price: Number(o.price), compare_at: num(o.compare_at), cost: num(o.cost), duration_days: num(o.duration_days), agent_price: num(o.agent_price), active: o.active })),
     } });
     setBusy(false);
@@ -228,6 +229,13 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                 <option value="manual">สั่งทำ — ลูกค้าจ่ายแล้วรอร้านทำให้ ส่งของที่หน้าออเดอร์ (แท็บ รอส่ง)</option>
               </select>
 </label>
+            {f.fulfillment === 'stock' && (
+              <div className="field preorder-box"><label className="preorder-on"><input type="checkbox" checked={f.preorder} onChange={(e) => setF({ ...f, preorder: e.target.checked })} /><span><b>📦 เปิดพรีออเดอร์เมื่อของหมด</b><small>ลูกค้าจองและจ่ายได้ตอนสต็อกเป็น 0 · เติมสต็อกเมื่อไหร่ ระบบส่งให้คนที่จองก่อนอัตโนมัติ</small></span></label>
+                {f.preorder && <div className="two">
+                  <input className="input" value={f.preorderNote} maxLength={80} placeholder="บอกลูกค้า เช่น ได้ของภายใน 1-2 วัน" aria-label="ข้อความพรีออเดอร์" onChange={(e) => setF({ ...f, preorderNote: e.target.value })} />
+                  <input className="input" inputMode="numeric" value={f.preorderLimit} placeholder="รับจองสูงสุด (ว่าง = ไม่จำกัด)" aria-label="รับจองสูงสุด" onChange={(e) => setF({ ...f, preorderLimit: e.target.value.replace(/\D/g, '').slice(0, 5) })} />
+                </div>}</div>
+            )}
             <label className="field"><span>ขอข้อมูลจากลูกค้าตอนสั่ง (ไม่บังคับ)</span><input className="input" value={f.askInfo} maxLength={60} placeholder="เช่น อีเมลสำหรับเชิญเข้าครอบครัว" onChange={(e) => setF({ ...f, askInfo: e.target.value })} />
               <small className="faint" style={{ fontSize: 12 }}>ใส่หัวข้อแล้วลูกค้าต้องกรอกในตะกร้าก่อนจ่าย · ดูได้ในหน้าออเดอร์</small></label>
             <label className="field"><span>รายละเอียด (ลูกค้าเห็นก่อนซื้อ)</span><textarea className="input" rows={4} value={f.description} maxLength={3000} onChange={(e) => setF({ ...f, description: e.target.value })} /></label>

@@ -5,6 +5,8 @@ export type Option = { id: string; name: string; price: number; compareAt: numbe
 export type Product = {
   id: string; name: string; category: string; description: string; image: string; template: string; badge: string; askInfo: string;
   fulfillment: 'stock' | 'slot' | 'manual'; options: Option[]; from: number | null; left: number | null; inStock: boolean; sold: number; active: boolean; sort: number;
+  /** พรีออเดอร์: ของหมดแล้วยังสั่งจองได้ (เฉพาะส่งอัตโนมัติ) · ข้อความบอกลูกค้า · รับจองสูงสุด */
+  preorder: boolean; preorderNote: string; preorderLimit: number | null;
 };
 
 type Row = {
@@ -24,11 +26,14 @@ export async function loadProducts(shopId: string, opts: { id?: string; includeH
   const rows = (data ?? []) as unknown as Row[];
   const optionIds = rows.flatMap((r) => r.shop_options.map((o) => o.id));
   const productIds = rows.map((r) => r.id);
-  const [stock, slots, sold] = await Promise.all([
+  const [stock, slots, sold, pre] = await Promise.all([
     optionIds.length ? d.from('shop_option_stock').select('option_id, available').in('option_id', optionIds) : Promise.resolve({ data: [] }),
     productIds.length ? d.from('shop_slots').select('shop_accounts!inner(product_id, renew_at)').eq('status', 'free').eq('shop_accounts.status', 'active').in('shop_accounts.product_id', productIds).limit(5000) : Promise.resolve({ data: [] }),
     productIds.length ? d.from('shop_order_items').select('product_id, qty').in('product_id', productIds).eq('status', 'delivered').limit(20000) : Promise.resolve({ data: [] }),
+    // พรีออเดอร์ (ยังไม่รัน 0040 = error → ไม่มีพรีออเดอร์)
+    productIds.length ? d.from('shop_products').select('id, preorder, preorder_note, preorder_limit').in('id', productIds) : Promise.resolve({ data: [] }),
   ]);
+  const preBy = new Map(((pre.data ?? []) as { id: string; preorder: boolean; preorder_note: string; preorder_limit: number | null }[]).map((x) => [x.id, x]));
   const avail = new Map((stock.data ?? []).map((s) => [s.option_id as string, Number(s.available)]));
   // จอว่างต่อสินค้า พร้อมวันหมดอายุของบัญชี · แพ็กเกจขายได้เฉพาะเมื่อวันของบัญชีเหลือพอ
   const free = new Map<string, (string | null)[]>();
@@ -54,6 +59,7 @@ export async function loadProducts(shopId: string, opts: { id?: string; includeH
       id: r.id, name: r.name, category: r.category, description: r.description, image: r.image, template: r.template, badge: r.badge, askInfo: r.ask_info ?? '', fulfillment: r.fulfillment,
       options, from: live.length ? Math.min(...live.map((o) => o.price)) : null, left,
       inStock: live.length > 0 && (left === null || left > 0), sold: soldBy.get(r.id) ?? 0, active: r.active, sort: r.sort,
+      preorder: r.fulfillment === 'stock' && !!preBy.get(r.id)?.preorder, preorderNote: preBy.get(r.id)?.preorder_note ?? '', preorderLimit: preBy.get(r.id)?.preorder_limit ?? null,
     };
   });
 }

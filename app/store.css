@@ -817,3 +817,6 @@ a.hb-link:hover { transform: translateY(-2px); border-color: var(--accent); }
 .app-install-acts small { font-size: 12px; max-width: 280px; }
 .app-install-help { flex-basis: 100%; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-size: 14px; }
 .app-install-help ol { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 4px; }
+/* พรีออเดอร์ */
+.preorder-note { display: grid; gap: 4px; margin-top: 12px; padding: 12px 14px; border-radius: 14px; border: 1px dashed color-mix(in srgb, var(--warn) 60%, transparent); background: color-mix(in srgb, var(--warn) 10%, var(--surface)); font-size: 14px; }
+.preorder-note span { color: var(--muted); font-size: 13px; }

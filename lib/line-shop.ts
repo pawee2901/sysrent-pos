@@ -294,7 +294,7 @@ async function showCart(shop: Shop, accent: string, s: Sess): Promise<LineMessag
 // ---------- ชำระเงิน ----------
 const ORDER_ERR: Record<string, string> = {
   EMPTY_CART: 'ตะกร้ายังว่างอยู่', CART_TOO_BIG: 'สั่งได้สูงสุด 20 รายการ', OPTION_UNAVAILABLE: 'มีสินค้าในตะกร้าที่ปิดขายแล้ว กรุณาลบออก',
-  OUT_OF_STOCK: 'สินค้าหมดหรือเหลือไม่พอ', NEED_INFO: 'กรุณากรอกข้อมูลที่ร้านขอ', ORDER_EXPIRED: 'ออเดอร์หมดเวลาชำระ กรุณาสั่งใหม่',
+  OUT_OF_STOCK: 'สินค้าหมดหรือเหลือไม่พอ', PREORDER_FULL: 'สินค้านี้รับจองเต็มแล้ว', NEED_INFO: 'กรุณากรอกข้อมูลที่ร้านขอ', ORDER_EXPIRED: 'ออเดอร์หมดเวลาชำระ กรุณาสั่งใหม่',
   INSUFFICIENT_FUNDS: 'ยอดเงินในกระเป๋าไม่พอ', NOT_PENDING: 'ออเดอร์นี้ชำระเงินแล้ว', ORDER_NOT_FOUND: 'ไม่พบออเดอร์',
 };
 const orderErr = (m = '') => { const [code, name] = m.split(':'); const t = ORDER_ERR[code.trim()]; if (!t) console.error('[line-shop] db', m); return t ? `${t}${name ? ` (${name.trim()})` : ''}` : 'ทำรายการไม่สำเร็จ กรุณาลองใหม่'; };

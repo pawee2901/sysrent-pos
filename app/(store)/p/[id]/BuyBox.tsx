@@ -10,17 +10,19 @@ type Opt = { id: string; name: string; price: number; compareAt: number | null; 
 type P = { id: string; name: string; image: string; template: string; fulfillment: string; askInfo: string };
 
 /** เลือกแพ็กเกจ → ใส่ตะกร้า / ซื้อเลย (ไปหน้าจ่ายเงินทันที) */
-export function BuyBox({ product, options, open, children }: { product: P; options: Opt[]; open: boolean; children?: React.ReactNode }) {
+export function BuyBox({ product, options, open, preorder = null, children }: { product: P; options: Opt[]; open: boolean; preorder?: { note: string } | null; children?: React.ReactNode }) {
   const router = useRouter();
   const cart = useCart();
   const first = Math.max(0, options.findIndex((o) => o.stock === null || o.stock > 0));
+  /** แพ็กเกจนี้ของหมด แต่ร้านเปิดพรีออเดอร์ = จองได้ */
+  const isPre = (x?: Opt) => !!preorder && !!x && product.fulfillment === 'stock' && (x.stock ?? 0) < 1;
   const [pick, setPick] = useState(first);
   const [msg, setMsg] = useState('');
   const [buying, setBuying] = useState(false);
   const [coupon, setCoupon] = useState('');
   const [couponOpen, setCouponOpen] = useState(false);
   const o = options[pick];
-  const max = !o ? 0 : product.fulfillment === 'stock' ? Math.min(20, o.stock ?? 0) : o.stock === 0 ? 0 : 1;
+  const max = !o ? 0 : isPre(o) ? 20 : product.fulfillment === 'stock' ? Math.min(20, o.stock ?? 0) : o.stock === 0 ? 0 : 1;
 
   if (!options.length) return <p className="muted">สินค้านี้ยังไม่เปิดขาย</p>;
   function put(): boolean {
@@ -49,15 +51,16 @@ export function BuyBox({ product, options, open, children }: { product: P; optio
     <>
       <div className="plans" role="radiogroup" aria-label="แพ็กเกจ">
         {options.map((x, i) => {
-          const out = x.stock !== null && x.stock < 1;
+          const out = x.stock !== null && x.stock < 1 && !isPre(x);
           return (
             <button key={x.id} type="button" role="radio" aria-checked={i === pick} disabled={out} className={`plan${i === pick ? ' on' : ''}`} onClick={() => { setPick(i); setMsg(''); }} style={out ? { opacity: .5 } : undefined}>
-              <span className="muted" style={{ fontSize: 14 }}>{x.name}{out ? ' · หมด' : ''}</span><b>{baht(x.price)}</b>{x.compareAt && x.compareAt > x.price ? <s>{baht(x.compareAt)}</s> : <s>&nbsp;</s>}
+              <span className="muted" style={{ fontSize: 14 }}>{x.name}{out ? ' · หมด' : isPre(x) ? ' · พรีออเดอร์' : ''}</span><b>{baht(x.price)}</b>{x.compareAt && x.compareAt > x.price ? <s>{baht(x.compareAt)}</s> : <s>&nbsp;</s>}
             </button>
           );
         })}
       </div>
       {children}
+      {isPre(o) && <div className="preorder-note" role="note"><b>📦 สินค้านี้เปิดพรีออเดอร์</b><span>จ่ายตอนนี้เพื่อจองคิว · ร้านเติมของเมื่อไหร่ ระบบส่งรหัสให้เองทันที (จองก่อนได้ก่อน) · ยังไม่ได้ของ ร้านคืนเงินเข้ากระเป๋าได้</span>{preorder?.note && <span>⏱ {preorder.note}</span>}</div>}
       <div className="buy-panel">
         {!couponOpen ? (
           <button type="button" className="coupon-toggle" onClick={() => setCouponOpen(true)}>🏷️ มีโค้ดส่วนลด?</button>
@@ -72,7 +75,7 @@ export function BuyBox({ product, options, open, children }: { product: P; optio
         <div className="buy-bar">
           <button type="button" className="btn lg cart-btn" disabled={max < 1} onClick={() => { if (put()) setMsg('ใส่ตะกร้าแล้ว 🛒'); }}>🛒 ใส่ตะกร้า</button>
           <button type="button" className="btn primary lg buy-btn" disabled={max < 1 || buying} onClick={buyNow}>
-            {buying ? 'กำลังสร้างออเดอร์…' : <><span>ซื้อเลย</span>{o && <b>{baht(o.price)}</b>}</>}
+            {buying ? 'กำลังสร้างออเดอร์…' : <><span>{isPre(o) ? 'จองเลย' : 'ซื้อเลย'}</span>{o && <b>{baht(o.price)}</b>}</>}
           </button>
         </div>
       </div>

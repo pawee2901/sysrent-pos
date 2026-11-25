@@ -52,7 +52,7 @@ export function dbFail(message = ''): NextResponse {
   const name = i < 0 ? '' : message.slice(i + 1).trim();
   const map: Record<string, [string, number]> = {
     EMPTY_CART: ['ตะกร้ายังว่างอยู่', 400], CART_TOO_BIG: ['สั่งได้สูงสุด 20 รายการ', 400],
-    OPTION_UNAVAILABLE: ['มีสินค้าในตะกร้าที่ปิดขายแล้ว กรุณาลบออกแล้วลองใหม่', 409], OUT_OF_STOCK: [`${name || 'สินค้า'} หมดหรือเหลือไม่พอ`, 409],
+    OPTION_UNAVAILABLE: ['มีสินค้าในตะกร้าที่ปิดขายแล้ว กรุณาลบออกแล้วลองใหม่', 409], OUT_OF_STOCK: [`${name || 'สินค้า'} หมดหรือเหลือไม่พอ`, 409], PREORDER_FULL: [`${name || 'สินค้า'} รับจองเต็มแล้ว`, 409],
     ORDER_NOT_FOUND: ['ไม่พบออเดอร์', 404], NOT_PENDING: ['ออเดอร์นี้ชำระเงินแล้ว', 409], ORDER_EXPIRED: ['ออเดอร์หมดเวลาชำระ (30 นาที) กรุณาสั่งใหม่', 410],
     INSUFFICIENT_FUNDS: ['ยอดเงินในกระเป๋าไม่พอ', 402], DUPLICATE_SLIP: ['สลิปนี้ถูกใช้ไปแล้ว', 409],
     NEED_INFO: [`กรุณากรอกข้อมูลที่ร้านขอสำหรับ ${name || 'สินค้า'} ในตะกร้า`, 400],

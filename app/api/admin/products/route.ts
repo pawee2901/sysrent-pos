@@ -3,8 +3,12 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { body, fail, requireAdmin } from '@/lib/api';
 import { shopCategories } from '@/lib/categories';
-import { markPlain } from '@/lib/fields';
+import { markPlain, stripPlain } from '@/lib/fields';
 import { can } from '@/lib/plan';
+import { after } from 'next/server';
+import { pushItem } from '@/lib/push';
+import { lineItemNotice } from '@/lib/line-shop';
+import { sendItemMail } from '@/lib/customer-mail';
 
 const SHORT_PLANS = [25, 15, 7, 3];
 const httpsUrl = z.string().trim().max(500).refine((u) => /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https');
@@ -32,6 +36,8 @@ const prod = z.object({
   sort: z.number().int().min(-999).max(999).default(0),
   active: z.boolean().default(true),
   options: z.array(opt).min(1, 'ต้องมีอย่างน้อย 1 แพ็กเกจ').max(12),
+  // พรีออเดอร์ (เฉพาะส่งอัตโนมัติ · เก็บแยก: ยังไม่รัน 0040 ก็บันทึกสินค้าได้)
+  preorder: z.boolean().default(false), preorder_note: z.string().trim().max(80).default(''), preorder_limit: z.number().int().min(1).max(99999).nullable().default(null),
 });
 const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('save'), id: z.string().uuid().optional(), data: prod }),
@@ -62,7 +68,7 @@ export async function POST(req: Request) {
   const x = b.data;
 
   if (x.action === 'save') {
-    const { options, ...p } = x.data;
+    const { options, preorder, preorder_note, preorder_limit, ...p } = x.data;
     let pid = x.id;
     if (pid) {
       if (!(await own(pid))) return fail('ไม่พบสินค้า', 404);
@@ -74,6 +80,10 @@ export async function POST(req: Request) {
       const { data, error } = await d.from('shop_products').insert({ ...p, shop_id: sid }).select('id').single();
       if (error || !data) return fail('สร้างสินค้าไม่สำเร็จ', 500);
       pid = data.id;
+    }
+    {
+      const { error: pe } = await d.from('shop_products').update({ preorder: p.fulfillment === 'stock' && preorder, preorder_note, preorder_limit }).eq('id', pid);
+      if (pe && preorder) return fail(/preorder/.test(pe.message) ? 'บันทึกสินค้าแล้ว แต่ยังเปิดพรีออเดอร์ไม่ได้: รัน SQL 0040_preorder.sql ก่อน' : 'บันทึกพรีออเดอร์ไม่สำเร็จ', 500);
     }
     // แพ็กเกจ: แก้ตัวเดิม / เพิ่มตัวใหม่ / ตัวที่หายไป = ลบ (ถ้ามีออเดอร์แล้วปิดขายแทน)
     const { data: cur } = await d.from('shop_options').select('id').eq('product_id', pid);
@@ -202,5 +212,19 @@ export async function POST(req: Request) {
   const withOtp = items.some((c) => pairs.get(c));
   const { error } = await d.from('shop_stock').insert(items.map((content) => ({ option_id: x.optionId, content: x.plain ? markPlain(content) : content, ...(withOtp ? { otp_email: pairs.get(content) || null } : {}) })));
   if (error) return fail(withOtp && error.message.includes('otp_email') ? 'ยังไม่ได้รัน SQL 0032_product_otp_button.sql (เมลรับ OTP)' : 'เพิ่มสต็อกไม่สำเร็จ', 500);
-  return NextResponse.json({ ok: true, notice: `เพิ่มสต็อกแล้ว ${items.length} ชิ้น` });
+  // คิวพรีออเดอร์ของแพ็กเกจนี้ → ส่งของให้ตามลำดับ แล้วแจ้งลูกค้า (แอป · LINE · อีเมล)
+  const { data: filled } = await d.rpc('shop_fill_preorders', { p_option: x.optionId }); // ยังไม่รัน 0040 = error → ข้าม
+  const done = ((filled ?? []) as unknown[]).map((v) => String(typeof v === 'object' && v ? Object.values(v)[0] : v));
+  if (done.length) {
+    const shop = a.shop;
+    after(async () => {
+      for (const id of done) {
+        await pushItem(shop, id, 'deliver').catch((e) => console.error('[push] preorder', e));
+        const { data: it } = await d.from('shop_order_items').select('delivered').eq('id', id).maybeSingle();
+        await lineItemNotice(shop, id, 'deliver', stripPlain(String(it?.delivered ?? ''))).catch((e) => console.error('[line] preorder', e));
+        if (can(shop.plan, 'mail')) await sendItemMail(shop, id, 'deliver', '').catch((e) => console.error('[mail] preorder', e));
+      }
+    });
+  }
+  return NextResponse.json({ ok: true, notice: `เพิ่มสต็อกแล้ว ${items.length} ชิ้น${done.length ? ` · ส่งให้ลูกค้าที่พรีออเดอร์ไว้ ${done.length} รายการ` : ''}` });
 }

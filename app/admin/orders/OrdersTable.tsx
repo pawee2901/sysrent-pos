@@ -74,7 +74,8 @@ export function OrdersTable({ rows, mailOn }: { rows: AdminOrder[]; mailOn: bool
               const is = ITEM_STATUS[i.status] ?? ITEM_STATUS.pending;
               return (
                 <div key={i.id} className="card" style={{ padding: 14, display: 'grid', gap: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><b>{i.name} ×{i.qty}</b><span className={`pill ${is.tone}`}>{is.label}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><b>{i.name} ×{i.qty}</b><span className={`pill ${is.tone}`}>{i.status === 'queued' && i.fulfillment === 'stock' ? '📦 พรีออเดอร์ · รอเติมสต็อก' : is.label}</span></div>
+                  {i.status === 'queued' && i.fulfillment === 'stock' && <small className="muted">เติมสต็อกแพ็กเกจนี้ที่หน้าสินค้า ระบบจะส่งให้ลูกค้าเองตามคิว · หรือส่งเอง / คืนเงินด้านล่าง</small>}
                   {i.customer_info && <div className="delivered" style={{ background: 'var(--accent-soft)' }}>📝 ลูกค้ากรอก: {i.customer_info}</div>}
                   {i.delivered && <div className="delivered">{i.delivered}</div>}
                   {i.status === 'queued' && <DeliverBox key={i.id} busy={busy} refund={refundOf(open, i)} mailOn={mailOn} onDeliver={(c, mail) => act(i.id, 'deliver', c, mail)} onRefund={(why) => act(i.id, 'refund', why)} />}

@@ -33,15 +33,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <h1>{p.name}</h1>
           <div className="pd-sub">
             <span>ขายแล้ว {p.sold.toLocaleString('th-TH')}</span>
-            {p.inStock ? <span className="pill ok">{p.left === null ? 'พร้อมส่ง' : `พร้อมส่ง ${p.left}`}</span> : <span className="pill bad">หมดชั่วคราว</span>}
+            {p.inStock ? <span className="pill ok">{p.left === null ? 'พร้อมส่ง' : `พร้อมส่ง ${p.left}`}</span> : p.preorder ? <span className="pill warn">📦 เปิดพรีออเดอร์</span> : <span className="pill bad">หมดชั่วคราว</span>}
             {p.from !== null && <span>เริ่ม {baht(p.from)}</span>}
           </div>
-          <BuyBox open={shopOpen(shop)} product={{ id: p.id, name: p.name, image: p.image, template: p.template, fulfillment: p.fulfillment, askInfo: p.askInfo }} options={p.options}>
+          <BuyBox open={shopOpen(shop)} product={{ id: p.id, name: p.name, image: p.image, template: p.template, fulfillment: p.fulfillment, askInfo: p.askInfo }} options={p.options} preorder={p.preorder ? { note: p.preorderNote } : null}>
             {/* รายละเอียดอยู่เหนือปุ่ม ใส่ตะกร้า / ซื้อเลย → อ่านเงื่อนไขก่อนกดซื้อ */}
             {p.description && <div className="card desc"><h3>รายละเอียด</h3><p className="muted" style={{ margin: 0, whiteSpace: 'pre-line' }}>{p.description}</p></div>}
           </BuyBox>
           <div className="perks">
-            <div className="card perk"><i>⚡</i><span>{p.fulfillment === 'manual' ? 'สินค้าสั่งทำ: จ่ายแล้วร้านทำให้ รับของได้ที่หน้าประวัติการซื้อ' : 'จ่ายแล้วได้รหัสทันที ไม่ต้องรอแอดมิน'}</span></div>
+            <div className="card perk"><i>⚡</i><span>{p.fulfillment === 'manual' ? 'สินค้าสั่งทำ: จ่ายแล้วร้านทำให้ รับของได้ที่หน้าประวัติการซื้อ' : !p.inStock && p.preorder ? 'พรีออเดอร์: จองแล้วระบบส่งรหัสให้เองทันทีที่ร้านเติมของ (จองก่อนได้ก่อน)' : 'จ่ายแล้วได้รหัสทันที ไม่ต้องรอแอดมิน'}</span></div>
             <div className="card perk"><i>🛡️</i><span>รับประกันตลอดอายุแพ็กเกจ</span></div>
             <div className="card perk"><i>🔑</i><span>ดูรหัสได้เองที่ &quot;บัญชีของฉัน&quot;</span></div>
           </div>

@@ -15,7 +15,9 @@ import { OtpButton } from '@/components/OtpButton';
 import type { OtpButton as OtpInfo } from '@/lib/otp-button';
 
 export type HItem = {
-  id: string; name: string; total: number; queued: boolean; delivered: string | null; warranty: string | null;
+  id: string; name: string; total: number; queued: boolean;
+  /** พรีออเดอร์ที่รอร้านเติมของ (ส่งอัตโนมัติ + ยังรอคิว) */
+  pre?: boolean; delivered: string | null; warranty: string | null;
   usage: string; usageImages: string[];
   /** ปุ่มรับ OTP (ร้านเปิดไว้ที่สินค้านี้) */
   otp: OtpInfo | null;
@@ -36,8 +38,10 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
   const pending = o.status === 'pending';
   const paid = o.status === 'completed' || o.status === 'processing';
   const waiting = o.items.filter((i) => i.queued).length;
+  const preWait = o.items.filter((i) => i.queued && i.pre).length;
   const ready = o.items.some((i) => i.delivered || i.sub);
   const state = pending ? ['รอชำระเงิน', 'warn'] : o.status === 'cancelled' ? ['ยกเลิกแล้ว', 'muted'] : o.status === 'refunded' ? ['คืนเงินแล้ว', 'muted']
+    : preWait && preWait === waiting ? [`📦 พรีออเดอร์ ${preWait} รายการ — ร้านเติมของเมื่อไหร่ ได้รหัสที่นี่ทันที`, 'warn']
     : waiting === o.items.length ? ['⏳ ร้านกำลังทำให้ — ทำเสร็จแล้วรับของได้ที่นี่', 'warn']
     : waiting > 0 ? [`⏳ ได้รับแล้วบางรายการ · รอร้านทำอีก ${waiting} รายการ`, 'warn']
     : o.expired ? ['หมดอายุแล้ว', 'bad'] : ['ยังไม่หมดอายุ', 'ok'];
