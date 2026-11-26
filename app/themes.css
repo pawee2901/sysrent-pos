@@ -542,3 +542,208 @@
 .store[data-style="sticker"].theme-mini .tm-row .card:first-child { transform: rotate(-2deg); }
 .store[data-style="sticker"].theme-mini .tm-row .card:last-child { transform: rotate(2deg); }
 .store[data-style="kitty"] .hb-scroll, .store[data-style="sticker"] .hb-scroll { padding-top: 16px; }
+
+/* =========================================================
+   คาร์บอนสปอร์ต: ลายคาร์บอน · แถบแข่งสีร้าน · ปุ่มเฉียง · หัวข้อตัวหนาเอียง
+   ========================================================= */
+.store[data-style="carbon"] {
+  color-scheme: dark;
+  --bg: #0b0c0e; --surface: #15171b; --surface-2: #1d2026; --line: #2a2e36;
+  --text: #f2f3f5; --muted: #a3a8b3; --faint: #6b717d; --ink: #0b0c0e;
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, #15171b);
+  --grad: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #fff));
+  --glow: 0 8px 22px -10px color-mix(in srgb, var(--accent) 80%, transparent);
+  --radius: 6px; --radius-sm: 4px;
+  --shadow: 0 10px 26px -16px rgba(0, 0, 0, .9); --shadow-lg: 0 24px 50px -22px rgba(0, 0, 0, .95);
+  --font: 'Kanit', 'IBM Plex Sans Thai', sans-serif; --font-head: 'Kanit', sans-serif;
+}
+.store[data-style="carbon"] .shop-bg[data-bg="default"] { background:
+  radial-gradient(70% 50% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+  repeating-linear-gradient(45deg, rgba(255, 255, 255, .025) 0 4px, transparent 4px 8px),
+  repeating-linear-gradient(-45deg, rgba(0, 0, 0, .35) 0 4px, transparent 4px 8px), var(--bg); }
+.store[data-style="carbon"] h1, .store[data-style="carbon"] h2, .store[data-style="carbon"] h3 { font-weight: 700; font-style: italic; letter-spacing: .01em; text-transform: uppercase; }
+.store[data-style="carbon"] .top { background: rgba(11, 12, 14, .85); border-bottom: 2px solid var(--accent); }
+.store[data-style="carbon"] .input { background: var(--surface-2); color: var(--text); border-radius: 4px; }
+.store[data-style="carbon"] .btn { background: var(--surface-2); color: var(--text); border-color: var(--line); border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.store[data-style="carbon"] .btn.primary { background: var(--accent); color: #fff; border: 0; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); padding-left: 22px; padding-right: 22px; box-shadow: none; transition: filter .15s, transform .15s; }
+.store[data-style="carbon"] .btn.primary:hover { filter: brightness(1.12); transform: translateX(2px); }
+.store[data-style="carbon"] .btn.ghost { background: none; border-color: transparent; }
+.store[data-style="carbon"] .announce { background: var(--accent); font-weight: 700; font-style: italic; letter-spacing: .04em; }
+.store[data-style="carbon"] .shop-mark, .store[data-style="carbon"] .badge, .store[data-style="carbon"] .avatar { background: var(--accent); border-radius: 4px; box-shadow: none; }
+.store[data-style="carbon"] .card { border-radius: 6px; }
+.store[data-style="carbon"] .hero { border-radius: 8px; border: 1px solid var(--line); box-shadow: var(--shadow-lg);
+  background: linear-gradient(100deg, transparent 58%, var(--accent) 58%, var(--accent) 61%, transparent 61%, transparent 63%, color-mix(in srgb, var(--accent) 60%, transparent) 63%, color-mix(in srgb, var(--accent) 60%, transparent) 64.5%, transparent 64.5%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .03) 0 4px, transparent 4px 8px), #121418; }
+.store[data-style="carbon"] .hero::after { display: none; }
+.store[data-style="carbon"] .hero h1 em { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.store[data-style="carbon"] .hero .pill.accent { background: var(--accent); color: #fff; border: 0; border-radius: 3px; font-style: italic; }
+.store[data-style="carbon"] .hero .btn.primary { background: var(--accent); color: #fff; }
+.store[data-style="carbon"] .hero-art .applogo { border-radius: 8px; animation: none; transform: skewX(-6deg); border: 2px solid var(--line); }
+.store[data-style="carbon"] .sec-head h2 { padding-left: 14px; border-left: 5px solid var(--accent); }
+.store[data-style="carbon"] .chip { border-radius: 3px; background: var(--surface); color: var(--muted); text-transform: uppercase; font-size: 13px; }
+.store[data-style="carbon"] .chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.store[data-style="carbon"] .pcard { border-radius: 6px; border-top: 3px solid var(--accent); }
+.store[data-style="carbon"] .pcard:hover { transform: translateY(-4px); box-shadow: var(--glow); }
+.store[data-style="carbon"] .pcard-img { border-radius: 4px; }
+.store[data-style="carbon"] .pcard-price, .store[data-style="carbon"] .stat b { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; font-style: italic; }
+.store[data-style="carbon"] .how-n { border-radius: 4px; background: var(--accent); box-shadow: none; font-style: italic; }
+.store[data-style="carbon"] .tabbar { background: rgba(21, 23, 27, .92); border-color: var(--line); border-radius: 8px; }
+.store[data-style="carbon"] .banner, .store[data-style="carbon"] .popup { border-radius: 8px; }
+
+/* =========================================================
+   แทคติคอล: เขียวทหาร · ลายพราง · ตัวหนังสือแบบป้าย · มุมกรอบเล็ง
+   ========================================================= */
+.store[data-style="tactical"] {
+  color-scheme: dark;
+  --bg: #15180f; --surface: #1d2116; --surface-2: #262b1d; --line: #3a412c;
+  --text: #e8e6d6; --muted: #a8a68e; --faint: #757360; --ink: #15180f;
+  --tac: #c9b458;
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, #1d2116);
+  --grad: linear-gradient(var(--accent), var(--accent)); --glow: none;
+  --radius: 4px; --radius-sm: 3px;
+  --shadow: 0 8px 20px -14px rgba(0, 0, 0, .9); --shadow-lg: 0 20px 40px -20px rgba(0, 0, 0, .95);
+  --font-head: 'Chakra Petch', 'IBM Plex Sans Thai', sans-serif;
+}
+.store[data-style="tactical"] .shop-bg[data-bg="default"] { background:
+  radial-gradient(40% 30% at 20% 30%, rgba(74, 84, 52, .45), transparent 70%),
+  radial-gradient(35% 25% at 70% 60%, rgba(52, 58, 36, .55), transparent 70%),
+  radial-gradient(30% 22% at 85% 15%, rgba(92, 84, 52, .35), transparent 70%),
+  radial-gradient(28% 24% at 35% 85%, rgba(40, 46, 28, .6), transparent 70%), var(--bg); }
+.store[data-style="tactical"] h1, .store[data-style="tactical"] h2, .store[data-style="tactical"] h3 { font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.store[data-style="tactical"] .top { background: rgba(21, 24, 15, .9); border-bottom: 1px solid var(--line); }
+.store[data-style="tactical"] .input { background: var(--surface-2); color: var(--text); border-radius: 3px; }
+.store[data-style="tactical"] .btn { background: var(--surface-2); color: var(--text); border-color: var(--line); border-radius: 3px; font-family: var(--font-head); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.store[data-style="tactical"] .btn.primary { background: var(--accent); color: #fff; border-color: var(--tac); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.store[data-style="tactical"] .btn.primary:hover { background: color-mix(in srgb, var(--accent) 85%, #fff); }
+.store[data-style="tactical"] .btn.ghost { background: none; border-color: transparent; }
+.store[data-style="tactical"] .announce { background: repeating-linear-gradient(-45deg, #2a2f1f 0 12px, #1d2116 12px 24px); color: var(--tac); font-family: var(--font-head); letter-spacing: .12em; text-transform: uppercase; }
+.store[data-style="tactical"] .shop-mark, .store[data-style="tactical"] .badge, .store[data-style="tactical"] .avatar { background: var(--accent); border-radius: 3px; box-shadow: none; }
+/* มุมกรอบเล็ง 4 มุมบนการ์ด */
+.store[data-style="tactical"] .card { border-radius: 3px; background-image:
+  linear-gradient(var(--tac), var(--tac)), linear-gradient(var(--tac), var(--tac)), linear-gradient(var(--tac), var(--tac)), linear-gradient(var(--tac), var(--tac)),
+  linear-gradient(var(--tac), var(--tac)), linear-gradient(var(--tac), var(--tac)), linear-gradient(var(--tac), var(--tac)), linear-gradient(var(--tac), var(--tac));
+  background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px;
+  background-position: 0 0, 0 0, 100% 0, 100% 0, 0 100%, 0 100%, 100% 100%, 100% 100%; background-repeat: no-repeat; }
+.store[data-style="tactical"] .hero { border-radius: 4px; border: 1px solid var(--line); box-shadow: var(--shadow-lg);
+  background: radial-gradient(60% 90% at 100% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 65%), linear-gradient(160deg, #262b1d, #15180f); }
+.store[data-style="tactical"] .hero::after { background-image: linear-gradient(rgba(201, 180, 88, .07) 1px, transparent 1px), linear-gradient(90deg, rgba(201, 180, 88, .07) 1px, transparent 1px); background-size: 24px 24px; }
+.store[data-style="tactical"] .hero h1 em { background: none; color: var(--tac); -webkit-text-fill-color: currentColor; }
+.store[data-style="tactical"] .hero .pill.accent { background: rgba(201, 180, 88, .12); color: var(--tac); border: 1px solid var(--tac); border-radius: 2px; font-family: var(--font-head); letter-spacing: .08em; }
+.store[data-style="tactical"] .hero-ticks span::before { color: var(--tac); }
+.store[data-style="tactical"] .hero-art .applogo { border-radius: 4px; animation: none; border: 1px solid var(--tac); }
+.store[data-style="tactical"] .sec-head h2::before { content: '// '; color: var(--tac); }
+.store[data-style="tactical"] .chip { border-radius: 2px; background: var(--surface); color: var(--muted); font-family: var(--font-head); letter-spacing: .05em; }
+.store[data-style="tactical"] .chip.on { background: var(--accent); color: #fff; border-color: var(--tac); }
+.store[data-style="tactical"] .pcard:hover { transform: translateY(-3px); border-color: var(--tac); }
+.store[data-style="tactical"] .pcard-img { border-radius: 2px; }
+.store[data-style="tactical"] .pcard-img .tag { background: var(--tac); color: #15180f; border-radius: 2px; }
+.store[data-style="tactical"] .pcard-price, .store[data-style="tactical"] .stat b { background: none; color: var(--tac); -webkit-text-fill-color: currentColor; font-family: var(--font-head); }
+.store[data-style="tactical"] .how-n { border-radius: 2px; background: var(--accent); border: 1px solid var(--tac); box-shadow: none; }
+.store[data-style="tactical"] .tabbar { background: rgba(29, 33, 22, .94); border-color: var(--line); border-radius: 4px; }
+.store[data-style="tactical"] .banner, .store[data-style="tactical"] .popup { border-radius: 4px; }
+
+/* =========================================================
+   เหล็กอุตสาหกรรม: แผ่นเหล็กขัด · หมุดย้ำมุมการ์ด · แถบเตือนเหลืองดำ · ตัวหนาแน่น
+   ========================================================= */
+.store[data-style="steel"] {
+  --bg: #d9dde2; --surface: #eef0f3; --surface-2: #e2e6ea; --line: #b6bcc4;
+  --text: #1b1f24; --muted: #4f5761; --faint: #7d858f; --ink: #1b1f24;
+  --hazard: #f2b705;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, #eef0f3);
+  --grad: linear-gradient(180deg, color-mix(in srgb, var(--accent) 80%, #fff), var(--accent));
+  --glow: none; --radius: 6px; --radius-sm: 4px;
+  --shadow: 0 1px 0 rgba(255, 255, 255, .8) inset, 0 6px 14px -8px rgba(27, 31, 36, .45); --shadow-lg: 0 1px 0 rgba(255, 255, 255, .8) inset, 0 18px 34px -16px rgba(27, 31, 36, .55);
+  --font: 'Kanit', 'IBM Plex Sans Thai', sans-serif; --font-head: 'Kanit', sans-serif;
+}
+.store[data-style="steel"] .shop-bg[data-bg="default"] { background:
+  repeating-linear-gradient(90deg, rgba(255, 255, 255, .18) 0 1px, transparent 1px 3px),
+  linear-gradient(180deg, #e4e7eb, #c9ced5); }
+.store[data-style="steel"] h1, .store[data-style="steel"] h2, .store[data-style="steel"] h3 { font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+.store[data-style="steel"] .top { background: linear-gradient(180deg, #2b3138, #1b1f24); color: #e9ecef; border-bottom: 4px solid transparent; border-image: repeating-linear-gradient(-45deg, var(--hazard) 0 12px, #1b1f24 12px 24px) 4; }
+.store[data-style="steel"] .top .shop-brand, .store[data-style="steel"] .top .icon-btn { color: #e9ecef; }
+.store[data-style="steel"] .top .search input { background: #3a414a; color: #fff; border-color: #4a525c; }
+.store[data-style="steel"] .card { border: 1px solid var(--line); background-image:
+  radial-gradient(circle at 10px 10px, #9aa1aa 2.2px, #6f7680 3px, transparent 3.6px), radial-gradient(circle at calc(100% - 10px) 10px, #9aa1aa 2.2px, #6f7680 3px, transparent 3.6px),
+  radial-gradient(circle at 10px calc(100% - 10px), #9aa1aa 2.2px, #6f7680 3px, transparent 3.6px), radial-gradient(circle at calc(100% - 10px) calc(100% - 10px), #9aa1aa 2.2px, #6f7680 3px, transparent 3.6px),
+  linear-gradient(180deg, #f4f6f8, #e4e8ec); }
+.store[data-style="steel"] .btn { border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; background: linear-gradient(180deg, #fafbfc, #dfe3e8); border-color: var(--line); }
+.store[data-style="steel"] .btn.primary { background: var(--grad); color: #fff; border-color: color-mix(in srgb, var(--accent) 70%, #000); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 3px 0 color-mix(in srgb, var(--accent) 60%, #000); }
+.store[data-style="steel"] .btn.primary:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35); }
+.store[data-style="steel"] .btn.ghost { background: none; border-color: transparent; }
+.store[data-style="steel"] .input { border-radius: 4px; background: #fff; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .08); }
+.store[data-style="steel"] .announce { background: repeating-linear-gradient(-45deg, var(--hazard) 0 14px, #1b1f24 14px 28px); color: #fff; font-weight: 700; text-shadow: 0 1px 2px #000; }
+.store[data-style="steel"] .shop-mark, .store[data-style="steel"] .badge, .store[data-style="steel"] .avatar { background: var(--accent); border-radius: 4px; box-shadow: none; }
+.store[data-style="steel"] .hero { border-radius: 6px; border: 1px solid #0f1215; box-shadow: var(--shadow-lg);
+  background: radial-gradient(60% 90% at 100% 0%, color-mix(in srgb, var(--accent) 35%, transparent), transparent 65%), repeating-linear-gradient(90deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 3px), linear-gradient(180deg, #2f363e, #171a1e); }
+.store[data-style="steel"] .hero::after { inset: auto 0 0 0; height: 10px; width: auto; border-radius: 0; -webkit-mask-image: none; mask-image: none; background: repeating-linear-gradient(-45deg, var(--hazard) 0 12px, #1b1f24 12px 24px); }
+.store[data-style="steel"] .hero h1 em { background: none; color: var(--hazard); -webkit-text-fill-color: currentColor; }
+.store[data-style="steel"] .hero .pill.accent { background: var(--hazard); color: #1b1f24; border: 0; border-radius: 3px; font-weight: 700; }
+.store[data-style="steel"] .hero-art .applogo { border-radius: 8px; animation: none; border: 3px solid #4a525c; }
+.store[data-style="steel"] .sec-head h2 { display: inline-block; padding: 2px 12px; background: #1b1f24; color: #fff; border-radius: 3px; }
+.store[data-style="steel"] .chip { border-radius: 3px; background: linear-gradient(180deg, #fafbfc, #dfe3e8); font-weight: 600; }
+.store[data-style="steel"] .chip.on { background: #1b1f24; color: #fff; border-color: #1b1f24; }
+.store[data-style="steel"] .pcard:hover { transform: translateY(-3px); }
+.store[data-style="steel"] .pcard-img { border-radius: 4px; }
+.store[data-style="steel"] .pcard-price, .store[data-style="steel"] .stat b { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; font-weight: 700; }
+.store[data-style="steel"] .how-n { border-radius: 4px; background: #1b1f24; box-shadow: none; }
+.store[data-style="steel"] .tabbar { border-radius: 6px; }
+
+/* =========================================================
+   ไซเบอร์ HUD: กรมท่าเข้ม · กล่องมุมตัดเฉียง · เส้นเรืองแสงบาง · ตัวเลขแบบหน้าจอ
+   ========================================================= */
+.store[data-style="cyber"] {
+  color-scheme: dark;
+  --bg: #050b14; --surface: #0a1626; --surface-2: #0f2036; --line: color-mix(in srgb, var(--accent) 35%, #12263f);
+  --text: #e2f1ff; --muted: #8fb0cc; --faint: #5b7a96; --ink: #050b14;
+  --hud: color-mix(in srgb, var(--accent) 65%, #7df9ff);
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, #0a1626);
+  --grad: linear-gradient(90deg, var(--accent), var(--hud)); --glow: 0 0 16px color-mix(in srgb, var(--hud) 55%, transparent);
+  --radius: 0px; --radius-sm: 0px;
+  --shadow: 0 10px 26px -16px rgba(0, 0, 0, .9); --shadow-lg: 0 0 0 1px color-mix(in srgb, var(--hud) 40%, transparent), 0 20px 40px -20px rgba(0, 0, 0, .9);
+  --font-head: 'Chakra Petch', 'IBM Plex Sans Thai', sans-serif;
+  --cut: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+}
+.store[data-style="cyber"] .shop-bg[data-bg="default"] { background:
+  repeating-linear-gradient(0deg, rgba(125, 249, 255, .03) 0 1px, transparent 1px 4px),
+  linear-gradient(color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px) 0 0 / 60px 60px,
+  linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px) 0 0 / 60px 60px,
+  radial-gradient(60% 40% at 50% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%), var(--bg); }
+.store[data-style="cyber"] h1, .store[data-style="cyber"] h2, .store[data-style="cyber"] h3 { letter-spacing: .04em; font-weight: 700; }
+.store[data-style="cyber"] .top { background: rgba(5, 11, 20, .85); border-bottom: 1px solid var(--line); }
+.store[data-style="cyber"] .input { background: var(--surface-2); color: var(--text); border-radius: 0; }
+.store[data-style="cyber"] .btn { background: var(--surface-2); color: var(--text); border-color: var(--line); border-radius: 0; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); font-family: var(--font-head); letter-spacing: .05em; }
+.store[data-style="cyber"] .btn.primary { background: var(--grad); color: #04101c; border: 0; font-weight: 700; }
+.store[data-style="cyber"] .btn.primary:hover { filter: brightness(1.15); }
+.store[data-style="cyber"] .btn.ghost { background: none; border-color: transparent; clip-path: none; }
+.store[data-style="cyber"] .announce { background: var(--grad); color: #04101c; font-family: var(--font-head); font-weight: 700; letter-spacing: .1em; }
+.store[data-style="cyber"] .shop-mark, .store[data-style="cyber"] .badge, .store[data-style="cyber"] .avatar { background: var(--accent); border-radius: 0; clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); box-shadow: none; }
+.store[data-style="cyber"] .card { border-radius: 0; clip-path: var(--cut); border-color: var(--line); background: linear-gradient(135deg, color-mix(in srgb, var(--hud) 10%, transparent), transparent 40%), var(--surface); }
+.store[data-style="cyber"] .hero { border-radius: 0; clip-path: polygon(28px 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%, 0 28px); border: 0; box-shadow: none;
+  background: linear-gradient(90deg, var(--hud) 0 3px, transparent 3px), radial-gradient(70% 90% at 0% 0%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 60%), #071223; }
+.store[data-style="cyber"] .hero::after { background-image: repeating-linear-gradient(0deg, rgba(125, 249, 255, .05) 0 1px, transparent 1px 3px); background-size: auto; }
+.store[data-style="cyber"] .hero h1 em { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.store[data-style="cyber"] .hero .pill.accent { background: transparent; color: var(--hud); border: 1px solid var(--hud); border-radius: 0; font-family: var(--font-head); letter-spacing: .1em; }
+.store[data-style="cyber"] .hero .btn.primary { background: var(--grad); color: #04101c; }
+.store[data-style="cyber"] .hero-ticks span::before { color: var(--hud); }
+.store[data-style="cyber"] .hero-art .applogo { border-radius: 0; clip-path: var(--cut); animation: none; }
+.store[data-style="cyber"] .sec-head h2::before { content: '▸ '; color: var(--hud); }
+.store[data-style="cyber"] .chip { border-radius: 0; background: var(--surface); color: var(--muted); font-family: var(--font-head); }
+.store[data-style="cyber"] .chip.on { background: var(--grad); color: #04101c; border-color: transparent; }
+.store[data-style="cyber"] .pcard:hover { transform: translateY(-3px); filter: drop-shadow(0 0 10px color-mix(in srgb, var(--hud) 40%, transparent)); }
+.store[data-style="cyber"] .pcard-img { border-radius: 0; }
+.store[data-style="cyber"] .pcard-img .tag { background: var(--hud); color: #04101c; border-radius: 0; }
+.store[data-style="cyber"] .pcard-price, .store[data-style="cyber"] .stat b { background: none; color: var(--hud); -webkit-text-fill-color: currentColor; font-family: var(--font-head); text-shadow: var(--glow); }
+.store[data-style="cyber"] .how-n { border-radius: 0; background: var(--grad); color: #04101c; box-shadow: none; }
+.store[data-style="cyber"] .tabbar { background: rgba(10, 22, 38, .94); border-color: var(--line); border-radius: 0; }
+.store[data-style="cyber"] .banner, .store[data-style="cyber"] .popup { border-radius: 0; }
+.store[data-style="cyber"] .live, .store[data-style="cyber"] .umenu-pop, .store[data-style="cyber"] .contact-pop { border-radius: 0; }
+
+/* ตัวอย่างย่อในหน้าตั้งค่า */
+.store[data-style="carbon"].theme-mini { background: #0b0c0e; }
+.store[data-style="carbon"].theme-mini .tm-hero { background: linear-gradient(100deg, transparent 70%, var(--accent) 70%, var(--accent) 74%, transparent 74%), #121418; border-radius: 4px; font-style: italic; text-transform: uppercase; }
+.store[data-style="carbon"].theme-mini .tm-row .card { border-top: 3px solid var(--accent); }
+.store[data-style="tactical"].theme-mini { background: #15180f; }
+.store[data-style="tactical"].theme-mini .tm-hero { background: linear-gradient(160deg, #262b1d, #15180f); border: 1px solid #3a412c; border-radius: 3px; color: #c9b458; letter-spacing: .06em; }
+.store[data-style="steel"].theme-mini .tm-hero { background: linear-gradient(180deg, #2f363e, #171a1e); border-bottom: 5px solid #f2b705; border-radius: 4px; color: #fff; }
+.store[data-style="cyber"].theme-mini { background: #050b14; }
+.store[data-style="cyber"].theme-mini .tm-hero { background: linear-gradient(90deg, var(--hud) 0 3px, transparent 3px), #071223; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); border-radius: 0; }

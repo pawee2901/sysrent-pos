@@ -17,6 +17,10 @@ export const THEMES: Theme[] = [
   { key: 'candy', name: 'ลูกกวาดสายรุ้ง', desc: 'พาสเทลหลายสี ขอบสายรุ้ง ปุ่มเยลลี่ การ์ดสินค้าสลับสี', premium: true, accent: 'pink' },
   { key: 'kitty', name: 'เหมียวเหมียว', desc: 'โทนครีมอุ่น ลายรอยเท้าแมว การ์ดสินค้ามีหูแมว', premium: true, accent: 'orange' },
   { key: 'cloud', name: 'ปุยเมฆฟ้าใส', desc: 'ท้องฟ้าไล่สี ก้อนเมฆ การ์ดฟูนุ่มลอยได้ ปุ่มเงาวาว', premium: true, accent: 'sky' },
+  { key: 'carbon', name: 'คาร์บอนสปอร์ต', desc: 'ลายคาร์บอน แถบแข่งสีร้าน ปุ่มเฉียง หัวข้อตัวหนาเอียง สายรถ', premium: true, accent: 'red' },
+  { key: 'tactical', name: 'แทคติคอล', desc: 'เขียวทหาร ลายพราง มุมกรอบเล็ง ตัวหนังสือแบบป้ายสั่งการ', premium: true, accent: 'lime' },
+  { key: 'steel', name: 'เหล็กอุตสาหกรรม', desc: 'แผ่นเหล็กขัด หมุดย้ำมุมการ์ด แถบเตือนเหลืองดำ', premium: true, accent: 'blue' },
+  { key: 'cyber', name: 'ไซเบอร์ HUD', desc: 'กรมท่าเข้ม กล่องมุมตัดเฉียง เส้นเรืองแสงบาง แบบหน้าจอเกม', premium: true, accent: 'sky' },
   { key: 'sticker', name: 'สมุดสติกเกอร์', desc: 'กระดาษตาราง ฟอนต์ลายมือ การ์ดเอียงติดเทปกาว ไฮไลต์หัวข้อ', premium: true, accent: 'rose' },
 ];
 
