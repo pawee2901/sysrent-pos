@@ -32,7 +32,7 @@ const schema = z.discriminatedUnion('action', [
   // ธีมพิเศษทั้งหมดที่ร้านเป็นเจ้าของ (ส่งรายการเต็มทุกครั้ง — ไม่ได้ส่งมา = ถอนสิทธิ์)
   // เปลี่ยนแพ็กเกจ: เก็บตามที่ซื้อ · โควตาสลิปเปลี่ยนตามแพ็กเกจ (ฟังก์ชันใช้ได้ครบทุกแพ็กเกจ)
   z.object({ action: z.literal('plan'), slug, plan: z.enum(['starter', 'pro', 'max']) }),
-  z.object({ action: z.literal('themes'), slug, themes: z.array(z.string().refine((k) => THEMES.some((t) => t.key === k && t.premium), 'ไม่มีธีมนี้')).max(50) }),
+  z.object({ action: z.literal('themes'), slug, themes: z.array(z.string().refine((k) => THEMES.some((t) => t.key === k), 'ไม่มีธีมนี้')).max(50) }),
 ]);
 
 /** ชื่อซ้ำกับเว็บเช่า OTP (sub เดียวกันบน sysrent) หรือร้านอื่นไม่ได้ */
