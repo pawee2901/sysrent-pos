@@ -13,6 +13,8 @@ type P = { id: string; name: string; category: string; image: string; template: 
 export type LayoutInit = {
   ready: boolean; blocks: Block[]; products: P[]; categories: string[];
   shop: { name: string; tagline: string; banner: string; line: boolean; facebook: boolean }; promos: string[];
+  /** คนเพิ่งซื้อจริงของร้าน (ตัวอย่างการ์ดกิจกรรม) · ว่าง = ใช้ตัวอย่างสมมุติ */
+  recent?: { initial: string; dots: string; name: string; avatar: string; when: string }[];
   /** หน้าเพิ่มเติม (ready = รัน 0035 แล้ว) */
   pages: { ready: boolean; list: PageRow[] };
 };
@@ -56,7 +58,14 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
       const who = ['p', 'k', 'n', 'm', 's'];
       if (b.variant === 'feed') return (
         <div className="cv-feed"><div className="cv-feed-head"><div>{(b.label ?? 'STORE FEED') && <small>{b.label ?? 'STORE FEED'}</small>}<b>{b.title || 'กิจกรรมล่าสุด'}</b>{b.text && <p>{b.text}</p>}</div>{(b.badge ?? 'อัปเดตสด') && <span><i />{b.badge ?? 'อัปเดตสด'}</span>}</div>
-          {who.slice(0, Math.min(5, b.limit ?? 5)).map((w, i) => <div key={w} className="cv-feed-row"><span>{w.toUpperCase()}</span><p><b>{w}•••••</b> ซื้อ {names[i % names.length]}</p><small>{[3, 9, 33, 41, 42][i]} นาทีที่แล้ว</small></div>)}</div>);
+          {(d.recent?.length ? d.recent : who.map((w, i) => ({ initial: w.toUpperCase(), dots: `${w}•••••`, name: names[i % names.length], avatar: '', when: `${[3, 9, 33, 41, 42][i]} นาทีที่แล้ว` })))
+            .slice(0, Math.min(5, b.limit ?? 5)).map((r, i) => {
+              // ร้านยังไม่มีคนซื้อ: แถว 4–5 เป็นตัวอย่างลูกค้าที่ตั้งรูปโปรไฟล์
+              const demo = !d.recent?.length && i >= 3 ? ['🐼', '🐰'][i - 3] : '';
+              return <div key={i} className="cv-feed-row"><span style={r.avatar || demo ? { padding: 0, overflow: 'hidden', fontSize: 15, background: demo ? 'linear-gradient(135deg, #fde2e4, #e0f2fe)' : undefined } : undefined}>
+                {r.avatar ? <img src={r.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : demo || r.initial}</span>
+                <p><b>{r.dots}</b> ซื้อ {r.name}</p><small>{r.when}</small></div>;
+            })}</div>);
       if (b.variant === 'ticker') return <div className="cv-marquee dark"><span>🟢 @s***a ซื้อ {names[0]} · 5 นาทีที่แล้ว     🟢 @k***n ซื้อ {names[1 % names.length]} · 9 นาทีที่แล้ว</span></div>;
       return <div className="cv-live"><i />@s***a ซื้อ {names[0]} · 5 นาทีที่แล้ว</div>;
     }

@@ -25,7 +25,24 @@ export default async function AdminSettings() {
   const promoImgs = (Array.isArray(pc.data?.promo_cards) ? (pc.data.promo_cards as { image?: string }[]) : []).map((x) => x.image ?? '').filter(Boolean);
   const pg = await d.from('shop_pages').select('id, slug, title, in_menu, blocks').eq('shop_id', shop.id).order('sort').order('created_at'); // ยังไม่รัน 0035 = error
   const pages = { ready: !pg.error, list: ((pg.data ?? []) as { id: string; slug: string; title: string; in_menu: boolean; blocks: unknown }[]).map((x) => ({ ...x, blocks: Array.isArray(x.blocks) && x.blocks.length ? parseLayout(x.blocks) : [] })) };
-  const layout = { pages, ready: !hl.error, blocks: parseLayout(hl.data?.home_layout), products: plist,
+  // คนเพิ่งซื้อจริง 5 คนล่าสุด (+ รูปโปรไฟล์) ให้ตัวอย่างการ์ดกิจกรรมในหน้าจัดร้าน · ยังไม่รัน 0043 = ไม่มีรูป
+  type RR = { paid_at: string; customer_id: string | null; shop_customers: { username: string } | null; shop_order_items: { name: string }[] };
+  const ro = await d.from('shop_orders').select('paid_at, customer_id, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(5);
+  const rr = (ro.data ?? []) as unknown as RR[];
+  const cids = [...new Set(rr.map((r) => r.customer_id).filter((x): x is string => !!x))];
+  const avq = cids.length ? await d.from('shop_customers').select('id, avatar_url').in('id', cids).not('avatar_url', 'is', null) : { data: [] };
+  const pics = new Map(((avq.data ?? []) as { id: string; avatar_url: string }[]).map((x) => [x.id, x.avatar_url]));
+  const recent = rr.map((r) => {
+    const u = r.shop_customers?.username ?? '';
+    const items = r.shop_order_items.map((x) => x.name);
+    const m = Math.max(1, Math.round((Date.now() - new Date(r.paid_at).getTime()) / 60_000));
+    return {
+      initial: (u[0] ?? '?').toUpperCase(), dots: u ? `${u[0]}${'•'.repeat(Math.min(10, Math.max(3, u.length - 1)))}` : 'ลูกค้า',
+      name: `${items[0] ?? 'สินค้า'}${items.length > 1 ? ` + อีก ${items.length - 1}` : ''}`, avatar: (r.customer_id && pics.get(r.customer_id)) || '',
+      when: m < 60 ? `${m} นาทีที่แล้ว` : m < 1440 ? `${Math.round(m / 60)} ชม.ที่แล้ว` : `${Math.round(m / 1440)} วันที่แล้ว`,
+    };
+  });
+  const layout = { recent, pages, ready: !hl.error, blocks: parseLayout(hl.data?.home_layout), products: plist,
     categories: mergeCategories(await shopCategories(shop.id), plist.map((p) => p.category).filter(Boolean)).filter((c) => plist.some((p) => p.category === c)),
     shop: { name: shop.name, tagline: shop.tagline, banner: shop.banner_url ?? '', line: !!shop.line_url, facebook: !!shop.facebook_url }, promos: promoImgs };
   const ct = await d.from('shops').select('contact_links').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0037 = error
