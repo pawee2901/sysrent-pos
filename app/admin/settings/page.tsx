@@ -19,6 +19,7 @@ export default async function AdminSettings() {
   const sm = await d.from('shops').select('smtp_user').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0021 = error
   const pc = await d.from('shops').select('promo_cards').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0031 = error
   const hl = await d.from('shops').select('home_layout').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0034 = error
+  const sh = await d.from('shops').select('btn_radius, box_radius').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0041 = error
   const prods = await loadProducts(shop.id);
   const plist = prods.map((p) => ({ id: p.id, name: p.name, category: p.category, image: p.image, template: p.template, from: p.from, sold: p.sold }));
   const promoImgs = (Array.isArray(pc.data?.promo_cards) ? (pc.data.promo_cards as { image?: string }[]) : []).map((x) => x.image ?? '').filter(Boolean);
@@ -34,7 +35,7 @@ export default async function AdminSettings() {
   const push = { ready: !ps.error, devices: ps.count ?? 0, eventsReady: !pe.error, events: Array.isArray(pe.data?.push_events) ? (pe.data.push_events as string[]) : PUSH_EVENT_KEYS };
   const dc = await d.from('shops').select('discord_webhook, discord_events').eq('id', shop.id).maybeSingle();
   const discord = { ready: !dc.error, set: !!dc.data?.discord_webhook, hint: (dc.data?.discord_webhook ?? '').slice(-6), events: (dc.data?.discord_events as string[] | null) ?? ['order', 'manual', 'topup', 'stock', 'signup', 'report'] };
-  return <SettingsClient push={push} contacts={contacts} layout={layout} promos={{ ready: !pc.error, cards: Array.isArray(pc.data?.promo_cards) ? (pc.data.promo_cards as { image: string; link: string }[]) : [] }} initial={{ name: shop.name, tagline: shop.tagline, logo_url: shop.logo_url, accent: shop.accent, line_url: shop.line_url, announcement: shop.announcement,
+  return <SettingsClient shape={{ ready: !sh.error, btn: sh.data?.btn_radius ?? null, box: sh.data?.box_radius ?? null }} push={push} contacts={contacts} layout={layout} promos={{ ready: !pc.error, cards: Array.isArray(pc.data?.promo_cards) ? (pc.data.promo_cards as { image: string; link: string }[]) : [] }} initial={{ name: shop.name, tagline: shop.tagline, logo_url: shop.logo_url, accent: shop.accent, line_url: shop.line_url, announcement: shop.announcement,
     promptpay_id: shop.promptpay_id, receiver_name: shop.receiver_name }}
     look={{ facebook_url: shop.facebook_url, banner_url: shop.banner_url, banner_link: shop.banner_link, popup_text: shop.popup_text, popup_image: shop.popup_image, popup_link: shop.popup_link, bg_style: shop.bg_style, bg_image: shop.bg_image, bg_color: shop.bg_color ?? '', card_style: shop.card_style ?? 'white' }} theme={shop.theme ?? 'modern'} owned={ownedThemes(shop.plan, shop.themes_owned)} slug={shop.slug} admin={data?.admin_username ?? 'admin'} discord={discord} mail={{ enabled: can(shop.plan, 'mail'), ready: !sm.error, email: sm.data?.smtp_user ?? '' }}
     appearance={{ enabled: can(shop.plan, 'appearance'), ready: !ap.error, font: ap.data?.font ?? '', effect: ap.data?.effect ?? 'none', loader: ap.data?.loader ?? 'none', music_url: ap.data?.music_url ?? '' }} />;

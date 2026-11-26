@@ -12,6 +12,8 @@ import { HomeLayout, type LayoutInit } from './HomeLayout';
 import { ContactLinks } from './ContactLinks';
 import { PushCard } from './PushCard';
 import type { ContactLink } from '@/lib/contacts';
+import { shapeAttrs } from '@/lib/shape';
+import { festOf } from '@/lib/appearance';
 
 /** ตัวแปร CSS ของชั้นพื้นหลัง (รูป / สี) สำหรับตัวอย่าง */
 const bgVars = (k: string, l: { bg_image: string; bg_color: string }): React.CSSProperties | undefined =>
@@ -30,10 +32,31 @@ const CARDS: [string, string][] = [['white', 'ขาว'], ['tint', 'ตาม�
 const BG_COLORS = ['#fff1f5', '#fdf2f8', '#f5f3ff', '#eef2ff', '#eff6ff', '#ecfeff', '#f0fdf4', '#f7fee7', '#fefce8', '#fff7ed', '#fdf6ec', '#f4f4f5'];
 
 /** ตั้งค่าร้าน + ตัวอย่างหน้าร้านบนมือถือ (เปลี่ยนแล้วเห็นทันที) */
-export function SettingsClient({ initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos, layout, contacts, push }: { initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] }; layout: LayoutInit; contacts: { ready: boolean; list: ContactLink[] }; push: { ready: boolean; devices: number; eventsReady: boolean; events: string[] } }) {
+/** ความมน: ปุ่มลัด [ค่า, ป้าย] · null = ตามธีม */
+const BTN_R: [number, string][] = [[0, 'เหลี่ยม'], [6, 'มนนิด'], [12, 'มน'], [20, 'มนมาก'], [99, 'แคปซูล']];
+const BOX_R: [number, string][] = [[0, 'เหลี่ยม'], [8, 'มนนิด'], [16, 'มน'], [28, 'มนมาก'], [40, 'มนสุด']];
+type Shape = { ready: boolean; btn: number | null; box: number | null };
+function RadiusField({ label, value, set, presets, max }: { label: string; value: number | null; set: (v: number | null) => void; presets: [number, string][]; max: number }) {
+  return (
+    <div className="field"><span>{label}</span>
+      <div className="ap-picks">
+        <button type="button" className={`ap-pick${value === null ? ' on' : ''}`} onClick={() => set(null)}>ตามธีม</button>
+        {presets.map(([v, l]) => <button key={v} type="button" className={`ap-pick${value === v ? ' on' : ''}`} onClick={() => set(v)}>{l}</button>)}
+      </div>
+      {value !== null && <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <input type="range" min={0} max={max} value={Math.min(value, max)} onChange={(e) => set(Number(e.target.value))} style={{ flex: 1 }} aria-label={label} />
+        <span className="muted" style={{ fontSize: 13, minWidth: 56, textAlign: 'right' }}>{value >= 99 ? 'แคปซูล' : `${value} px`}</span>
+      </div>}
+    </div>
+  );
+}
+
+export function SettingsClient({ shape: shapeInit, initial, look: lookInit, theme: themeInit, owned, slug, admin, discord, mail, appearance, promos, layout, contacts, push }: { shape: Shape; initial: S; look: Look; theme: string; owned: string[]; slug: string; admin: string; discord: DiscordInit; mail: MailInit; appearance: AppearanceInit; promos: { ready: boolean; cards: Promo[] }; layout: LayoutInit; contacts: { ready: boolean; list: ContactLink[] }; push: { ready: boolean; devices: number; eventsReady: boolean; events: string[] } }) {
   const router = useRouter();
   const [f, setF] = useState(initial);
   const [look, setLook] = useState(lookInit);
+  const [shape, setShape] = useState({ btn: shapeInit.btn, box: shapeInit.box });
+  const shapeChanged = shape.btn !== shapeInit.btn || shape.box !== shapeInit.box;
   const [theme, setTheme] = useState(themeInit);
   const [pw, setPw] = useState({ username: admin, password: '', password2: '' });
   const [busy, setBusy] = useState(false);
@@ -104,7 +127,8 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
   async function saveAll() {
     setBusy(true); setMsg('');
     const a = await api('/api/admin/settings', { action: 'shop', ...f });
-    const b = a.ok ? await api('/api/admin/settings', { action: 'look', ...look }) : a;
+    const l = a.ok ? await api('/api/admin/settings', { action: 'look', ...look }) : a;
+    const b = l.ok && shapeChanged ? await api('/api/admin/settings', { action: 'shape', btn_radius: shape.btn, box_radius: shape.box }) : l;
     setBusy(false);
     setMsg(b.ok ? 'บันทึกแล้ว ✓' : b.error);
     if (b.ok) { Object.entries(accentVars(f.accent)).forEach(([k, v]) => document.documentElement.style.setProperty(k, v)); router.refresh(); }
@@ -183,7 +207,8 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
                   </label>
                 </div>}
                 {look.bg_style === 'image' && <div style={{ display: 'flex', gap: 8 }}><button type="button" className="btn sm" disabled={busy} onClick={() => pickImage('bg_image')}>{look.bg_image ? 'เปลี่ยนรูปพื้นหลัง' : 'อัปโหลดรูปพื้นหลัง'}</button>
-                  <span className="faint" style={{ fontSize: 12, alignSelf: 'center' }}>แนะนำรูปแนวนอนกว้าง 1600px ขึ้นไป · ลายที่ขอบรูปจะเห็นชัดบนจอคอม</span></div>}</div>
+                  <span className="faint" style={{ fontSize: 12, alignSelf: 'center' }}>แนะนำรูปแนวนอนกว้าง 1600px ขึ้นไป · ลายที่ขอบรูปจะเห็นชัดบนจอคอม</span></div>}
+                {festOf(appearance.effect) && <span style={{ fontSize: 12, color: 'var(--warn)' }}>🎄 ร้านเปิดธีมเทศกาลอยู่ · เลือก "ตามธีม" = เห็นฉากเทศกาล · เลือกแบบอื่น = ใช้พื้นหลังนี้แทนฉาก (เอฟเฟกต์ขยับยังอยู่)</span>}</div>
               <div className="field"><span>สีกล่อง (การ์ดสินค้า / กล่องข้อมูล)</span>
                 <div className="card-picks">{CARDS.map(([k, l]) => (
                   <button key={k} type="button" className={`card-pick${look.card_style === k ? ' on' : ''}`} onClick={() => setLook({ ...look, card_style: k })}>
@@ -194,6 +219,10 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
                   </button>
                 ))}</div>
                 <span className="faint" style={{ fontSize: 12 }}>ตามพื้นหลัง = กล่องเป็นสีอ่อนโทนเดียวกับพื้นหลัง · โปร่งแสง = กล่องใสเห็นพื้นหลังลาง ๆ (สวยกับพื้นหลังแบบรูป)</span></div>
+              {!shapeInit.ready && <p style={{ color: 'var(--warn)', margin: 0, fontSize: 13 }}>⚠️ ต้องรัน SQL <code>0041_shop_radius.sql</code> ใน Supabase ก่อน ถึงจะบันทึกความมนได้</p>}
+              <RadiusField label="ความมนของปุ่ม (ทั้งร้าน)" value={shape.btn} set={(v) => setShape({ ...shape, btn: v })} presets={BTN_R} max={40} />
+              <RadiusField label="ความมนของกล่อง / การ์ด (ทั้งร้าน)" value={shape.box} set={(v) => setShape({ ...shape, box: v })} presets={BOX_R} max={48} />
+              <span className="faint" style={{ fontSize: 12 }}>กล่องที่ตั้ง 🎨 สไตล์กล่อง ไว้ในหน้าจัดร้าน จะใช้ความมนของกล่องนั้นแทน</span>
             </div></section>
           </>}
 
@@ -236,7 +265,7 @@ export function SettingsClient({ initial, look: lookInit, theme: themeInit, owne
         </div>
         {withPreview && <div className="preview-col">
         <section className="card preview"><div className="card-head"><h2>ตัวอย่างหน้าร้าน</h2><span className="pill accent plain">สด</span></div>
-          <div className="phone store" data-style={theme} data-card={look.card_style} style={{ ...accentVars(f.accent), ...(look.bg_style === 'color' ? { ['--tint' as string]: look.bg_color || BG_COLORS[0] } : {}), position: 'relative', isolation: 'isolate' } as React.CSSProperties}>
+          <div className="phone store" data-style={theme} data-card={look.card_style} {...shapeAttrs(shape.btn, shape.box).attrs} style={{ ...accentVars(f.accent), ...shapeAttrs(shape.btn, shape.box).vars, ...(look.bg_style === 'color' ? { ['--tint' as string]: look.bg_color || BG_COLORS[0] } : {}), position: 'relative', isolation: 'isolate' } as React.CSSProperties}>
             {look.bg_style !== 'default' && <span className="shop-bg" data-bg={look.bg_style} style={{ position: 'absolute', ...bgVars(look.bg_style, look) }} />}
             <div className="phone-top">{f.logo_url ? <img src={f.logo_url} alt="" style={{ height: 32, maxWidth: 140, objectFit: 'contain', borderRadius: 8 }} />
               : <><span className="m" style={{ background: accent }}>{(f.name || 'ร').slice(0, 1).toUpperCase()}</span><span>{f.name || 'ชื่อร้าน'}</span></>}</div>

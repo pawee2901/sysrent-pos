@@ -6,6 +6,7 @@ import { ContactFab } from '@/components/ContactFab';
 import { FloatingFx } from '@/components/FloatingFx';
 import { FestivalFx } from '@/components/FestivalFx';
 import { festOf } from '@/lib/appearance';
+import { shapeAttrs } from '@/lib/shape';
 import { PageLoader } from '@/components/PageLoader';
 import { MusicPlayer } from '@/components/MusicPlayer';
 import { fontHref, fontOf, fontStack } from '@/lib/appearance';
@@ -26,10 +27,12 @@ import '../store.css';
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const shop = (await getShop())!;
   // ฟอนต์ / เพลง / เอฟเฟกต์ (แยก query: ยังไม่รัน 0022 = ไม่มี แต่หน้าร้านใช้งานได้)
-  const [me, { data: ap, error: apErr }] = await Promise.all([
+  const [me, { data: ap, error: apErr }, { data: sh }] = await Promise.all([
     getCustomer(),
     db().from('shops').select('font, effect, loader, music_url').eq('id', shop.id).maybeSingle(),
+    db().from('shops').select('btn_radius, box_radius').eq('id', shop.id).maybeSingle(), // ยังไม่รัน 0041 = null = ตามธีม
   ]);
+  const shape = shapeAttrs(sh?.btn_radius, sh?.box_radius);
   // หน้าเพิ่มเติมที่ร้านเปิดไว้ในเมนู (ยังไม่รัน 0035 = ไม่มีเมนู)
   const { data: pageRows } = await db().from('shop_pages').select('slug, title').eq('shop_id', shop.id).eq('in_menu', true).order('sort').order('created_at').limit(20);
   const pages = (pageRows ?? []) as { slug: string; title: string }[];
@@ -43,7 +46,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const bg = (shop.bg_style === 'image' && !shop.bg_image) || (shop.bg_style === 'color' && !shop.bg_color) ? 'default' : shop.bg_style;
   return (
     <CartProvider shop={shop.slug}>
-    <div className="store" data-style={theme} data-card={shop.card_style ?? 'white'} data-fest={fest ?? undefined} style={{ ...(bg === 'color' ? { ['--tint' as string]: shop.bg_color } : {}), ...(font ? { ['--font' as string]: fontStack(font.family), ['--font-head' as string]: fontStack(font.family) } : {}) }}>
+    <div className="store" data-style={theme} data-card={shop.card_style ?? 'white'} data-fest={fest ?? undefined} {...shape.attrs} style={{ ...shape.vars, ...(bg === 'color' ? { ['--tint' as string]: shop.bg_color } : {}), ...(font ? { ['--font' as string]: fontStack(font.family), ['--font-head' as string]: fontStack(font.family) } : {}) }}>
       {font && <link rel="stylesheet" href={fontHref(font.key)} precedence="default" />}
       <PageLoader kind={look?.loader ?? 'none'} logo={shop.logo_url} />
       {!fest && <FloatingFx effect={look?.effect ?? 'none'} />}
@@ -51,7 +54,8 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       {(theme !== 'modern' || bg !== 'default') && (
         <div className="shop-bg" data-bg={bg} style={bg === 'image' ? { ['--bg-image' as string]: `url("${shop.bg_image}")` } : bg === 'color' ? { ['--bg-color' as string]: shop.bg_color } : undefined} aria-hidden="true" />
       )}
-      {fest && <FestivalFx code={fest} />}
+      {/* ร้านเลือกพื้นหลังเอง = ใช้พื้นหลังนั้นแทนฉากเทศกาล (เหลือแค่เอฟเฟกต์ขยับ) */}
+      {fest && <FestivalFx code={fest} scene={bg === 'default'} />}
       {shop.announcement && <div className="announce">{shop.announcement}</div>}
       <header className="top">
         <div className="wrap top-row">

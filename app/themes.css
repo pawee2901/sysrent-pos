@@ -747,3 +747,9 @@
 .store[data-style="steel"].theme-mini .tm-hero { background: linear-gradient(180deg, #2f363e, #171a1e); border-bottom: 5px solid #f2b705; border-radius: 4px; color: #fff; }
 .store[data-style="cyber"].theme-mini { background: #050b14; }
 .store[data-style="cyber"].theme-mini .tm-hero { background: linear-gradient(90deg, var(--hud) 0 3px, transparent 3px), #071223; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); border-radius: 0; }
+
+/* ---------- ความมนทั้งร้าน (shops.btn_radius / box_radius · lib/shape.ts) — ใช้ได้กับทุกธีม ----------
+   กล่องที่ตั้ง "สไตล์กล่อง" ความมนเองในหน้าจัดร้าน (.hb-st.st-r) ใช้ค่าของกล่องนั้นแทน */
+.store.store[data-btnr] :is(.btn, .chip, .btnp):not(.hb-st.st-r *) { border-radius: var(--btn-r); clip-path: none; }
+.store.store[data-boxr] :is(.card, .pcard, .stat, .hero, .banner, .promo, .live, .popup, .hb-image, .hb-notice, .hb-frame, .hb-cat, .hb-coupon, .hb-count,
+  .hb-slides, .hb-cta, .hb-badges, .hb-marquee, .hb-spot-img, .hb-quote, .hb-link, .hb-feed, .phone-hero, .phone-grid > div):not(.hb-st.st-r *) { border-radius: var(--box-r); }

@@ -70,6 +70,8 @@ const schema = z.discriminatedUnion('action', [
     action: z.literal('appearance'), font: z.string().max(20).refine((k) => !k || !!fontOf(k), 'ไม่มีฟอนต์นี้'), effect: z.string().refine(isEffect, 'ไม่มีเอฟเฟกต์นี้'),
     loader: z.string().refine(isLoader, 'ไม่มีเอฟเฟกต์นี้'), music_url: z.string().trim().max(500).refine((u) => !u || !!parseMusic(u), 'ลิงก์เพลงไม่ถูกต้อง'),
   }),
+  // ความมนของปุ่ม / กล่องทั้งร้าน (null = ตามธีม)
+  z.object({ action: z.literal('shape'), btn_radius: z.number().int().min(0).max(99).nullable(), box_radius: z.number().int().min(0).max(48).nullable() }),
   z.object({ action: z.literal('mail_test') }),
   // กล่องรูปใต้รูปหน้าแรก (สูงสุด 8 · [] = ไม่แสดง)
   z.object({ action: z.literal('promos'), cards: z.array(z.object({ image: https(500).refine(Boolean, 'ใส่รูปก่อน'), link })).max(8) }),
@@ -116,6 +118,10 @@ export async function POST(req: Request) {
     const { action: _a, ...upd } = b.data;
     const { error } = await d.from('shops').update(upd).eq('id', a.shop.id);
     return error ? fail(/font|effect|loader|music/.test(error.message) ? 'ยังไม่ได้รัน SQL 0022_shop_appearance.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
+  if (b.data.action === 'shape') {
+    const { error } = await d.from('shops').update({ btn_radius: b.data.btn_radius, box_radius: b.data.box_radius }).eq('id', a.shop.id);
+    return error ? fail(/radius/.test(error.message) ? 'ยังไม่ได้รัน SQL 0041_shop_radius.sql (ความมนยังไม่ถูกบันทึก)' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
   }
   if (b.data.action === 'mail_off') {
     const { error } = await d.from('shops').update({ smtp_user: '', smtp_pass_enc: '' }).eq('id', a.shop.id);
