@@ -22,7 +22,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       B('hero'), B('badges'),
       B('live', { variant: 'feed', limit: 5 }),
       B('featured', { title: '🔥 ขายดีประจำสัปดาห์', variant: 'scroll', limit: 8 }),
-      B('cats'), B('products'), B('reviews'), B('faq'), B('contact'),
+      B('cats'), B('products'), B('realreviews'), B('faq'), B('contact'),
     ],
   },
   {
@@ -119,7 +119,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
     build: () => [
       B('heading', { title: 'รีวิวจากลูกค้าจริง', size: 'l' }),
       B('numbers', { items: [{ icon: '⭐', q: '4.9/5', a: 'คะแนนเฉลี่ย' }, { icon: '👥', q: '1,000+', a: 'ลูกค้า' }, { icon: '🔁', q: '80%', a: 'กลับมาซื้อซ้ำ' }] }),
-      B('reviews', { title: '' }),
+      B('realreviews', { title: '', limit: 12, minStars: 1 }),
       B('gallery', { cols: 3 }),
       B('cta', { title: 'พร้อมเป็นลูกค้าคนต่อไปไหม?', text: '', label: 'เลือกซื้อเลย', link: '/#cat', tone: 'accent' }),
     ],

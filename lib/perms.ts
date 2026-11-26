@@ -7,6 +7,7 @@ export const PERMS = [
   { key: 'orders', label: 'ออเดอร์', desc: 'ดูออเดอร์ · ส่งของ · คืนเงิน', href: '/orders' },
   { key: 'reports', label: 'แจ้งปัญหา', desc: 'ตอบลูกค้า · แก้ไอดีให้ลูกค้า', href: '/reports' },
   { key: 'products', label: 'สินค้า', desc: 'เพิ่ม / แก้สินค้า · ราคา · สต็อก', href: '/products' },
+  { key: 'reviews', label: 'รีวิว', desc: 'ดู · ซ่อน · ตอบรีวิวลูกค้า', href: '/reviews' },
   { key: 'renewals', label: 'ต่อเมล', desc: 'ลูกค้าต่อเมล · เตือน + รับเงินทาง LINE', href: '/renewals' },
   { key: 'linebot', label: 'บอท LINE', desc: 'เชื่อม LINE OA · ข้อความ · เมนู · การ์ดสินค้าในแชท', href: '/line-bot' },
   { key: 'coupons', label: 'คูปอง', desc: 'สร้าง / ปิดคูปองส่วนลด', href: '/coupons' },

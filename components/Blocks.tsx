@@ -11,6 +11,7 @@ import { AppLogo } from '@/components/AppLogo';
 import { HALF_OK, SOCIAL, blockStyle, youtubeId, type Block } from '@/lib/home-layout';
 import { CouponBox, Countdown, Slider } from '@/components/HomeBits';
 import { shopContacts } from '@/lib/contacts-server';
+import { latestReviews } from '@/lib/reviews';
 import { CONTACT_KINDS, contactHref } from '@/lib/contacts';
 
 const mask = (u: string) => (u.length <= 2 ? u[0] + '*' : `${u[0]}***${u[u.length - 1]}`);
@@ -27,7 +28,7 @@ function Card({ p }: { p: Product }) {
       <div className="pcard-body">
         <span className="pcard-name">{p.name}</span>
         <span className="pcard-price">{p.from !== null && <>{p.options.length > 1 && <small>เริ่ม </small>}{baht(p.from)}</>}{compare > (p.from ?? 0) && <s className="faint" style={{ fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{baht(compare)}</s>}</span>
-        <span className="pcard-meta"><span>{p.left === null ? 'พร้อมส่ง' : p.left ? `เหลือ ${p.left}` : p.preorder ? 'เปิดจอง' : 'หมด'}</span><span>ขายแล้ว {p.sold.toLocaleString('th-TH')}</span></span>
+        <span className="pcard-meta"><span>{p.rating ? <span className="pcard-rate">★ {p.rating.avg.toFixed(1)} <small>({p.rating.count})</small></span> : p.left === null ? 'พร้อมส่ง' : p.left ? `เหลือ ${p.left}` : p.preorder ? 'เปิดจอง' : 'หมด'}</span><span>ขายแล้ว {p.sold.toLocaleString('th-TH')}</span></span>
       </div>
     </Link>
   );
@@ -48,6 +49,8 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
   ]);
   const layout = input.filter((b) => b.on);
   const contacts = layout.some((b) => b.type === 'contact') ? await shopContacts(shop) : [];
+  // กล่องรีวิวจริง: โหลดตามเงื่อนไขของแต่ละกล่อง
+  const realRev = new Map(await Promise.all(layout.filter((b) => b.type === 'realreviews').map(async (b) => [b.id, await latestReviews(shop.id, Math.min(24, b.limit ?? 6), b.minStars ?? 1, b.ids?.[0])] as const)));
   const promos = (Array.isArray(pc?.promo_cards) ? pc.promo_cards as { image?: string; link?: string }[] : []).filter((x) => x.image);
   // ตัวแทน (ร้าน Pro): เห็นราคาตัวแทน · ราคาปกติขีดฆ่า
   const agent = await getAgent(shop, me?.id);
@@ -159,6 +162,21 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
     }
     if (b.type === 'space') return <div className={`hb-space ${b.size ?? 'm'}`} aria-hidden />;
     if (b.type === 'divider') return <hr className="hb hb-hr" />;
+    if (b.type === 'realreviews') {
+      const rv = realRev.get(b.id);
+      if (!rv?.list.length) return null;
+      return (
+        <section className="hb">
+          <div className="sec-head"><h2>{b.title || 'รีวิวจากผู้ซื้อจริง'}</h2>{rv.rating && <span className="hb-rate">★ {rv.rating.avg.toFixed(1)} <small>· {rv.rating.count} รีวิว</small></span>}</div>
+          <div className="hb-reviews">{rv.list.map((r) => (
+            <figure key={r.id} className="card">
+              <Stars n={r.stars} />
+              {r.body && <blockquote>{r.body}</blockquote>}
+              <figcaption><span>{r.who.slice(0, 1).toUpperCase()}</span>{r.who}<small className="muted"> · {r.product.split(' · ')[0] || 'สินค้า'} · {r.when}</small></figcaption>
+              {r.reply && <div className="rv-reply"><b>💬 ร้านตอบ</b><p>{r.reply}</p></div>}
+            </figure>))}</div>
+        </section>);
+    }
     if (b.type === 'heading') return <div className={`hb hb-heading ${b.size ?? 'm'}${b.align === 'left' ? '' : ' center'}`}>{b.title && <h2>{b.title}</h2>}{b.text && <p>{b.text}</p>}</div>;
     if (b.type === 'slider') {
       const pics = (b.items ?? []).filter((x) => x.image) as { image: string; link?: string }[];

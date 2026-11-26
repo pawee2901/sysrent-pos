@@ -12,12 +12,15 @@ import { ReportDialog } from './ReportDialog';
 import { Layer } from '@/components/Layer';
 import { SubCard } from '../my/SubCard';
 import { OtpButton } from '@/components/OtpButton';
+import { ReviewDialog } from './ReviewDialog';
 import type { OtpButton as OtpInfo } from '@/lib/otp-button';
 
 export type HItem = {
   id: string; name: string; total: number; queued: boolean;
   /** พรีออเดอร์ที่รอร้านเติมของ (ส่งอัตโนมัติ + ยังรอคิว) */
-  pre?: boolean; delivered: string | null; warranty: string | null;
+  pre?: boolean;
+  /** รีวิวของรายการนี้ (null = ยังไม่รีวิว) · reviewable = ได้ของแล้ว + ร้านเปิดระบบรีวิว */
+  review?: { stars: number; body: string } | null; reviewable?: boolean; delivered: string | null; warranty: string | null;
   usage: string; usageImages: string[];
   /** ปุ่มรับ OTP (ร้านเปิดไว้ที่สินค้านี้) */
   otp: OtpInfo | null;
@@ -34,6 +37,9 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
   const [show, setShow] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [howto, setHowto] = useState(false);
+  const [reviewing, setReviewing] = useState<HItem | null>(null);
+  const [reviews, setReviews] = useState<Record<string, { stars: number; body: string } | null>>(() => Object.fromEntries(o.items.map((i) => [i.id, i.review ?? null])));
+  const toReview = o.items.filter((i) => i.reviewable);
   const guides = o.items.filter((i) => (i.usage || i.usageImages.length) && (i.delivered || i.sub));
   const pending = o.status === 'pending';
   const paid = o.status === 'completed' || o.status === 'processing';
@@ -103,6 +109,10 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
           : paid && ready && <button type="button" className="btn hcard-show" onClick={() => setShow(!show)}>{show ? 'ซ่อนไอดี' : 'แสดงไอดี'}</button>}
         {paid && o.items.filter((i) => i.otp).map((i, _k, all) => <OtpButton key={`otp${i.id}`} otp={i.otp!} label={all.length > 1 ? `รับรหัส OTP · ${i.name}` : undefined} />)}
         {paid && guides.length > 0 && <button type="button" className="btn" aria-expanded={howto} onClick={() => setHowto(!howto)}>{howto ? 'ซ่อนวิธีใช้งาน' : '📖 ดูวิธีการใช้งาน'}</button>}
+        {paid && toReview.map((i) => {
+          const r = reviews[i.id];
+          return <button key={`rv${i.id}`} type="button" className={`btn hcard-review${r ? ' done' : ''}`} onClick={() => setReviewing(i)}>{r ? <>{'★'.repeat(r.stars)} แก้รีวิว</> : '⭐ ให้คะแนน'}{toReview.length > 1 ? ` · ${i.name.split(' · ')[0]}` : ''}</button>;
+        })}
         {paid && canReport && (!o.report || o.report.status === 'resolved') && <button type="button" className="btn hcard-report-btn" onClick={report}>⚠️ แจ้งปัญหา</button>}
       </div>
 
@@ -132,6 +142,7 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
           ))}
         </div>
       )}
+      {reviewing && <ReviewDialog item={reviewing} init={reviews[reviewing.id] ?? null} onClose={() => setReviewing(null)} onSaved={(r) => { setReviews({ ...reviews, [reviewing.id]: r }); setReviewing(null); notify('ขอบคุณสำหรับรีวิว ⭐'); }} />}
       {reporting && <Layer><ReportDialog code={o.code} onClose={() => setReporting(false)} onSent={() => { setReporting(false); notify('ส่งเรื่องให้ร้านแล้ว ร้านจะตอบกลับในหน้านี้'); router.refresh(); }} /></Layer>}
     </article>
   );

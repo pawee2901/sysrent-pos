@@ -23,6 +23,7 @@
     "/products": "/catalog",
     "/reports": "/tickets",
     "/settings": "/config",
+    "/reviews": "/feedback",
     "/otp": "/codes",
     "/renewals": "/renew",
     "/line-bot": "/linebot"

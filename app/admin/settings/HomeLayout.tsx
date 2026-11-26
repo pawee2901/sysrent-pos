@@ -21,7 +21,7 @@ type Drag = { kind: 'new'; type: BlockType } | { kind: 'move'; id: string };
 /** สีแนะนำในสไตล์กล่อง */
 const SWATCHES = ['#ffffff', '#f8fafc', '#111827', '#0f172a', '#14532d', '#1e3a8a', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#f59e0b', '#16a34a', '#0ea5e9', '#fdf2f8', '#ecfdf5', '#fef3c7'];
 /** กล่องที่มีช่อง "หัวข้อ" */
-const TITLED: BlockType[] = ['featured', 'cats', 'text', 'video', 'imgtext', 'contact', 'faq', 'coupon', 'countdown', 'heading', 'cta', 'features', 'steps', 'reviews', 'pricelist', 'numbers', 'logos', 'social', 'spotlight', 'quote', 'linkcards'];
+const TITLED: BlockType[] = ['realreviews', 'featured', 'cats', 'text', 'video', 'imgtext', 'contact', 'faq', 'coupon', 'countdown', 'heading', 'cta', 'features', 'steps', 'reviews', 'pricelist', 'numbers', 'logos', 'social', 'spotlight', 'quote', 'linkcards'];
 const TONES: [NonNullable<Block['tone']>, string][] = [['accent', 'สีร้าน'], ['dark', 'ดำ'], ['ok', 'เขียว'], ['warn', 'ส้ม'], ['info', 'ฟ้า']];
 
 /** ปุ่มเลือกแบบแถว (segmented) */
@@ -87,6 +87,7 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
     }
     case 'video': { const id = youtubeId(b.video); return <>{head(b.title)}<div className="cv-video" style={id ? { backgroundImage: `url(https://i.ytimg.com/vi/${id}/hqdefault.jpg)` } : undefined}><span>▶</span>{!id && <small>ใส่ลิงก์ YouTube ทางขวา</small>}</div></>; }
     case 'divider': return <hr className="cv-hr" />;
+    case 'realreviews': return <>{head(b.title)}<div className="cv-reviews">{[['ส่งไวมาก ได้รหัสทันที', 5], ['ใช้งานได้จริง คุ้มราคา', 5], ['แอดมินตอบไว', 4]].map(([t, n], i) => <div key={i}><span className="cv-stars">{'★'.repeat(n as number)}<i>{'★'.repeat(5 - (n as number))}</i></span><p>{t}</p><small>— ลูกค้าจริง</small></div>)}</div><small className="muted">ตัวอย่าง · หน้าร้านแสดงรีวิวจริงของลูกค้า (ยังไม่มีรีวิว = ไม่แสดงกล่องนี้)</small></>;
     case 'heading': return <div className={`cv-heading ${b.size ?? 'm'}${b.align === 'left' ? '' : ' center'}`}>{b.title && <b>{b.title}</b>}{b.text && <p>{b.text}</p>}</div>;
     case 'slider': { const pics = (b.items ?? []).filter((x) => x.image); return pics.length ? <div className="cv-slider"><img src={pics[0].image} alt="" className="cv-img round" /><div>{pics.map((_, i) => <i key={i} className={i ? '' : 'on'} />)}</div></div> : <Ph>🎞️ เพิ่มรูปสไลด์ทางขวา</Ph>; }
     case 'cta': return <div className={`cv-cta ${b.tone ?? 'accent'}`} style={b.image ? { backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.7), rgba(0,0,0,.2)), url("${b.image}")` } : undefined}><div>{b.title && <b>{b.title}</b>}{b.text && <p>{b.text}</p>}</div>{b.label && <span className="cv-btn light">{b.label}</span>}</div>;
@@ -544,6 +545,12 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                   {txt('label', 'ข้อความบนปุ่ม (ไม่บังคับ)', { max: 40 })}{linkField('ปุ่มไปที่')}</>}
                 {b.type === 'video' && <label className="field"><span>ลิงก์ YouTube</span><input className="input" value={b.video ?? ''} maxLength={300} placeholder="https://youtu.be/..." onChange={(e) => patch(b.id, { video: e.target.value })} />
                   {b.video && !youtubeId(b.video) && <small style={{ color: 'var(--bad)' }}>ลิงก์ไม่ใช่คลิป YouTube</small>}</label>}
+                {b.type === 'realreviews' && <>
+                  <label className="field"><span>จำนวนรีวิวที่โชว์</span><select className="input" value={b.limit ?? 6} onChange={(e) => patch(b.id, { limit: Number(e.target.value) })}>{[3, 6, 9, 12].map((n) => <option key={n} value={n}>{n} รีวิว</option>)}</select></label>
+                  <div className="field"><span>แสดงเฉพาะรีวิวที่ได้</span><Seg value={b.minStars ?? 1} set={(v) => patch(b.id, { minStars: v })} opts={[[1, 'ทุกคะแนน'], [3, '3★ ขึ้นไป'], [4, '4★ ขึ้นไป'], [5, '5★ เท่านั้น']]} /></div>
+                  <label className="field"><span>รีวิวของสินค้า</span><select className="input" value={b.ids?.[0] ?? ''} onChange={(e) => patch(b.id, { ids: e.target.value ? [e.target.value] : [] })}><option value="">ทุกสินค้าในร้าน</option>{init.products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+                  <p className="muted lb-note">ลูกค้ารีวิวได้ที่หน้าประวัติการซื้อหลังได้ของ · ซ่อน / ตอบรีวิวได้ที่เมนู &quot;รีวิว&quot;</p>
+                </>}
                 {b.type === 'heading' && <>{txt('text', 'คำอธิบาย (ไม่บังคับ)', { rows: 2, max: 300 })}
                   <div className="field"><span>ขนาดหัวข้อ</span><Seg value={b.size ?? 'm'} set={(v) => patch(b.id, { size: v })} opts={[['s', 'เล็ก'], ['m', 'กลาง'], ['l', 'ใหญ่']]} /></div>
                   <div className="field"><span>จัดข้อความ</span><Seg value={b.align ?? 'center'} set={(v) => patch(b.id, { align: v })} opts={[['left', 'ชิดซ้าย'], ['center', 'กึ่งกลาง']]} /></div></>}

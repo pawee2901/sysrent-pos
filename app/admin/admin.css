@@ -1108,3 +1108,13 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
 .preorder-on input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); }
 .preorder-on > span { display: grid; gap: 2px; }
 .preorder-on small { color: var(--muted); font-size: 12.5px; }
+/* หลังบ้าน → รีวิว */
+.arv-list { display: grid; }
+.arv { display: grid; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--line); }
+.arv.off { opacity: .6; }
+.arv-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.arv-st { color: #f59e0b; letter-spacing: 1px; }
+.arv-body { margin: 0; white-space: pre-line; line-height: 1.6; }
+.arv-reply { padding: 8px 12px; border-radius: 10px; background: var(--surface-2, var(--bg)); font-size: 14px; }
+.arv-reply-ed { display: grid; gap: 8px; }
+.arv-acts { display: flex; gap: 6px; flex-wrap: wrap; }

@@ -7,7 +7,7 @@ export type BlockType =
   | 'hero' | 'promos' | 'live' | 'stats' | 'products' | 'how'
   | 'featured' | 'cats' | 'text' | 'image' | 'gallery' | 'imgtext' | 'notice' | 'button' | 'contact' | 'faq'
   | 'coupon' | 'countdown' | 'video' | 'divider' | 'space'
-  | 'heading' | 'slider' | 'cta' | 'features' | 'steps' | 'reviews' | 'pricelist' | 'numbers' | 'marquee' | 'logos' | 'social' | 'spotlight' | 'quote' | 'linkcards' | 'badges';
+  | 'heading' | 'slider' | 'cta' | 'features' | 'steps' | 'reviews' | 'pricelist' | 'numbers' | 'marquee' | 'logos' | 'social' | 'spotlight' | 'quote' | 'linkcards' | 'badges' | 'realreviews';
 /** รายการย่อยในกล่อง (รูปในแกลเลอรี · คำถามในถาม-ตอบ) */
 export type BlockItem = { image?: string; link?: string; q?: string; a?: string; icon?: string; stars?: number; kind?: SocialKind };
 export type SocialKind = 'line' | 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'x' | 'discord' | 'telegram' | 'web';
@@ -29,6 +29,8 @@ export type Block = {
   variant?: 'grid' | 'scroll' | 'list' | 'bar' | 'feed' | 'ticker';
   /** ป้ายมุมขวา (การ์ดกิจกรรม: "อัปเดตสด") */
   badge?: string;
+  /** รีวิวจริง: แสดงเฉพาะรีวิวที่ได้ดาวตั้งแต่เท่านี้ */
+  minStars?: number;
   /** สไตล์ที่ร้านปรับเอง (ไม่ใส่ = ตามธีม) */
   style?: BlockStyle;
 };
@@ -65,7 +67,7 @@ export function blockStyle(s?: BlockStyle): { className: string; style: Record<s
 export const BUILTIN: BlockType[] = ['hero', 'promos', 'live', 'stats', 'products', 'how'];
 /** กล่องที่ตั้งเป็นครึ่งแถวได้ */
 export const HALF_OK: BlockType[] = ['live', 'featured', 'cats', 'text', 'image', 'gallery', 'notice', 'button', 'contact', 'faq', 'coupon', 'countdown', 'video',
-  'heading', 'slider', 'cta', 'features', 'steps', 'reviews', 'pricelist', 'numbers', 'logos', 'social', 'spotlight', 'quote', 'linkcards', 'badges'];
+  'heading', 'slider', 'cta', 'features', 'steps', 'reviews', 'pricelist', 'numbers', 'logos', 'social', 'spotlight', 'quote', 'linkcards', 'badges', 'realreviews'];
 export const LAYOUT_MAX = 60;
 export const PAGES_MAX = 50;
 /** ชื่อหน้าในลิงก์ (/s/ชื่อ) */
@@ -109,6 +111,7 @@ export const BLOCK_INFO: Record<BlockType, { icon: string; label: string; desc: 
   quote: { icon: '❝', label: 'คำคม / คำพูด', desc: 'ข้อความเน้นตัวใหญ่' },
   linkcards: { icon: '🗃️', label: 'การ์ดลิงก์', desc: 'รูป + หัวข้อ กดไปหน้าอื่น' },
   badges: { icon: '✅', label: 'แถบความมั่นใจ', desc: 'ส่งไว · ปลอดภัย · มีประกัน' },
+  realreviews: { icon: '🌟', label: 'รีวิวจากผู้ซื้อจริง', desc: 'ดึงรีวิว + คะแนนจริงของลูกค้าอัตโนมัติ' },
 };
 
 /** ช่องของรายการย่อยแต่ละแบบ (ป้ายชื่อ q / a ในหน้าแก้ไข) */
@@ -133,7 +136,7 @@ export const PALETTE: [string, BlockType[]][] = [
   ['สินค้า', ['featured', 'spotlight', 'cats', 'pricelist', 'products']],
   ['รูป · วิดีโอ', ['image', 'slider', 'gallery', 'imgtext', 'cta', 'video', 'logos', 'hero', 'promos']],
   ['ข้อความ', ['heading', 'text', 'notice', 'marquee', 'quote', 'faq', 'steps']],
-  ['ความน่าเชื่อถือ', ['reviews', 'features', 'numbers', 'badges']],
+  ['ความน่าเชื่อถือ', ['realreviews', 'reviews', 'features', 'numbers', 'badges']],
   ['ลิงก์ · ติดต่อ', ['button', 'linkcards', 'contact', 'social']],
   ['โปรโมชัน', ['coupon', 'countdown']],
   ['ตกแต่ง · อื่น ๆ', ['divider', 'space', 'live', 'stats', 'how']],
@@ -174,6 +177,7 @@ export function newBlock(type: BlockType): Block {
     case 'spotlight': return { ...base, label: 'ซื้อเลย', text: '' };
     case 'quote': return { ...base, text: 'ซื้อง่าย ได้ไว ใช้ได้จริง', title: 'ร้านของเรา', align: 'center' };
     case 'linkcards': return { ...base, title: 'ลิงก์ที่น่าสนใจ', cols: 3, items: [{ q: 'ประวัติการซื้อ', a: 'ดูไอดีที่ซื้อไว้', link: '/history' }, { q: 'เติมเงิน', a: 'เติมเข้ากระเป๋า', link: '/balance' }] };
+    case 'realreviews': return { ...base, title: 'รีวิวจากผู้ซื้อจริง', limit: 6, minStars: 4 };
     case 'badges': return { ...base, items: [{ icon: '⚡', q: 'ส่งอัตโนมัติ' }, { icon: '🔒', q: 'จ่ายปลอดภัย' }, { icon: '🛡️', q: 'มีประกัน' }, { icon: '💬', q: 'ทักได้ทุกวัน' }] };
     default: return base;
   }
