@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ask, input, notify } from '@/components/dialog';
+import { uploadImage } from '@/components/upload';
 import { api, baht } from '@/components/Cart';
 import { AppLogo } from '@/components/AppLogo';
 import { FULFILL_LABEL } from '@/lib/templates';
@@ -59,17 +60,17 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   const [otpApp, setOtpApp] = useState(''); // ปุ่มรับ OTP: '' = ปิด
   const [usageImgs, setUsageImgs] = useState<string[]>([]);
   const [gallery, setGallery] = useState<string[]>([]);
-  /** อัปหลายรูปทีละไฟล์ · พังกลางทาง = เก็บที่อัปได้แล้ว */
+  /** อัปหลายรูปพร้อมกันครั้งละ 3 ไฟล์ (เรียงตามที่เลือก) · ไฟล์ที่พัง = ข้าม แล้วแจ้ง */
   async function uploadMany(files: File[]): Promise<string[]> {
-    const out: string[] = [];
+    const out: (string | null)[] = new Array(files.length).fill(null);
+    let err = '';
     setBusy(true);
-    for (const fl of files) {
-      const fd = new FormData(); fd.append('file', fl);
-      const r = await api<{ url: string }>('/api/admin/upload', fd);
-      if (r.ok) out.push(r.data.url); else { setMsg(r.error); break; }
+    for (let i = 0; i < files.length; i += 3) {
+      await Promise.all(files.slice(i, i + 3).map(async (fl, k) => { const r = await uploadImage(fl); if (r.ok) out[i + k] = r.data.url; else err = r.error; }));
     }
     setBusy(false);
-    return out;
+    if (err) setMsg(err);
+    return out.filter((u): u is string => !!u);
   }
   const counts = products.reduce<Record<string, number>>((m, p) => ({ ...m, [p.category]: (m[p.category] ?? 0) + 1 }), {});
   const router = useRouter();
@@ -125,9 +126,8 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   }
   async function upload(fl: File | undefined) {
     if (!fl || !f) return;
-    const fd = new FormData(); fd.append('file', fl);
     setBusy(true);
-    const r = await api<{ url: string }>('/api/admin/upload', fd);
+    const r = await uploadImage(fl, 800);
     setBusy(false);
     if (r.ok) setF({ ...f, image: r.data.url }); else setMsg(r.error);
   }

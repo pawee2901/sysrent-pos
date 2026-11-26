@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { uploadImage } from '@/components/upload';
 import { api } from '@/components/Cart';
 import { THEMES, canUseTheme } from '@/lib/themes';
 import { ACCENTS, HEX, accentHex, accentVars } from '@/lib/colors';
@@ -101,9 +102,8 @@ export function SettingsClient({ shape: shapeInit, initial, look: lookInit, them
   }
   async function uploadLook(fl?: File) {
     if (!fl) return;
-    const fd = new FormData(); fd.append('file', fl);
     setBusy(true);
-    const r = await api<{ url: string }>('/api/admin/upload', fd);
+    const r = await uploadImage(fl);
     setBusy(false);
     if (r.ok) setLook({ ...look, [lookTarget]: r.data.url, ...(lookTarget === 'bg_image' ? { bg_style: 'image' } : {}) }); else setMsg(r.error);
   }
@@ -118,8 +118,7 @@ export function SettingsClient({ shape: shapeInit, initial, look: lookInit, them
   }
   async function upload(fl?: File) {
     if (!fl) return;
-    const fd = new FormData(); fd.append('file', fl);
-    const r = await api<{ url: string }>('/api/admin/upload', fd);
+    const r = await uploadImage(fl);
     if (r.ok) setLogo(r.data.url); else setMsg(r.error);
   }
   const accent = accentHex(f.accent);

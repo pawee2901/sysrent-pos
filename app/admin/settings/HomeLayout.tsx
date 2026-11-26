@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { uploadImage } from '@/components/upload';
 import { api, baht } from '@/components/Cart';
 import { ask, notify } from '@/components/dialog';
 import { AppLogo } from '@/components/AppLogo';
@@ -237,8 +238,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
     setBusy(true);
     const urls: string[] = [];
     for (const fl of list) {
-      const fd = new FormData(); fd.append('file', fl);
-      const r = await api<{ url: string }>('/api/admin/upload', fd);
+      const r = await uploadImage(fl);
       if (r.ok) urls.push(r.data.url); else { notify(r.error, 'error'); break; }
     }
     setBusy(false);

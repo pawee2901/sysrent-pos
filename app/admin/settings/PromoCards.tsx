@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { uploadImage } from '@/components/upload';
 import { api } from '@/components/Cart';
 import { notify } from '@/components/dialog';
 
@@ -20,8 +21,7 @@ export function PromoCards({ init }: { init: { ready: boolean; cards: Promo[] } 
     setBusy(true);
     const got: Promo[] = [];
     for (const fl of files) {
-      const fd = new FormData(); fd.append('file', fl);
-      const r = await api<{ url: string }>('/api/admin/upload', fd);
+      const r = await uploadImage(fl);
       if (r.ok) got.push({ image: r.data.url, link: '' }); else { notify(r.error, 'error'); break; }
     }
     setBusy(false);
