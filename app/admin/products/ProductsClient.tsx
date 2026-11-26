@@ -214,7 +214,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
               {galleryReady
                 ? <ImageList urls={gallery} onChange={setGallery} max={MAX_IMAGES} disabled={busy} upload={uploadMany} addLabel="เพิ่มรูป" />
                 : <small className="faint" style={{ fontSize: 12 }}>⚠️ ต้องรัน SQL 0029_product_images.sql ก่อน ถึงจะใส่รูปสินค้าได้หลายรูป</small>}
-              {galleryReady && <small className="faint" style={{ fontSize: 12 }}>รูปบนสุด (โลโก้) ใช้ในการ์ดสินค้า · รูปเพิ่มเติมแสดงต่อท้ายในหน้าสินค้า · กด ‹ เพื่อเลื่อนลำดับ</small>}</div>
+              {galleryReady && <small className="faint" style={{ fontSize: 12 }}>รูปบนสุด (โลโก้) ใช้ในการ์ดสินค้า · รูปเพิ่มเติมแสดงต่อท้ายในหน้าสินค้า · กด ‹ เพื่อเลื่อนลำดับ · 🗜️ ระบบย่อรูปให้อัตโนมัติก่อนอัป</small>}</div>
             <label className="field"><span>ชื่อสินค้า</span><input className="input" value={f.name} maxLength={80} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <label className="field"><span>หมวด</span>

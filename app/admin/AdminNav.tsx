@@ -19,7 +19,7 @@ const MENU: { g: string; items: [string, string, string][] }[] = [
   { g: 'ร้านของฉัน', items: [['/line-bot', 'บอท LINE', 'chat'], ['/settings', 'ตั้งค่าร้าน', 'settings']] },
 ];
 const MOBILE: [string, string, string][] = [['', 'ภาพรวม', 'home'], ['/orders', 'ออเดอร์', 'orders'], ['/products', 'สินค้า', 'products'], ['/customers', 'ลูกค้า', 'customers'], ['/settings', 'ตั้งค่า', 'settings']];
-const TITLE: Record<string, string> = Object.fromEntries(MENU.flatMap((m) => m.items.map(([h, l]) => [h, l])));
+const TITLE: Record<string, string> = { ...Object.fromEntries(MENU.flatMap((m) => m.items.map(([h, l]) => [h, l]))), '/resize': 'ย่อรูป' };
 const ICON: Record<string, string> = Object.fromEntries(MENU.flatMap((m) => m.items.map(([h, , i]) => [h, i])));
 
 /** โครงหลังบ้าน: แถบซ้าย + แถบบน + เมนูล่าง (มือถือ) */
@@ -83,6 +83,7 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
             <b>{TITLE[cur] ?? 'ภาพรวม'}</b>
           </nav>
           <div className="acts">
+            <Link href={to('/admin/resize')} className={`btn sm${cur === '/resize' ? ' soft' : ''}`} title="ย่อรูปก่อนอัป / ไปใช้ที่อื่น">🗜️ ย่อรูป</Link>
             <TutorialButton page={cur} />
             <a href="/" className="btn sm" target="_blank" rel="noopener noreferrer">ดูหน้าร้าน ↗</a>
             <button type="button" className={`btn ghost sm${extra.length ? ' m-logout' : ''}`} onClick={logout}>ออกจากระบบ</button>

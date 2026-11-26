@@ -24,6 +24,7 @@
     "/reports": "/tickets",
     "/settings": "/config",
     "/reviews": "/feedback",
+    "/resize": "/shrink",
     "/otp": "/codes",
     "/renewals": "/renew",
     "/line-bot": "/linebot"

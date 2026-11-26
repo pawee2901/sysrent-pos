@@ -1,0 +1,9 @@
+.note { font-size: 14px; margin-bottom: 14px; }
+.drop { display: grid; justify-items: center; gap: 4px; padding: 30px 16px; border: 2px dashed var(--line); border-radius: 16px; background: var(--surface-2, var(--bg)); color: inherit; font: inherit; cursor: pointer; transition: border-color .15s, background .15s; }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop span { font-size: 34px; }
+.list { display: grid; }
+.item { display: flex; align-items: center; gap: 12px; padding: 10px 18px; border-top: 1px solid var(--line); }
+.item img, .bad { width: 64px; height: 64px; flex: none; border-radius: 10px; object-fit: cover; border: 1px solid var(--line); background: var(--bg); display: grid; place-items: center; }
+.meta { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.meta > b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
