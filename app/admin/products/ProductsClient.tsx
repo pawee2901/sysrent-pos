@@ -45,6 +45,8 @@ function stockCount(st: StockForm) {
   const n = new Set(t.split(/^\s*-{3,}\s*$/m).map((s) => s.replace(/^\n+|\s+$/g, '')).filter((s) => s.trim())).size * Math.max(1, Number(st.repeat) || 1);
   return `จะเพิ่ม ${n.toLocaleString('th-TH')} ชิ้น`;
 }
+/** ช่องที่ยังไม่ได้กรอก (ว่าง = ครบแล้ว) */
+const missing = (f: Form) => [!f.name.trim() && 'ชื่อสินค้า', !f.options.length && 'แพ็กเกจ', f.options.some((o) => !(Number(o.price) > 0)) && 'ราคาขาย', f.options.some((o) => !o.name.trim()) && 'ชื่อแพ็กเกจ'].filter(Boolean).join(' · ');
 const blank = (): Form => ({ name: '', category: '', description: '', image: '', template: '', fulfillment: 'stock', badge: '', askInfo: '', active: true, preorder: false, preorderNote: '', preorderLimit: '', options: [{ name: '30 วัน', price: '', compare_at: '', cost: '', duration_days: '30', agent_price: '', active: true }] });
 const fromProduct = (p: Product, ap: Record<string, number> = {}): Form => ({
   id: p.id, name: p.name, category: p.category, description: p.description, image: p.image, template: p.template, fulfillment: p.fulfillment, badge: p.badge, askInfo: p.askInfo, active: p.active, preorder: p.preorder, preorderNote: p.preorderNote, preorderLimit: p.preorderLimit ? String(p.preorderLimit) : '',
@@ -90,6 +92,9 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
 
   async function save() {
     if (!f) return;
+    // ปุ่มไม่ล็อกเงียบ ๆ แล้ว: กดแล้วบอกว่ายังขาดอะไร
+    const need = missing(f);
+    if (need) { setMsg(`กรอกให้ครบก่อนบันทึก: ${need}`); notify(`กรอกให้ครบก่อนบันทึก: ${need}`, 'error'); return; }
     setBusy(true); setMsg('');
     const r = await api<{ id: string }>('/api/admin/products', { action: 'save', id: f.id, data: {
       name: f.name, category: f.category, description: f.description, image: f.image, template: f.template, fulfillment: f.fulfillment, badge: f.badge, ask_info: f.askInfo, active: f.active,
@@ -103,17 +108,20 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
     const same = (a: string[], b: string[]) => a.join('\n') === b.join('\n');
     const imgChanged = imgReady && !same(usageImgs, usageImages[pid ?? ''] ?? []);
     const galChanged = galleryReady && !same(gallery, images[pid ?? ''] ?? []);
+    // วิธีใช้งาน + ปุ่มรับ OTP: บันทึกพร้อมกัน เฉพาะส่วนที่เปลี่ยน
+    const extra: Promise<{ ok: boolean; error: string }>[] = [];
     if (pid && usageReady && (imgChanged || galChanged || usage.trim() !== (usages[pid] ?? '').trim())) {
       const media = galleryReady ? { usage_images: usageImgs, images: gallery } : imgReady ? { usage_image: usageImgs[0] ?? '' } : {};
-      const u = await api('/api/admin/products', { action: 'usage', id: pid, usage, ...media });
-      if (!u.ok) { setMsg(u.error); router.refresh(); return; }
+      extra.push(api('/api/admin/products', { action: 'usage', id: pid, usage, ...media }));
     }
-    // ปุ่มรับ OTP: บันทึกแยก เฉพาะเมื่อเปลี่ยน
-    if (pid && otp?.ready && otpApp !== (otp.picks[pid] ?? '')) {
-      const o = await api('/api/admin/products', { action: 'otp', id: pid, app_id: otpApp || null });
-      if (!o.ok) { setMsg(o.error); router.refresh(); return; }
+    if (pid && otp?.ready && otpApp !== (otp.picks[pid] ?? '')) extra.push(api('/api/admin/products', { action: 'otp', id: pid, app_id: otpApp || null }));
+    if (extra.length) {
+      setBusy(true);
+      const bad = (await Promise.all(extra)).find((x) => !x.ok);
+      setBusy(false);
+      if (bad) { setMsg(bad.error); router.refresh(); return; }
     }
-    setF(null); router.refresh();
+    setF(null); notify('บันทึกสินค้าแล้ว ✓'); router.refresh();
   }
   async function upload(fl: File | undefined) {
     if (!fl || !f) return;
@@ -316,7 +324,8 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
           </div>
           <div className="drawer-foot">
             {f.id && <button type="button" className="btn danger" onClick={() => { simple({ action: 'delete', id: f.id }, `ลบสินค้า "${f.name}"?`); setF(null); }}>ลบ</button>}
-            <button type="button" className="btn primary" disabled={busy || !f.name.trim() || !f.options.length} onClick={save}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button>
+            {missing(f) && !busy && <small style={{ flex: 2, alignSelf: 'center', color: 'var(--bad)', fontSize: 13 }}>ยังขาด: {missing(f)}</small>}
+            <button type="button" className="btn primary" disabled={busy} onClick={save}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button>
           </div>
         </>}
       </aside>

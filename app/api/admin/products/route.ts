@@ -70,10 +70,15 @@ export async function POST(req: Request) {
   if (x.action === 'save') {
     const { options, preorder, preorder_note, preorder_limit, ...p } = x.data;
     let pid = x.id;
+    const pre = { preorder: p.fulfillment === 'stock' && preorder, preorder_note, preorder_limit };
+    let preDone = false;
     if (pid) {
-      if (!(await own(pid))) return fail('ไม่พบสินค้า', 404);
-      const { error } = await d.from('shop_products').update(p).eq('id', pid);
+      // ตรวจว่าเป็นสินค้าของร้าน + บันทึกในคำสั่งเดียว (รวมพรีออเดอร์ · ยังไม่รัน 0040 = บันทึกแยกด้านล่าง)
+      let { data: upd, error } = await d.from('shop_products').update({ ...p, ...pre }).eq('id', pid).eq('shop_id', sid).select('id');
+      if (error && /preorder/.test(error.message)) ({ data: upd, error } = await d.from('shop_products').update(p).eq('id', pid).eq('shop_id', sid).select('id'));
+      else preDone = !error;
       if (error) return fail('บันทึกไม่สำเร็จ', 500);
+      if (!upd?.length) return fail('ไม่พบสินค้า', 404);
     } else {
       const { count } = await d.from('shop_products').select('id', { count: 'exact', head: true }).eq('shop_id', sid);
       if ((count ?? 0) >= 200) return fail('ร้านมีสินค้าได้สูงสุด 200 รายการ');
@@ -81,32 +86,33 @@ export async function POST(req: Request) {
       if (error || !data) return fail('สร้างสินค้าไม่สำเร็จ', 500);
       pid = data.id;
     }
-    {
-      const { error: pe } = await d.from('shop_products').update({ preorder: p.fulfillment === 'stock' && preorder, preorder_note, preorder_limit }).eq('id', pid);
+    if (!preDone) {
+      const { error: pe } = await d.from('shop_products').update(pre).eq('id', pid);
       if (pe && preorder) return fail(/preorder/.test(pe.message) ? 'บันทึกสินค้าแล้ว แต่ยังเปิดพรีออเดอร์ไม่ได้: รัน SQL 0040_preorder.sql ก่อน' : 'บันทึกพรีออเดอร์ไม่สำเร็จ', 500);
     }
     // แพ็กเกจ: แก้ตัวเดิม / เพิ่มตัวใหม่ / ตัวที่หายไป = ลบ (ถ้ามีออเดอร์แล้วปิดขายแทน)
     const { data: cur } = await d.from('shop_options').select('id').eq('product_id', pid);
     const keep = new Set(options.filter((o) => o.id).map((o) => o.id!));
-    const agentRows: { option_id: string; agent_price: number | null; price: number }[] = [];
-    for (const [i, o] of options.entries()) {
+    // บันทึกทุกแพ็กเกจพร้อมกัน (เดิมทีละตัว = ช้าเมื่อมีหลายแพ็กเกจ)
+    const agentRows = (await Promise.all(options.map(async (o, i) => {
       const row = { name: o.name, price: o.price, compare_at: o.compare_at, cost: o.cost, duration_days: o.duration_days, active: o.active, sort: i };
       let oid = o.id;
       if (o.id && (cur ?? []).some((c) => c.id === o.id)) await d.from('shop_options').update(row).eq('id', o.id);
       else oid = (await d.from('shop_options').insert({ ...row, product_id: pid }).select('id').single()).data?.id;
-      if (oid) agentRows.push({ option_id: oid, agent_price: o.agent_price ?? null, price: o.price });
-    }
+      return oid ? { option_id: oid, agent_price: o.agent_price ?? null, price: o.price } : null;
+    }))).filter((r): r is { option_id: string; agent_price: number | null; price: number } => !!r);
     // ราคาตัวแทน: มีค่า (และถูกกว่าราคาขาย) = บันทึก · ว่าง = ลบ (ตัวแทนซื้อราคาปกติ) · ยังไม่รัน 0016 = ข้าม
     const setAp = agentRows.filter((r) => r.agent_price !== null && r.agent_price < r.price);
     const clearAp = agentRows.filter((r) => !setAp.includes(r)).map((r) => r.option_id);
-    if (setAp.length) await d.from('shop_agent_prices').upsert(setAp.map((r) => ({ option_id: r.option_id, agent_price: r.agent_price })));
-    if (clearAp.length) await d.from('shop_agent_prices').delete().in('option_id', clearAp);
-    for (const c of cur ?? []) {
-      if (keep.has(c.id)) continue;
-      const { count } = await d.from('shop_order_items').select('id', { count: 'exact', head: true }).eq('option_id', c.id);
-      if (count) await d.from('shop_options').update({ active: false }).eq('id', c.id);
-      else await d.from('shop_options').delete().eq('id', c.id);
-    }
+    await Promise.all([
+      setAp.length ? d.from('shop_agent_prices').upsert(setAp.map((r) => ({ option_id: r.option_id, agent_price: r.agent_price }))) : null,
+      clearAp.length ? d.from('shop_agent_prices').delete().in('option_id', clearAp) : null,
+      ...(cur ?? []).filter((c) => !keep.has(c.id)).map(async (c) => {
+        const { count } = await d.from('shop_order_items').select('id', { count: 'exact', head: true }).eq('option_id', c.id);
+        if (count) await d.from('shop_options').update({ active: false }).eq('id', c.id);
+        else await d.from('shop_options').delete().eq('id', c.id);
+      }),
+    ]);
     // หมวดใหม่ที่พิมพ์ตอนเพิ่มสินค้า → ใส่ท้ายรายการหมวดของร้านให้เอง
     if (p.category) {
       const list = await shopCategories(sid);
