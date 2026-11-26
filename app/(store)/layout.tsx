@@ -37,7 +37,8 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const { data: pageRows } = await db().from('shop_pages').select('slug, title').eq('shop_id', shop.id).eq('in_menu', true).order('sort').order('created_at').limit(20);
   const pages = (pageRows ?? []) as { slug: string; title: string }[];
   const contacts = await shopContacts(shop);
-  const [isAdmin, agent, email] = me ? await Promise.all([isShopAdmin(), getAgent(shop, me.id), customerEmail(me.id)]) : [false, null, ''];
+  const [isAdmin, agent, email, av] = me ? await Promise.all([isShopAdmin(), getAgent(shop, me.id), customerEmail(me.id),
+    db().from('shop_customers').select('avatar_url').eq('id', me.id).maybeSingle()]) : [false, null, '', null]; // ยังไม่รัน 0043 = ไม่มีรูป
   const look = apErr || !can(shop.plan, 'appearance') ? null : ap;
   const font = fontOf(look?.font ?? '');
   const fest = festOf(look?.effect ?? '');
@@ -72,7 +73,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
             {me && <Link href={to('/wallet')} className="wallet-chip" title="เติมเงิน"><Icon name="wallet" size={18} />{baht(me.balance)}</Link>}
             <Link href={to('/cart')} className="icon-btn" aria-label="ตะกร้า"><Icon name="bag" size={22} /><CartCount /></Link>
             {me
-              ? <UserMenu username={me.username} contact={me.contact} balance={baht(me.balance)} isAdmin={isAdmin} isAgent={!!agent} email={email} mailOn={can(shop.plan, 'mail')} otpOn={can(shop.plan, 'otp')} />
+              ? <UserMenu username={me.username} contact={me.contact} balance={baht(me.balance)} isAdmin={isAdmin} isAgent={!!agent} email={email} mailOn={can(shop.plan, 'mail')} otpOn={can(shop.plan, 'otp')} avatar={av?.data?.avatar_url ?? ''} />
               : <Link href={to('/login')} className="btn primary sm">เข้าสู่ระบบ</Link>}
           </div>
         </div>

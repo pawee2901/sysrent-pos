@@ -846,3 +846,12 @@ a.hb-link:hover { transform: translateY(-2px); border-color: var(--accent); }
 .hb-rate small { color: var(--muted); font-weight: 400; }
 .hb-reviews figcaption small { font-weight: 400; }
 @media (max-width: 760px) { .rv-wrap { grid-template-columns: 1fr; } .rv-sum { position: static; } }
+
+/* รูปโปรไฟล์ลูกค้า (เมนูบัญชี · การ์ดกิจกรรม) */
+.avatar { overflow: hidden; }
+.avatar img, .hb-feed-av img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+.hb-feed-av { overflow: hidden; }
+.umenu-pic { position: relative; padding: 0; border: 0; cursor: pointer; font: inherit; color: #fff; overflow: visible; }
+.umenu-pic img { border-radius: 50%; }
+.umenu-pic i { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-style: normal; background: var(--surface); box-shadow: 0 1px 4px rgba(0, 0, 0, .25); }
+.umenu-pop button[role="menuitem"]:disabled { opacity: .6; cursor: wait; }
