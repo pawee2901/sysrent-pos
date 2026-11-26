@@ -29,7 +29,8 @@ export function HumanCheck({ onToken, nonce }: { onToken: (t: string) => void; n
     load().then(() => {
       if (gone || !box.current || !window.turnstile) return;
       id.current = window.turnstile.render(box.current, {
-        sitekey: KEY, language: 'th', theme: 'auto',
+        // flexible = กว้างเต็มช่องเท่ากับช่องกรอก / ปุ่มในฟอร์ม (ขั้นต่ำ 300px)
+        sitekey: KEY, language: 'th', theme: 'auto', size: 'flexible',
         callback: (t: string) => cb.current(t), 'expired-callback': () => cb.current(''), 'error-callback': () => cb.current(''),
       });
     }).catch(() => cb.current(''));
@@ -38,5 +39,5 @@ export function HumanCheck({ onToken, nonce }: { onToken: (t: string) => void; n
   useEffect(() => {
     if (nonce && id.current && window.turnstile) { window.turnstile.reset(id.current); cb.current(''); }
   }, [nonce]);
-  return KEY ? <div ref={box} style={{ minHeight: 65 }} /> : null;
+  return KEY ? <div ref={box} className="human-check" style={{ minHeight: 65, width: '100%' }} /> : null;
 }
