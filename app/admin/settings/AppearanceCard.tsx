@@ -5,7 +5,7 @@ import { notify } from '@/components/dialog';
 import { FloatingFx } from '@/components/FloatingFx';
 import { FestivalFx } from '@/components/FestivalFx';
 import { LoaderMark } from '@/components/PageLoader';
-import { EFFECTS, FEST, FESTIVALS, FONTS, LOADERS, allFontsHref, festOf, fontStack } from '@/lib/appearance';
+import { EFFECTS, EFFECT_GROUPS, FEST, FESTIVALS, FONTS, LOADERS, LOADER_GROUPS, allFontsHref, festOf, fontStack } from '@/lib/appearance';
 import { MUSIC_HINT, parseMusic } from '@/lib/music';
 
 export type AppearanceInit = { enabled: boolean; ready: boolean; font: string; effect: string; loader: string; music_url: string };
@@ -41,7 +41,8 @@ export function AppearanceCard({ init, logo }: { init: AppearanceInit; logo: str
           </div></div>
 
         <div className="field"><span>เอฟเฟกต์ลอย</span>
-          <div className="ap-picks">{EFFECTS.map(([k, l, icon]) => <button key={k} type="button" className={`ap-pick${f.effect === k ? ' on' : ''}`} onClick={() => setF({ ...f, effect: k })}>{icon} {l}</button>)}</div>
+          <div className="ap-picks"><button type="button" className={`ap-pick${f.effect === 'none' ? ' on' : ''}`} onClick={() => setF({ ...f, effect: 'none' })}>ไม่มี</button></div>
+          {EFFECT_GROUPS.map(([g, keys]) => <div key={g} className="ap-group"><small>{g}</small><div className="ap-picks">{keys.map((k) => { const e = EFFECTS.find((x) => x[0] === k); return e && <button key={k} type="button" className={`ap-pick${f.effect === k ? ' on' : ''}`} onClick={() => setF({ ...f, effect: k })}>{e[2]} {e[1]}</button>; })}</div></div>)}
           {f.effect !== 'none' && !festOf(f.effect) && <div className="ap-preview"><FloatingFx effect={f.effect} contained /></div>}
         </div>
 
@@ -51,7 +52,8 @@ export function AppearanceCard({ init, logo }: { init: AppearanceInit; logo: str
         </div>
 
         <div className="field"><span>เอฟเฟกต์รอโหลด (ตอนเปิดเว็บ)</span>
-          <div className="ap-picks">{LOADERS.map(([k, l]) => <button key={k} type="button" className={`ap-pick${f.loader === k ? ' on' : ''}`} onClick={() => setF({ ...f, loader: k })}>{l}</button>)}</div>
+          <div className="ap-picks"><button type="button" className={`ap-pick${f.loader === 'none' ? ' on' : ''}`} onClick={() => setF({ ...f, loader: 'none' })}>ไม่มี</button></div>
+          {LOADER_GROUPS.map(([g, keys]) => <div key={g} className="ap-group"><small>{g}</small><div className="ap-picks">{keys.map((k) => { const e = LOADERS.find((x) => x[0] === k); return e && <button key={k} type="button" className={`ap-pick${f.loader === k ? ' on' : ''}`} onClick={() => setF({ ...f, loader: k })}>{e[1]}</button>; })}</div></div>)}
           {f.loader !== 'none' && <div className="ap-preview center"><LoaderMark kind={f.loader} logo={logo} /></div>}
         </div>
 

@@ -1118,3 +1118,5 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
 .arv-reply { padding: 8px 12px; border-radius: 10px; background: var(--surface-2, var(--bg)); font-size: 14px; }
 .arv-reply-ed { display: grid; gap: 8px; }
 .arv-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.ap-group { display: grid; gap: 6px; margin-top: 4px; }
+.ap-group > small { font-size: 12px; font-weight: 700; color: var(--muted); }

@@ -21,13 +21,44 @@ export const FONTS = [
 ] as const;
 
 export const EFFECTS = [
-  ['none', 'ไม่มี', ''], ['confetti', 'คอนเฟตติ', '🎊'], ['hearts', 'หัวใจ', '💗'], ['sakura', 'ซากุระ', '🌸'],
-  ['snow', 'หิมะ', '❄️'], ['stars', 'ดาว', '✨'], ['lantern', 'โคมลอย', '🏮'], ['bubbles', 'ฟองสบู่', '🫧'],
+  ['none', 'ไม่มี', ''],
+  // น่ารัก
+  ['hearts', 'หัวใจ', '💗'], ['sakura', 'ซากุระ', '🌸'], ['bubbles', 'ฟองสบู่', '🫧'], ['flowers', 'ดอกไม้', '🌼'], ['butterfly', 'ผีเสื้อ', '🦋'],
+  ['balloons', 'ลูกโป่ง', '🎈'], ['sweets', 'ขนมหวาน', '🍭'], ['paws', 'อุ้งเท้าแมว', '🐾'], ['teddy', 'ตุ๊กตาหมี', '🧸'],
+  // เทศกาล · ฤดู
+  ['confetti', 'คอนเฟตติ', '🎊'], ['snow', 'หิมะ', '❄️'], ['stars', 'ดาว', '✨'], ['lantern', 'โคมลอย', '🏮'], ['gifts', 'กล่องของขวัญ', '🎁'],
+  ['lotus', 'ดอกบัว', '🪷'], ['spooky', 'ฮาโลวีน', '🎃'], ['leaves', 'ใบไม้ร่วง', '🍁'], ['rain', 'ฝนตก', '🌧️'], ['clover', 'ใบโคลเวอร์', '🍀'],
+  // ขายของ · โชคลาภ
+  ['money', 'เงินปลิว', '💸'], ['coins', 'เหรียญทอง', '🪙'], ['gems', 'เพชร', '💎'], ['percent', 'ลดราคา %', '🏷️'], ['fire', 'ไฟลุก', '🔥'],
+  // เท่ · เกม · ไฮเทค
+  ['glitter', 'ประกายสี', '✦'], ['fireflies', 'หิ่งห้อย', '🟡'], ['embers', 'ประกายไฟ', '🟠'], ['matrix', 'โค้ดไหล', '💻'],
+  ['game', 'เกมเมอร์', '🎮'], ['rocket', 'จรวด', '🚀'], ['music', 'ตัวโน้ต', '🎵'],
 ] as const;
-export const LOADERS = [['none', 'ไม่มี'], ['spinner', 'วงกลมหมุน'], ['dots', 'จุดเด้ง'], ['heart', 'หัวใจเต้น'], ['logo', 'โลโก้เด้ง'], ['bar', 'แถบวิ่ง'],
+/** กลุ่มของเอฟเฟกต์ลอย (หน้าตั้งค่า) */
+export const EFFECT_GROUPS: [string, string[]][] = [
+  ['น่ารัก', ['hearts', 'sakura', 'bubbles', 'flowers', 'butterfly', 'balloons', 'sweets', 'paws', 'teddy']],
+  ['เทศกาล · ฤดู', ['confetti', 'snow', 'stars', 'lantern', 'gifts', 'lotus', 'spooky', 'leaves', 'rain', 'clover']],
+  ['ขายของ · โชคลาภ', ['money', 'coins', 'gems', 'percent', 'fire']],
+  ['เท่ · เกม · ไฮเทค', ['glitter', 'fireflies', 'embers', 'matrix', 'game', 'rocket', 'music']],
+];
+export const LOADERS = [['none', 'ไม่มี'],
+  // เรียบ ๆ
+  ['spinner', 'วงกลมหมุน'], ['ring2', 'วงแหวนคู่'], ['grad', 'วงไล่สี'], ['ripple', 'คลื่นวง'], ['dots', 'จุดเด้ง'], ['orbit', 'จุดโคจร'],
+  ['eq', 'แท่งเพลง'], ['bar', 'แถบวิ่ง'], ['cube', 'สี่เหลี่ยมพลิก'], ['ball', 'ลูกบอลเด้ง'], ['text', 'คำว่า กำลังโหลด'],
+  // โลโก้ร้าน
+  ['logo', 'โลโก้เด้ง'], ['logospin', 'โลโก้หมุน'], ['logopulse', 'โลโก้ + คลื่น'],
+  // อีโมจิ
+  ['heart', 'หัวใจเต้น'], ['rocket', '🚀 จรวด'], ['cart', '🛒 รถเข็น'], ['gift', '🎁 ของขวัญ'], ['hourglass', '⏳ นาฬิกาทราย'], ['game', '🎮 จอยเกม'], ['money', '💸 เงิน'], ['star', '⭐ ดาวหมุน'],
   // ฟังก์ชันเสริมจาก SysRent: ตัวการ์ตูน (code ต้องตรงกับ BUILTIN_LOADERS ใน components/addons/AddonArt.tsx — ไฟล์นั้นเป็น client component นำเข้าฝั่ง server ไม่ได้)
   ['cat', '🐱 แมวส้ม'], ['bunny', '🐰 กระต่าย'], ['penguin', '🐧 เพนกวิน'], ['dino', '🦖 ไดโนเสาร์'], ['ghost', '👻 ผีน้อย'], ['chick', '🐣 ลูกเจี๊ยบ'],
   ['bear', '🐻 หมีน้อย'], ['krathong', '🪷 กระทง'], ['sleigh', '🎅 ซานต้าขี่เลื่อน']] as const;
+/** กลุ่มของเอฟเฟกต์รอโหลด (หน้าตั้งค่า) */
+export const LOADER_GROUPS: [string, string[]][] = [
+  ['เรียบ ๆ', ['spinner', 'ring2', 'grad', 'ripple', 'dots', 'orbit', 'eq', 'bar', 'cube', 'ball', 'text']],
+  ['โลโก้ร้าน', ['logo', 'logospin', 'logopulse']],
+  ['อีโมจิ', ['heart', 'rocket', 'cart', 'gift', 'hourglass', 'game', 'money', 'star']],
+  ['ตัวการ์ตูน', ['cat', 'bunny', 'penguin', 'dino', 'ghost', 'chick', 'bear', 'krathong', 'sleigh']],
+];
 
 /**
  * ธีมเทศกาล (ฟังก์ชันเสริมจาก SysRent): รูปฉาก + เอฟเฟกต์เคลื่อนไหว เต็มหน้าร้าน — บันทึกในคอลัมน์ effect เป็น 'fest-<code>'

@@ -269,3 +269,56 @@ body.swal2-toast-shown .swal2-container .swal2-popup { pointer-events: auto; }
 .fx.contained .fx-rise { animation-name: fx-rise-box; }
 @keyframes fx-fall-box { from { transform: translate3d(0, -30px, 0) rotate(0); } to { transform: translate3d(calc(var(--drift) / 3), 150px, 0) rotate(360deg); } }
 @keyframes fx-rise-box { from { transform: translate3d(0, 150px, 0); } to { transform: translate3d(calc(var(--drift) / 3), -30px, 0); } }
+
+/* เอฟเฟกต์ลอยแบบใหม่ */
+.fx-straight.fx-fall { animation-name: fx-fall-s; }
+.fx.contained .fx-straight.fx-fall { animation-name: fx-fall-box-s; }
+@keyframes fx-fall-s { from { transform: translate3d(0, -12vh, 0); } to { transform: translate3d(var(--drift), 112vh, 0); } }
+@keyframes fx-fall-box-s { from { transform: translate3d(0, -30px, 0); } to { transform: translate3d(calc(var(--drift) / 3), 150px, 0); } }
+.fx-glitter span, .fx-percent span { color: var(--c); font-weight: 800; text-shadow: 0 0 10px color-mix(in srgb, var(--c) 70%, transparent); }
+.fx-fireflies span { width: .32em; height: .32em; border-radius: 50%; background: #fde68a; box-shadow: 0 0 10px 4px rgba(253, 230, 138, .75); }
+.fx-embers span { width: .26em; height: .26em; border-radius: 50%; background: #fb923c; box-shadow: 0 0 8px 3px rgba(251, 146, 60, .7); }
+.fx-rain span { width: 2px; height: 1.6em; border-radius: 2px; background: linear-gradient(transparent, rgba(96, 165, 250, .85)); }
+.fx-matrix span { color: #22c55e; font-family: ui-monospace, monospace; font-weight: 700; text-shadow: 0 0 6px #22c55e; }
+
+/* เอฟเฟกต์รอโหลดแบบใหม่ */
+.pl-ring2 { position: relative; width: 60px; height: 60px; border-radius: 50%; border: 4px solid transparent; border-top-color: var(--accent); border-bottom-color: var(--accent); animation: pl-turn 1s linear infinite; }
+.pl-ring2::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 4px solid transparent; border-left-color: var(--accent-2, var(--accent)); border-right-color: var(--accent-2, var(--accent)); animation: pl-turn .7s linear infinite reverse; }
+.pl-grad { width: 60px; height: 60px; border-radius: 50%; background: conic-gradient(from 0deg, transparent, var(--accent)); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px)); mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px)); animation: pl-turn .9s linear infinite; }
+.pl-ripple { position: relative; width: 84px; height: 84px; display: grid; place-items: center; }
+.pl-ripple i { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--accent); opacity: 0; animation: pl-wave 1.6s ease-out infinite; }
+.pl-ripple i:nth-child(2) { animation-delay: .8s; }
+.pl-ripple-logo { width: 110px; height: 110px; }
+.pl-ripple img { width: 58px; height: 58px; object-fit: contain; border-radius: 14px; }
+.pl-ripple b { font-size: 42px; }
+@keyframes pl-wave { from { transform: scale(.35); opacity: .9; } to { transform: scale(1); opacity: 0; } }
+.pl-orbit { position: relative; width: 64px; height: 64px; animation: pl-turn 1.2s linear infinite; }
+.pl-orbit i { position: absolute; top: 0; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--accent); transform-origin: 7px 32px; }
+.pl-orbit i:nth-child(2) { transform: rotate(120deg); opacity: .7; } .pl-orbit i:nth-child(3) { transform: rotate(240deg); opacity: .4; }
+.pl-eq { display: flex; align-items: flex-end; gap: 6px; height: 48px; }
+.pl-eq i { width: 8px; height: 100%; border-radius: 4px; background: var(--accent); transform-origin: bottom; animation: pl-eqb .9s ease-in-out infinite; }
+.pl-eq i:nth-child(2) { animation-delay: -.7s; } .pl-eq i:nth-child(3) { animation-delay: -.4s; } .pl-eq i:nth-child(4) { animation-delay: -.2s; } .pl-eq i:nth-child(5) { animation-delay: -.55s; }
+@keyframes pl-eqb { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
+.pl-cube { width: 44px; height: 44px; border-radius: 8px; background: var(--grad, var(--accent)); animation: pl-cubef 1.4s ease-in-out infinite; }
+@keyframes pl-cubef { 0% { transform: perspective(120px) rotateX(0) rotateY(0); } 50% { transform: perspective(120px) rotateX(-180deg) rotateY(0); } 100% { transform: perspective(120px) rotateX(-180deg) rotateY(-180deg); } }
+.pl-ball { position: relative; width: 60px; height: 80px; }
+.pl-ball i { position: absolute; left: 14px; top: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); animation: pl-ballj .55s cubic-bezier(.5, 0, .5, 1) infinite alternate; }
+.pl-ball b { position: absolute; left: 12px; bottom: 0; width: 36px; height: 8px; border-radius: 50%; background: rgba(0, 0, 0, .18); animation: pl-balls .55s cubic-bezier(.5, 0, .5, 1) infinite alternate; }
+@keyframes pl-ballj { from { transform: translateY(0); } to { transform: translateY(42px) scale(1.08, .9); } }
+@keyframes pl-balls { from { transform: scale(.5); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+.pl-text { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+.pl-text span { display: inline-block; animation: pl-jump .5s ease-in-out infinite alternate; }
+.pl-text span:nth-child(2) { animation-delay: .15s; } .pl-text span:nth-child(3) { animation-delay: .3s; }
+.pl-emo { font-size: 56px; line-height: 1; }
+.pl-flip { animation: pl-flipy 1.4s ease-in-out infinite; }
+@keyframes pl-flipy { to { transform: perspective(300px) rotateY(360deg); } }
+.pl-float { animation: pl-floaty 1.2s ease-in-out infinite alternate; }
+@keyframes pl-floaty { from { transform: translateY(8px) rotate(-8deg); } to { transform: translateY(-12px) rotate(6deg); } }
+.pl-drive { animation: pl-drivex 1.4s ease-in-out infinite alternate; }
+@keyframes pl-drivex { from { transform: translateX(-36px); } to { transform: translateX(36px) rotate(-4deg); } }
+.pl-shake { animation: pl-shk .9s ease-in-out infinite; }
+@keyframes pl-shk { 0%, 60%, 100% { transform: rotate(0); } 10%, 30%, 50% { transform: rotate(-12deg) scale(1.05); } 20%, 40% { transform: rotate(12deg) scale(1.05); } }
+.pl-hour { animation: pl-hourf 1.6s ease-in-out infinite; }
+@keyframes pl-hourf { 0%, 40% { transform: rotate(0); } 60%, 100% { transform: rotate(180deg); } }
+.pl-bounce { animation: pl-bnc .6s cubic-bezier(.5, 0, .5, 1) infinite alternate; }
+@keyframes pl-bnc { from { transform: translateY(0) scale(1.05, .95); } to { transform: translateY(-22px); } }
