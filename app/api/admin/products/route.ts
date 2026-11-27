@@ -54,6 +54,8 @@ const schema = z.discriminatedUnion('action', [
     usage_images: z.array(httpsUrl).max(20).optional(), images: z.array(httpsUrl).max(20).optional(), usage_image: z.string().trim().max(500).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https').optional() }),
   // ปุ่มรับ OTP ในหน้าประวัติการซื้อ: app_id = แอป OTP ที่ปุ่มค้น · null = ปิดปุ่ม (ต้องรัน 0032)
   z.object({ action: z.literal('otp'), id: z.string().uuid(), app_id: z.string().uuid().nullable() }),
+  // ฟอร์มส่งของของแพ็กเกจ: tpl มีช่อง {{0}} {{1}} … ตาม fields · null = ลบฟอร์ม (ต้องรัน 0046)
+  z.object({ action: z.literal('form'), optionId: z.string().uuid(), form: z.object({ tpl: z.string().min(1).max(4000), fields: z.array(z.string().trim().min(1).max(30)).min(1).max(12) }).nullable() }),
 ]);
 
 /** จัดการสินค้า + แพ็กเกจ + เพิ่มสต็อก (ทุกคำสั่งตรวจว่าเป็นของร้านนี้) */
@@ -197,6 +199,17 @@ export async function POST(req: Request) {
     if (!error) return NextResponse.json({ ok: true });
     // เช็ก 0029 ก่อน: ชื่อ usage_images มีคำว่า usage_image อยู่ในตัว
     return fail(/usage_images|\bimages\b/.test(error.message) ? 'ยังไม่ได้รัน SQL 0029_product_images.sql' : error.message.includes('usage_image') ? 'ยังไม่ได้รัน SQL 0012_usage_image.sql' : error.message.includes('usage') ? 'ยังไม่ได้รัน SQL 0011_product_usage.sql' : 'บันทึกไม่สำเร็จ', 500);
+  }
+
+  if (x.action === 'form') {
+    const { data: fo } = await d.from('shop_options').select('id, shop_products!inner(shop_id)').eq('id', x.optionId).eq('shop_products.shop_id', sid).maybeSingle();
+    if (!fo) return fail('ไม่พบแพ็กเกจ', 404);
+    if (x.form) {
+      const used = [...x.form.tpl.matchAll(/\{\{(\d+)\}\}/g)].map((m) => Number(m[1]));
+      if (!used.length || used.some((n) => n >= x.form!.fields.length)) return fail('ฟอร์มไม่ถูกต้อง ลองแตะเลือกช่องใหม่');
+    }
+    const { error } = await d.from('shop_options').update({ delivery_form: x.form }).eq('id', x.optionId);
+    return error ? fail(error.message.includes('delivery_form') ? 'ยังไม่ได้รัน SQL 0046_delivery_form.sql' : 'บันทึกฟอร์มไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
   }
 
   // เพิ่มสต็อก: ทีละบรรทัด (1 บรรทัด = 1 ชิ้น) หรือ 1 ชิ้นหลายบรรทัด (คั่นหลายชิ้นด้วยบรรทัด ---)

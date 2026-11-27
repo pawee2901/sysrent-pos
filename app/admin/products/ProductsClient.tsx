@@ -10,11 +10,13 @@ import type { Product } from '@/lib/catalog';
 import { CategoriesCard } from './CategoriesCard';
 import { Delivered } from '@/components/Delivered';
 import { markPlain } from '@/lib/fields';
+import { FormBuilder, renderForm, type DForm } from './DeliveryForm';
+import dcss from './dform.module.css';
 
 type OptF = { id?: string; name: string; price: string; compare_at: string; cost: string; duration_days: string; agent_price: string; active: boolean };
 type Form = { id?: string; name: string; category: string; description: string; image: string; template: string; fulfillment: 'stock' | 'slot' | 'manual'; badge: string; askInfo: string; active: boolean; options: OptF[]; preorder: boolean; preorderNote: string; preorderLimit: string };
 const num = (s: string) => (s.trim() === '' ? null : Number(s));
-type StockForm = { optionId: string; mode: 'fields' | 'block'; text: string; repeat: string; cols: string[]; rows: string[][]; otp: string[]; otpAll: string };
+type StockForm = { optionId: string; mode: 'fields' | 'block' | 'form'; text: string; repeat: string; cols: string[]; rows: string[][]; otp: string[]; otpAll: string; dform?: DForm | null; building?: boolean };
 const DEFAULT_COLS = ['อีเมล', 'รหัสผ่าน', 'โปรไฟล์'];
 const newStock = (optionId: string): StockForm => ({ optionId, mode: 'fields', text: '', repeat: '1', cols: [...DEFAULT_COLS], rows: [['', '', '']], otp: [], otpAll: '' });
 /** เติมค่าที่ขาด (เช่น state เก่าจากก่อนอัปเดตหน้า ที่ยังไม่มีตาราง) */
@@ -31,16 +33,26 @@ function fieldsToText(st: StockForm) {
     .map((r) => cols.map((c, i) => (r[i]?.trim() ? `${c.trim() || `ข้อมูล ${i + 1}`}: ${r[i].trim()}` : '')).filter(Boolean).join('\n'))
     .filter(Boolean).join('\n---\n');
 }
+/** ฟอร์มส่งของ → ชิ้นละ 1 ข้อความเต็มตามฟอร์ม (เฉพาะชิ้นที่กรอก) คั่นด้วย --- */
+function formText(st: StockForm) {
+  const fm = st.dform;
+  if (!fm) return '';
+  return (st.rows ?? []).filter((r) => r.some((v) => v?.trim())).map((r) => renderForm(fm, r).replace(/^\n+|\s+$/g, '')).join('\n---\n');
+}
+const stockText = (st: StockForm) => (st.mode === 'fields' ? fieldsToText(st) : st.mode === 'form' ? formText(st) : st.text);
+/** เปิดโหมดฟอร์มด้วยฟอร์มที่บันทึกไว้ (ช่องในตาราง = ช่องของฟอร์ม) */
+const withForm = (st: StockForm, fm: DForm): StockForm => ({ ...st, mode: 'form', dform: fm, building: false, cols: [...fm.fields], rows: [fm.fields.map(() => '')], otp: [] });
 /** ข้อความชิ้นแรก (ไว้โชว์ตัวอย่างว่าลูกค้าจะเห็นยังไง) */
 function previewOf(st: StockForm): string {
   if (st.mode === 'fields') return fieldsToText(st).split('\n---\n')[0] ?? '';
+  if (st.mode === 'form') return markPlain(formText(st).split('\n---\n')[0] ?? '');
   const t = (st.text ?? '').replace(/\r\n/g, '\n').trim();
   if (!t) return '';
   return markPlain((t.split(/^\s*-{3,}\s*$/m).find((s) => s.trim()) ?? '').replace(/^\n+|\s+$/g, ''));
 }
 /** นับจำนวนชิ้นที่จะเพิ่ม (ให้ตรงกับที่เซิร์ฟเวอร์แยก) */
 function stockCount(st: StockForm) {
-  if (st.mode === 'fields') { const n = (st.rows ?? []).filter((r) => r.some((v) => v.trim())).length; return n ? `จะเพิ่ม ${n} ชิ้น` : 'ยังไม่ได้กรอกข้อมูล'; }
+  if (st.mode !== 'block') { const n = (st.rows ?? []).filter((r) => r.some((v) => v.trim())).length; return n ? `จะเพิ่ม ${n} ชิ้น` : 'ยังไม่ได้กรอกข้อมูล'; }
   const t = (st.text ?? '').replace(/\r\n/g, '\n').trim();
   if (!t) return 'ยังไม่มีข้อความ';
   const n = new Set(t.split(/^\s*-{3,}\s*$/m).map((s) => s.replace(/^\n+|\s+$/g, '')).filter((s) => s.trim())).size * Math.max(1, Number(st.repeat) || 1);
@@ -55,7 +67,7 @@ const fromProduct = (p: Product, ap: Record<string, number> = {}): Form => ({
 });
 
 /** สินค้า: ตาราง + เพิ่มจากแม่แบบ + แผงแก้ไข (ข้อมูล · แพ็กเกจ · สต็อก) */
-export function ProductsClient({ products, categories, usages, usageReady, usageImages, images, imgReady, galleryReady, agentPrices, agentsOn, otp }: { products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string[]>; images: Record<string, string[]>; imgReady: boolean; galleryReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean; otp: { ready: boolean; apps: { id: string; name: string }[]; picks: Record<string, string> } | null }) {
+export function ProductsClient({ products, categories, usages, usageReady, usageImages, images, imgReady, galleryReady, agentPrices, agentsOn, otp, forms, formReady }: { products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string[]>; images: Record<string, string[]>; imgReady: boolean; galleryReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean; otp: { ready: boolean; apps: { id: string; name: string }[]; picks: Record<string, string> } | null; forms: Record<string, DForm>; formReady: boolean }) {
   const [usage, setUsage] = useState('');
   const [otpApp, setOtpApp] = useState(''); // ปุ่มรับ OTP: '' = ปิด
   const [usageImgs, setUsageImgs] = useState<string[]>([]);
@@ -78,6 +90,19 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [stock, setStock] = useState<StockForm | null>(null);
+  const [formMap, setFormMap] = useState<Record<string, DForm>>(forms);
+  /** เปิดเติมสต็อก: แพ็กเกจที่มีฟอร์มส่งของแล้ว = เปิดโหมดฟอร์มให้เลย */
+  const openStock = (optionId: string): StockForm => { const fm = formMap[optionId]; return fm ? withForm(newStock(optionId), fm) : newStock(optionId); };
+  async function saveForm(fm: DForm) {
+    if (!stock) return;
+    setBusy(true);
+    const r = await api('/api/admin/products', { action: 'form', optionId: stock.optionId, form: fm });
+    setBusy(false);
+    if (!r.ok) notify(formReady ? r.error : 'ใช้ฟอร์มนี้ได้เลย แต่ระบบยังจำฟอร์มไว้ไม่ได้ (ต้องรัน SQL 0046_delivery_form.sql)', formReady ? 'error' : 'info');
+    else notify('บันทึกฟอร์มส่งของแล้ว ✓');
+    setFormMap((m) => ({ ...m, [stock.optionId]: fm }));
+    setStock(withForm(fillStock(stock), fm));
+  }
   const [q, setQ] = useState('');
   const file = useRef<HTMLInputElement>(null);
   const editing = f?.id ? products.find((p) => p.id === f.id) : undefined;
@@ -141,18 +166,18 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   async function addStock() {
     if (!stock) return;
     setBusy(true);
-    const text = stock.mode === 'fields' ? fieldsToText(stock) : stock.text;
+    const text = stockText(fillStock(stock));
     if (!text.trim()) { setBusy(false); setMsg('ยังไม่ได้กรอกข้อมูล'); return; }
     // เมลรับ OTP: ตาราง = ทีละชิ้น (เฉพาะชิ้นที่กรอก ลำดับเดียวกับ fieldsToText) · ข้อความ = เมลเดียวทุกชิ้น
     const st = fillStock(stock);
-    const otpMail = !otpApp ? {} : st.mode === 'fields'
+    const otpMail = !otpApp ? {} : st.mode !== 'block'
       ? { otp_emails: st.rows.map((row, k) => [row, k] as const).filter(([row]) => row.some((v) => v.trim())).map(([, k]) => (st.otp[k] ?? '').trim()) }
       : { otp_email: st.otpAll.trim() };
     if (f?.id && otp?.ready && otpApp !== (otp.picks[f.id] ?? '')) {
       const o = await api('/api/admin/products', { action: 'otp', id: f.id, app_id: otpApp || null });
       if (!o.ok) { setBusy(false); setMsg(o.error); return; }
     }
-    const r = await api<{ notice: string }>('/api/admin/products', { action: 'stock', optionId: stock.optionId, text, mode: 'block', plain: stock.mode === 'block', repeat: stock.mode === 'block' ? Math.max(1, Number(stock.repeat) || 1) : 1, ...otpMail });
+    const r = await api<{ notice: string }>('/api/admin/products', { action: 'stock', optionId: stock.optionId, text, mode: 'block', plain: stock.mode !== 'fields', repeat: stock.mode === 'block' ? Math.max(1, Number(stock.repeat) || 1) : 1, ...otpMail });
     setBusy(false);
     setMsg(r.ok ? r.data.notice : r.error);
     if (r.ok) { setStock(null); router.refresh(); }
@@ -281,9 +306,14 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                   {editing && o.id && f.fulfillment === 'stock' && (
                     stock?.optionId === o.id ? (
                       <div ref={stockBox} style={{ display: 'grid', gap: 6 }}>
-                        <div className="stock-modes" role="radiogroup" aria-label="รูปแบบสต็อก">
-                          {([['fields', '📋 แยกช่อง', 'อีเมล / รหัสผ่าน / โปรไฟล์ · 1 แถว = 1 ชิ้น'], ['block', '📄 ข้อความยาว', 'ลิงก์ทีม / ข้อความหลายบรรทัด · ทั้งก้อน = 1 ชิ้น']] as const).map(([k, l, d]) => (
-                            <button key={k} type="button" role="radio" aria-checked={stock.mode === k} className={stock.mode === k ? 'on' : ''} onClick={() => setStock(fillStock({ ...stock, mode: k }))}><b>{l}</b><small>{d}</small></button>
+                        <div className={`stock-modes ${dcss.three}`} role="radiogroup" aria-label="รูปแบบสต็อก">
+                          {([['form', '🎨 ฟอร์มส่งของ', 'วางฟอร์มที่เคยส่ง · แตะคำที่เปลี่ยน · เติมแค่ค่า'], ['fields', '📋 แยกช่อง', 'อีเมล / รหัสผ่าน / โปรไฟล์ · 1 แถว = 1 ชิ้น'], ['block', '📄 ข้อความยาว', 'ลิงก์ทีม / ข้อความหลายบรรทัด · ทั้งก้อน = 1 ชิ้น']] as const).map(([k, l, d]) => (
+                            <button key={k} type="button" role="radio" aria-checked={stock.mode === k} className={stock.mode === k ? 'on' : ''} onClick={() => {
+                              if (stock.mode === k) return;
+                              const fm = formMap[stock.optionId];
+                              if (k === 'form') setStock(fm ? withForm(fillStock(stock), fm) : { ...fillStock(stock), mode: 'form', dform: null, building: true });
+                              else setStock(fillStock({ ...stock, mode: k, dform: null, building: false, ...(stock.mode === 'form' ? { cols: [...DEFAULT_COLS], rows: [['', '', '']], otp: [] } : {}) }));
+                            }}><b>{l}</b><small>{d}</small></button>
                           ))}
                         </div>
                         {otp && (
@@ -297,6 +327,13 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                           </div>
                         )}
                         {stock.mode === 'fields' && <StockTable st={fillStock(stock)} set={setStock} otpOn={!!otpApp} />}
+                        {stock.mode === 'form' && (stock.building || !stock.dform
+                          ? <FormBuilder initial={stock.dform ?? null} busy={busy} onSave={saveForm} onCancel={() => setStock(stock.dform ? { ...stock, building: false } : fillStock({ ...stock, mode: 'fields', building: false }))} />
+                          : <>
+                            <div className={dcss.formbar}><small><b>🎨 ฟอร์มส่งของ</b> · {stock.dform.fields.length} ช่อง: {stock.dform.fields.join(' · ')}</small>
+                              <button type="button" className="btn ghost sm" onClick={() => setStock({ ...stock, building: true })}>✏️ แก้ฟอร์ม</button></div>
+                            <StockTable st={fillStock(stock)} set={setStock} otpOn={!!otpApp} locked />
+                          </>)}
                         {stock.mode === 'block' && <textarea className="input" rows={10} value={stock.text} onChange={(e) => setStock({ ...stock, text: e.target.value })}
                           placeholder={'วางข้อความทั้งก้อน = 1 ชิ้น เช่น\n🔗 Link เข้าร่วมทีม: https://...\n👥 Team: ...\n⏰ วันหมดอายุ: ...\n\n(จะเพิ่มหลายชิ้นในครั้งเดียว คั่นแต่ละชิ้นด้วยบรรทัด ---)'} />}
                         {stock.mode === 'block' && (
@@ -311,9 +348,9 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                         {(() => { const pv = previewOf(stock); return pv ? (
                           <div className="stock-preview"><span className="pe-sub">👀 ตัวอย่างที่ลูกค้าเห็น (ชิ้นแรก)</span><Delivered content={pv} warranty={o.duration_days ? `${o.duration_days} วันหลังซื้อ` : null} /></div>
                         ) : null; })()}
-                        <div style={{ display: 'flex', gap: 6 }}><button type="button" className="btn primary sm" disabled={busy || (stock.mode === 'fields' ? !fieldsToText(stock) : !stock.text.trim())} onClick={addStock}>เพิ่มสต็อก</button><button type="button" className="btn ghost sm" onClick={() => setStock(null)}>ยกเลิก</button></div>
+                        <div style={{ display: 'flex', gap: 6 }}><button type="button" className="btn primary sm" disabled={busy || !stockText(fillStock(stock)).trim() || (stock.mode === 'form' && !!stock.building)} onClick={addStock}>เพิ่มสต็อก</button><button type="button" className="btn ghost sm" onClick={() => setStock(null)}>ยกเลิก</button></div>
                       </div>
-                    ) : <button type="button" className="btn soft sm" onClick={() => setStock(newStock(o.id!))}>+ เพิ่มสต็อก (เหลือ {editing.options.find((x) => x.id === o.id)?.stock ?? 0})</button>
+                    ) : <button type="button" className="btn soft sm" onClick={() => setStock(openStock(o.id!))}>+ เพิ่มสต็อก (เหลือ {editing.options.find((x) => x.id === o.id)?.stock ?? 0})</button>
                   )}
                 </div>
               ))}
@@ -360,7 +397,7 @@ function ImageList({ urls, onChange, max, disabled, upload, addLabel }: { urls: 
   );
 }
 
-function StockTable({ st, set, otpOn }: { st: StockForm; set: (s: StockForm) => void; otpOn: boolean }) {
+function StockTable({ st, set, otpOn, locked = false }: { st: StockForm; set: (s: StockForm) => void; otpOn: boolean; locked?: boolean }) {
   const setCell = (r: number, c: number, v: string) => set({ ...st, rows: st.rows.map((row, i) => (i === r ? row.map((x, j) => (j === c ? v : x)) : row)) });
   function paste(e: React.ClipboardEvent<HTMLInputElement>, r: number, c: number) {
     const t = e.clipboardData.getData('text').replace(/\r\n/g, '\n').trim();
@@ -377,8 +414,8 @@ function StockTable({ st, set, otpOn }: { st: StockForm; set: (s: StockForm) => 
   }
   return (
     <div className="sv">
-      {/* ชื่อช่อง (ใช้กับทุกชิ้น) */}
-      <div className="sv-cols">
+      {/* ชื่อช่อง (ใช้กับทุกชิ้น) · ฟอร์มส่งของ = ช่องมาจากฟอร์ม แก้ที่ปุ่ม "แก้ฟอร์ม" */}
+      {!locked && <div className="sv-cols">
         <span className="pe-sub">ช่องข้อมูลของแต่ละชิ้น</span>
         <div className="sv-chips">
           {st.cols.map((c, j) => (
@@ -389,7 +426,7 @@ function StockTable({ st, set, otpOn }: { st: StockForm; set: (s: StockForm) => 
           ))}
           {st.cols.length < 6 && <button type="button" className="sv-add" onClick={() => set({ ...st, cols: [...st.cols, `ช่อง ${st.cols.length + 1}`], rows: st.rows.map((row) => [...row, '']) })}>＋ เพิ่มช่อง</button>}
         </div>
-      </div>
+      </div>}
 
       {/* 1 การ์ด = 1 ชิ้น */}
       {st.rows.map((row, i) => (
@@ -410,7 +447,7 @@ function StockTable({ st, set, otpOn }: { st: StockForm; set: (s: StockForm) => 
       ))}
 
       <button type="button" className="btn sv-more" onClick={() => set({ ...st, rows: [...st.rows, st.cols.map(() => '')] })}>＋ เพิ่มอีกชิ้น</button>
-      <small className="faint">มีหลายชิ้น? วาง <code>อีเมล | รหัส | โปรไฟล์</code> หลายบรรทัด (หรือก๊อปจาก Excel) ลงช่องแรกของชิ้นที่ 1 ระบบแยกเป็นหลายชิ้นให้เอง</small>
+      <small className="faint">มีหลายชิ้น? วาง <code>{locked ? st.cols.join(' | ') : 'อีเมล | รหัส | โปรไฟล์'}</code> หลายบรรทัด (หรือก๊อปจาก Excel) ลงช่องแรกของชิ้นที่ 1 ระบบแยกเป็นหลายชิ้นให้เอง</small>
     </div>
   );
 }

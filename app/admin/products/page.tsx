@@ -1,6 +1,7 @@
 import { adminShop } from '@/lib/admin-page';
 import { loadProducts } from '@/lib/catalog';
 import { ProductsClient } from './ProductsClient';
+import type { DForm } from './DeliveryForm';
 import { agentPrices } from '@/lib/agents';
 import { can } from '@/lib/plan';
 import { mergeCategories, shopCategories } from '@/lib/categories';
@@ -22,9 +23,13 @@ export default async function AdminProducts() {
     ready: !otpPicks?.error, apps: (otpAppRows?.data ?? []) as { id: string; name: string }[],
     picks: Object.fromEntries(((otpPicks?.data ?? []) as { id: string; otp_app_id: string | null }[]).filter((r) => r.otp_app_id).map((r) => [r.id, r.otp_app_id as string])),
   } : null;
+  // ฟอร์มส่งของของแต่ละแพ็กเกจ (ยังไม่รัน 0046 = ไม่มีฟอร์ม ใช้ได้ปกติ)
+  const optIds = products.flatMap((p) => p.options.map((o) => o.id));
+  const fq = optIds.length ? await db().from('shop_options').select('id, delivery_form').in('id', optIds) : { data: [], error: null };
+  const forms = Object.fromEntries(((fq.data ?? []) as { id: string; delivery_form: DForm | null }[]).filter((r) => r.delivery_form?.tpl).map((r) => [r.id, r.delivery_form as DForm]));
   const pick = <T,>(fn: (m: { usage: string; usageImages: string[]; images: string[] }) => T) => Object.fromEntries([...media.map].map(([id, m]) => [id, fn(m)]));
   return <ProductsClient products={products} categories={mergeCategories(list, products.map((p) => p.category))}
     usages={pick((m) => m.usage)} usageImages={pick((m) => m.usageImages)} images={pick((m) => m.images)}
     usageReady={media.level !== 'none'} imgReady={media.level === 'multi' || media.level === 'single'} galleryReady={media.level === 'multi'}
-    agentPrices={agentsOn ? await agentPrices(products.flatMap((p) => p.options.map((o) => o.id))) : {}} agentsOn={agentsOn} otp={otp} />;
+    agentPrices={agentsOn ? await agentPrices(products.flatMap((p) => p.options.map((o) => o.id))) : {}} agentsOn={agentsOn} otp={otp} forms={forms} formReady={!fq.error} />;
 }
