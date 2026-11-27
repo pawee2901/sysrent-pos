@@ -55,6 +55,9 @@ const schema = z.discriminatedUnion('action', [
   // ปุ่มรับ OTP ในหน้าประวัติการซื้อ: app_id = แอป OTP ที่ปุ่มค้น · null = ปิดปุ่ม (ต้องรัน 0032)
   z.object({ action: z.literal('otp'), id: z.string().uuid(), app_id: z.string().uuid().nullable() }),
   // ฟอร์มส่งของของแพ็กเกจ: tpl มีช่อง {{0}} {{1}} … ตาม fields · null = ลบฟอร์ม (ต้องรัน 0046)
+  // รายการในสต็อกที่ยังไม่ขาย · ลบ (= void ไม่ลบจริง) เฉพาะชิ้นที่ยังไม่ขาย
+  z.object({ action: z.literal('stock_list'), optionId: z.string().uuid() }),
+  z.object({ action: z.literal('stock_delete'), optionId: z.string().uuid(), ids: z.array(z.string().uuid()).min(1).max(500) }),
   z.object({ action: z.literal('form'), optionId: z.string().uuid(), form: z.object({ tpl: z.string().min(1).max(4000), fields: z.array(z.string().trim().min(1).max(30)).min(1).max(12) }).nullable() }),
 ]);
 
@@ -199,6 +202,19 @@ export async function POST(req: Request) {
     if (!error) return NextResponse.json({ ok: true });
     // เช็ก 0029 ก่อน: ชื่อ usage_images มีคำว่า usage_image อยู่ในตัว
     return fail(/usage_images|\bimages\b/.test(error.message) ? 'ยังไม่ได้รัน SQL 0029_product_images.sql' : error.message.includes('usage_image') ? 'ยังไม่ได้รัน SQL 0012_usage_image.sql' : error.message.includes('usage') ? 'ยังไม่ได้รัน SQL 0011_product_usage.sql' : 'บันทึกไม่สำเร็จ', 500);
+  }
+
+  if (x.action === 'stock_list' || x.action === 'stock_delete') {
+    const { data: so } = await d.from('shop_options').select('id, shop_products!inner(shop_id)').eq('id', x.optionId).eq('shop_products.shop_id', sid).maybeSingle();
+    if (!so) return fail('ไม่พบแพ็กเกจ', 404);
+    if (x.action === 'stock_delete') {
+      const { data, error } = await d.from('shop_stock').update({ status: 'void' }).eq('option_id', x.optionId).eq('status', 'available').in('id', x.ids).select('id');
+      return error ? fail('ลบไม่สำเร็จ', 500) : NextResponse.json({ ok: true, removed: data?.length ?? 0 });
+    }
+    const { data, count, error } = await d.from('shop_stock').select('id, content, created_at', { count: 'exact' })
+      .eq('option_id', x.optionId).eq('status', 'available').order('created_at').order('id').limit(500);
+    if (error) return fail('โหลดสต็อกไม่สำเร็จ', 500);
+    return NextResponse.json({ ok: true, total: count ?? 0, items: (data ?? []).map((it) => ({ id: it.id, created_at: it.created_at, content: stripPlain(String(it.content)).slice(0, 2000) })) });
   }
 
   if (x.action === 'form') {
