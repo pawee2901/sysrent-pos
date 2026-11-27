@@ -9,5 +9,5 @@ export const REPORT_TOPICS = [
   'อื่น ๆ',
 ] as const;
 
-/** ปุ่มแจ้งปัญหา = เฉพาะร้านแพ็กเกจ Pro (฿399) */
+/** ปุ่มแจ้งปัญหา = ทุกร้าน (แพ็กเกจเดียว ฿310) */
 export const canReport = (plan: string | null | undefined) => can(plan, 'report');

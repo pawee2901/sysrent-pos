@@ -24,13 +24,13 @@ const schema = z.discriminatedUnion('action', [
     admin_username: z.string().trim().min(3).max(40), expires_at: until,
     admin_password: z.string().min(8).max(72).optional(), // ส่งอย่างใดอย่างหนึ่ง
     admin_pass_hash: z.string().regex(/^s1\$[\w-]+\$[\w-]+$/).optional(),
-    plan: z.enum(['starter', 'pro', 'max']).default('starter'), // เก็บแพ็กเกจที่ซื้อจริง (ทุกแพ็กเกจใช้ได้ทุกฟังก์ชัน)
+    plan: z.enum(['starter', 'pro', 'max']).default('starter'), // รับค่าเดิมจากเว็บหลักได้ แต่บันทึกเป็น max เสมอ (แพ็กเกจเดียว ฿310 ทุกฟังก์ชัน)
     slip_quota: z.number().int().min(0).max(1000).optional(), // ร้านทดลอง: โควตาน้อยกว่าแพ็กเกจ
   }),
   z.object({ action: z.literal('extend'), slug, expires_at: until }),
   z.object({ action: z.enum(['suspend', 'resume']), slug }),
   // ธีมพิเศษทั้งหมดที่ร้านเป็นเจ้าของ (ส่งรายการเต็มทุกครั้ง — ไม่ได้ส่งมา = ถอนสิทธิ์)
-  // เปลี่ยนแพ็กเกจ: เก็บตามที่ซื้อ · โควตาสลิปเปลี่ยนตามแพ็กเกจ (ฟังก์ชันใช้ได้ครบทุกแพ็กเกจ)
+  // เปลี่ยนแพ็กเกจ: แพ็กเกจเดียวแล้ว → ตั้งเป็น max + โควตาเต็ม
   z.object({ action: z.literal('plan'), slug, plan: z.enum(['starter', 'pro', 'max']) }),
   z.object({ action: z.literal('themes'), slug, themes: z.array(z.string().refine((k) => THEMES.some((t) => t.key === k), 'ไม่มีธีมนี้')).max(50) }),
 ]);
@@ -70,13 +70,13 @@ export async function POST(req: Request) {
     if (!passHash) return fail('ต้องกำหนดรหัสผ่านผู้ดูแล', 400);
     const { data, error } = await d.from('shops').insert({
       slug: x.slug, owner_id: x.owner_id, name: x.name, admin_username: x.admin_username,
-      admin_pass_hash: passHash, expires_at: x.expires_at, plan: x.plan, slip_quota: x.slip_quota ?? SLIP_QUOTA[x.plan], slip_overage: 0.45,
+      admin_pass_hash: passHash, expires_at: x.expires_at, plan: 'max', slip_quota: x.slip_quota ?? SLIP_QUOTA.max, slip_overage: 0.45,
     }).select('id, slug').single();
     if (error) return fail(error.code === '23505' ? 'ชื่อนี้มีคนใช้แล้ว' : 'สร้างร้านไม่สำเร็จ', error.code === '23505' ? 409 : 500);
     return NextResponse.json({ ok: true, shop: data });
   }
   if (x.action === 'plan') {
-    const { data } = await d.from('shops').update({ plan: x.plan, slip_quota: SLIP_QUOTA[x.plan] }).eq('slug', x.slug).select('id');
+    const { data } = await d.from('shops').update({ plan: 'max', slip_quota: SLIP_QUOTA.max }).eq('slug', x.slug).select('id');
     return data?.length ? NextResponse.json({ ok: true }) : fail('ไม่พบร้าน', 404);
   }
   if (x.action === 'themes') {

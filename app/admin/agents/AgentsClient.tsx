@@ -34,7 +34,7 @@ export function AgentsClient({ rows, enabled, ready }: { rows: AgentRow[]; enabl
   return (
     <>
       <div className="page-head"><div><h1>ตัวแทน</h1><p>{rows.length ? `${active} คนใช้งานอยู่ · ยอดซื้อรวม ${baht(rows.reduce((s, r) => s + r.spent, 0))}` : 'ตัวแทนซื้อสินค้าในราคาส่ง แล้วไปขายต่อเอง'}</p></div></div>
-      {!enabled && <div className="card card-pad" style={{ marginBottom: 16 }}><b>🔒 ระบบตัวแทนเป็นฟีเจอร์ของแพ็กเกจ Pro (฿399/เดือน)</b><p className="muted" style={{ margin: '6px 0 0' }}>อัปเกรดแพ็กเกจที่ sysrent.shop เพื่อตั้งราคาส่งให้ตัวแทน</p></div>}
+      {!enabled && <div className="card card-pad" style={{ marginBottom: 16 }}><b>🔒 ระบบตัวแทนเป็นฟีเจอร์ของแพ็กเกจ ฿310</b><p className="muted" style={{ margin: '6px 0 0' }}>อัปเกรดแพ็กเกจที่ sysrent.shop เพื่อตั้งราคาส่งให้ตัวแทน</p></div>}
       {!ready && <div className="card card-pad" style={{ marginBottom: 16 }}><b>⚠️ ต้องรัน SQL 0016_agents.sql ก่อน</b></div>}
 
       <section className="card" style={{ marginBottom: 16 }}>

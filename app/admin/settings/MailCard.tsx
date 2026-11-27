@@ -33,7 +33,7 @@ export function MailCard({ init }: { init: MailInit }) {
     <section className="card">
       <div className="card-head"><h2>แจ้งลูกค้าทางอีเมล</h2><span className={`pill ${saved ? 'ok' : 'plain'}`}>{saved ? 'เชื่อมแล้ว' : 'ยังไม่เชื่อม'}</span></div>
       <form className="form" onSubmit={save}>
-        {!init.enabled && <p style={{ margin: 0, fontWeight: 600 }}>🔒 ฟังก์ชันนี้อยู่ในแพ็กเกจ Pro (฿399/เดือน) ขึ้นไป · อัปเกรดที่ sysrent.shop</p>}
+        {!init.enabled && <p style={{ margin: 0, fontWeight: 600 }}>🔒 ฟังก์ชันนี้อยู่ในแพ็กเกจ ฿310 · อัปเกรดที่ sysrent.shop</p>}
         {!init.ready && <p style={{ color: 'var(--warn)', margin: 0 }}>⚠️ ต้องรัน SQL <code>0021_shop_mail.sql</code> ใน Supabase ก่อน</p>}
         <p className="muted" style={{ margin: 0, fontSize: 14 }}>ส่งถึงลูกค้าเมื่อร้านส่งสินค้าสั่งทำ หรือคืนเงิน โดยใช้ Gmail ของร้าน ลูกค้าจะเห็นชื่อร้านเป็นผู้ส่ง</p>
         <div className="two">

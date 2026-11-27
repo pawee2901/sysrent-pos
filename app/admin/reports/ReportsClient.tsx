@@ -32,7 +32,7 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
   return (
     <>
       <div className="page-head"><div><h1>แจ้งปัญหา</h1><p>{open ? `รอตอบ ${open} เรื่อง` : 'ไม่มีเรื่องค้าง 👍'} · แก้ไอดีให้ลูกค้าได้ในหน้านี้ · ลูกค้าเห็นคำตอบในหน้าประวัติ</p></div></div>
-      {!enabled && <div className="card card-pad" style={{ marginBottom: 16 }}><b>🔒 ปุ่มแจ้งปัญหาเป็นฟีเจอร์ของแพ็กเกจ Pro (฿399/เดือน)</b><p className="muted" style={{ margin: '6px 0 0' }}>อัปเกรดแพ็กเกจที่ sysrent.shop แล้วลูกค้าจะเห็นปุ่ม &quot;⚠️ แจ้งปัญหา&quot; ในหน้าประวัติการซื้อ</p></div>}
+      {!enabled && <div className="card card-pad" style={{ marginBottom: 16 }}><b>🔒 ปุ่มแจ้งปัญหาเป็นฟีเจอร์ของแพ็กเกจ ฿310</b><p className="muted" style={{ margin: '6px 0 0' }}>อัปเกรดแพ็กเกจที่ sysrent.shop แล้วลูกค้าจะเห็นปุ่ม &quot;⚠️ แจ้งปัญหา&quot; ในหน้าประวัติการซื้อ</p></div>}
       {!ready && <div className="card card-pad" style={{ marginBottom: 16 }}><b>⚠️ ต้องรัน SQL 0013_reports_slip_price.sql ก่อน</b></div>}
       {ready && !rows.length && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีลูกค้าแจ้งปัญหา</p></div>}
       <div className="reports">{rows.map((r) => (
