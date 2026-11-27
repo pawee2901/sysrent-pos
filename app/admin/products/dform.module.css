@@ -10,28 +10,40 @@
 .name { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .name > span { width: 22px; height: 22px; border-radius: 99px; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; }
 .name small { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.formbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
-.three.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-@media (max-width: 620px) { .three.three { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .name { grid-template-columns: 24px minmax(0, 1fr); } .name small { display: none; } }
 
-/* ---------- สต็อก: แท็บ · ชนิด · จำนวนคน ---------- */
-.tabs { display: flex; gap: 4px; align-items: center; border-bottom: 1px solid var(--line); }
-.tabs button { border: 0; background: none; font: inherit; font-size: 14px; color: var(--muted); padding: 8px 10px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-.tabs button.on { color: var(--text); font-weight: 600; border-bottom-color: var(--text); }
-.tabs .x { margin-left: auto; color: var(--faint); }
-.kinds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.kinds button { position: relative; display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font: inherit; color: var(--text); cursor: pointer; }
-.kinds button b { display: block; font-size: 14px; }
-.kinds button small { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
-.kinds button.on { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
-.kinds button i { position: absolute; top: 10px; right: 12px; font-style: normal; font-weight: 700; }
-.ic { flex: none; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: var(--surface-2); }
-.kinds button.on .ic { background: var(--text); color: var(--surface); }
+/* ---------- แผงสต็อก (แบบง่าย) ---------- */
+.panel { display: grid; gap: 12px; padding: 14px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line)); background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface-2); }
+.tabs button { height: 40px; border: 0; border-radius: 11px; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.tabs button b { margin-left: 4px; padding: 1px 8px; border-radius: 99px; background: var(--surface); font-size: 12px; }
+.tabs button.on { background: var(--grad); color: #fff; box-shadow: var(--glow); }
+.tabs button.on b { background: rgba(255,255,255,.25); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg button { display: grid; justify-items: center; gap: 2px; padding: 12px 8px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); font: inherit; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
+.seg button small { font-size: 12px; font-weight: 400; color: var(--muted); }
+.seg button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.mini { display: flex; gap: 6px; flex-wrap: wrap; }
+.mini button { padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); font: inherit; font-size: 13px; color: var(--muted); cursor: pointer; }
+.mini button.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.hint { font-size: 13px; padding: 8px 12px; border-radius: 12px; background: var(--accent-soft); color: var(--text); word-break: break-word; }
+.paste { font-size: 14px; line-height: 1.6; min-height: 120px; }
 .rep { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; }
 .rep input { width: 64px; text-align: center; }
-.rep small { flex-basis: 100%; }
-@media (max-width: 560px) { .kinds { grid-template-columns: 1fr; } }
+.pv { border-radius: 12px; background: var(--surface); border: 1px solid var(--line); padding: 8px 12px; }
+.pv summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.pv[open] summary { margin-bottom: 8px; }
+.extras { display: grid; gap: 6px; }
+.extra { border-radius: 14px; border: 1px solid var(--line); background: var(--surface); overflow: hidden; }
+.exHead { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; background: none; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
+.exHead > span:nth-child(2) { flex: 1; min-width: 0; display: grid; }
+.exHead b { font-size: 14px; }
+.exHead small { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.exHead i { font-style: normal; font-size: 18px; color: var(--faint); width: 20px; text-align: center; }
+.exBody { display: grid; gap: 8px; padding: 0 12px 12px; }
+.foot { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0 2px; background: inherit; font-size: 13px; color: var(--muted); }
+.foot .btn { flex: none; }
+@media (max-width: 420px) { .foot { flex-direction: column; align-items: stretch; text-align: center; } }
 
 /* ---------- รายการในสต็อก ---------- */
 .list { display: grid; gap: 6px; max-height: 420px; overflow: auto; }

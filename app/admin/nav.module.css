@@ -21,7 +21,8 @@
 .subtabs::-webkit-scrollbar { display: none; }
 .subtabs a { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 99px; font-size: 14px; color: var(--muted); border: 1px solid var(--line); background: var(--surface); white-space: nowrap; }
 .subtabs a:hover { color: var(--text); }
-.subtabs a.on { background: var(--text); border-color: var(--text); color: var(--surface); font-weight: 600; }
+.subtabs a.on { background: var(--grad); border-color: transparent; color: #fff; font-weight: 600; box-shadow: var(--glow); }
+.subtabs a.on .n { background: rgba(255,255,255,.28); }
 .subtabs .n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: inline-grid; place-items: center; }
 
 /* เมนูล่างมือถือ 6 หมวด */

@@ -1120,3 +1120,28 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
 .arv-acts { display: flex; gap: 6px; flex-wrap: wrap; }
 .ap-group { display: grid; gap: 6px; margin-top: 4px; }
 .ap-group > small { font-size: 12px; font-weight: 700; color: var(--muted); }
+
+/* =========================================================
+   มือถือแนวตั้ง: ไม่ให้หน้าล้นด้านข้าง (ไม่ต้องหมุนจอแนวนอน)
+   - กริดหลักใช้ minmax(0, 1fr) → ของที่กว้าง (ตาราง / ข้อความยาว / ลิงก์) ไม่ดันหน้ากว้างเกินจอ
+   - ข้อความยาว (อีเมล · ลิงก์ · รหัส) ตัดบรรทัดได้
+   ========================================================= */
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .main, .content, .card, .pe-col, .drawer-body > * { min-width: 0; }
+  .content img, .content video, .content canvas { max-width: 100%; height: auto; }
+  .content pre, .content code { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .tbl td, .tbl td * { overflow-wrap: anywhere; min-width: 0; }
+  .tbl tr > td:last-child .row-acts { flex-wrap: wrap; justify-content: flex-end; }
+  .card-head { flex-wrap: wrap; gap: 8px; }
+  .page-head .acts { flex-wrap: wrap; }
+  .page-head .acts .btn { flex: 1 1 auto; }
+  .form .two, .form .three { grid-template-columns: minmax(0, 1fr); }
+  .stock-table table { min-width: 0; }
+  .acc-head .grow { min-width: 0; }
+  .lb-page-form .field { min-width: 0; }
+  .drawer { max-width: 100vw; }
+  .drawer.pe-full .drawer-body { padding: 16px 14px 24px; gap: 16px; }
+  .drawer-foot { flex-wrap: wrap; }
+  input, select, textarea { max-width: 100%; }
+}
