@@ -26,6 +26,8 @@
     "/settings": "/config",
     "/reviews": "/feedback",
     "/resize": "/shrink",
+    "/guide": "/manual",
+    "/whats-new": "/updates",
     "/otp": "/codes",
     "/renewals": "/renew",
     "/line-bot": "/linebot"

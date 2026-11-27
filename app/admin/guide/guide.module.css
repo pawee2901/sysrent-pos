@@ -1,0 +1,30 @@
+/* ---------- คู่มือ ---------- */
+.part { display: grid; gap: 8px; margin-bottom: 22px; max-width: 860px; }
+.partH { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .02em; margin: 0 0 2px 4px; }
+.step { padding: 0; overflow: hidden; }
+.step summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+.step summary::-webkit-details-marker { display: none; }
+.no { flex: none; width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px; }
+.step[open] .no { background: var(--grad); color: #fff; box-shadow: var(--glow); }
+.sum { flex: 1; min-width: 0; display: grid; }
+.sum b { font-size: 15px; }
+.sum small { font-size: 12.5px; color: var(--muted); }
+.step summary i { font-style: normal; color: var(--faint); font-size: 18px; transition: transform .2s; }
+.step[open] summary i { transform: rotate(180deg); }
+.body { display: grid; gap: 10px; justify-items: start; padding: 0 16px 16px 58px; }
+.body ol { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.55; }
+.tip { margin: 0; padding: 8px 12px; border-radius: 12px; background: var(--accent-soft); font-size: 13px; }
+@media (max-width: 560px) { .body { padding-left: 16px; } }
+
+/* ---------- มีอะไรใหม่ ---------- */
+.timeline { display: grid; gap: 22px; max-width: 760px; }
+.day { display: grid; gap: 10px; }
+.date { font-size: 13px; font-weight: 700; color: var(--muted); margin: 0 0 0 4px; }
+.news { padding: 16px 18px; display: grid; gap: 6px; justify-items: start; }
+.news h3 { margin: 0; font-size: 16px; }
+.news p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.6; }
+.news ol { margin: 2px 0 4px; padding-left: 18px; font-size: 14px; display: grid; gap: 4px; }
+.tag { font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+.tNew { background: var(--grad); color: #fff; }
+.tFix { background: var(--accent-soft); color: var(--accent); }
+.tPrice { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }

@@ -31,3 +31,7 @@
 /* ปุ่มแถบบน: จอเล็กใช้คำสั้น */
 .short { display: none; }
 @media (max-width: 620px) { .full { display: none; } .short { display: inline; } }
+
+/* ปุ่มมีอะไรใหม่ + จุดแจ้ง */
+.newsBtn { position: relative; }
+.dot { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 99px; background: var(--bad, #e11d48); box-shadow: 0 0 0 2px var(--surface); }

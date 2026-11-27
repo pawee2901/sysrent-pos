@@ -10,6 +10,7 @@ import { PERMS } from '@/lib/perms';
 import { TutorialButton } from './TutorialButton';
 import { NavSearch } from './NavSearch';
 import css from './nav.module.css';
+import { LATEST_NEWS } from '@/lib/whats-new';
 
 const LOCKS: Record<string, Feature> = { '/otp': 'otp', '/accounting': 'accounting', '/agents': 'agents', '/reports': 'report', '/renewals': 'renewals', '/line-bot': 'line_shop' };
 const PERM_OF: Record<string, string> = { ...Object.fromEntries(PERMS.map((p) => [p.href, p.key])), '/stock': 'products' };
@@ -27,6 +28,7 @@ const GROUPS: Group[] = [
 /** หน้าที่ทุกคนในหลังบ้านใช้ได้ (ไม่ผูกสิทธิ์) */
 const OPEN = new Set(['/resize']);
 const TITLE: Record<string, string> = Object.fromEntries(GROUPS.flatMap((g) => g.items.map(([h, l]) => [h, g.items.length > 1 && h === g.items[0][0] ? g.l : l])));
+const EXTRA_TITLE: Record<string, string> = { '/guide': 'คู่มือ', '/whats-new': 'มีอะไรใหม่' };
 const groupOf = (h: string) => GROUPS.find((g) => g.items.some(([x]) => x === h)) ?? GROUPS[0];
 
 /** โครงหลังบ้าน: แถบซ้าย + แถบบน + เมนูล่าง (มือถือ) */
@@ -78,11 +80,13 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
           <nav className="crumbs" aria-label="ตำแหน่ง">
             <span className="crumb-ic"><Icon name={group.i} size={17} /></span>
             {cur && <><Link href={to('/admin')} className="crumb-root">หลังบ้าน</Link><svg className="crumb-sep" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m9 6 6 6-6 6" /></svg></>}
-            <b>{TITLE[cur] ?? 'ภาพรวม'}</b>
+            <b>{TITLE[cur] ?? EXTRA_TITLE[cur] ?? 'ภาพรวม'}</b>
           </nav>
-          <NavSearch menu={groups.flatMap((g) => g.items.map(([h, l]) => ({ href: h, label: g.items.length > 1 && h === g.items[0][0] ? g.l : l, where: g.l })))} />
+          <NavSearch menu={[...groups.flatMap((g) => g.items.map(([h, l]) => ({ href: h, label: g.items.length > 1 && h === g.items[0][0] ? g.l : l, where: g.l }))), { href: '/guide', label: 'คู่มือ', where: 'ช่วยเหลือ', words: 'วิธีใช้ ขั้นตอน เริ่มต้น help' }, { href: '/whats-new', label: 'มีอะไรใหม่', where: 'ช่วยเหลือ', words: 'อัปเดต ฟีเจอร์ใหม่ news' }]} />
           <div className="acts">
             <TutorialButton page={cur} />
+            <Link href={to('/admin/guide')} className={`btn sm${cur === '/guide' ? ' soft' : ''}`} title="คู่มือทีละขั้น"><span aria-hidden>📖</span><span className={css.full}> คู่มือ</span></Link>
+            <NewsLink on={cur === '/whats-new'} />
             <a href="/" className="btn sm" target="_blank" rel="noopener noreferrer"><span className={css.full}>ดูหน้าร้าน</span><span className={css.short}>ร้าน</span> ↗</a>
             <button type="button" className="btn ghost sm" onClick={logout} aria-label="ออกจากระบบ" title="ออกจากระบบ"><span className={css.full}>ออกจากระบบ</span><span className={css.short} aria-hidden>⎋</span></button>
           </div>
@@ -100,5 +104,21 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
         {groups.map((g) => gLink(g, 22))}
       </nav>
     </div>
+  );
+}
+
+/** ปุ่ม "มีอะไรใหม่" · มีจุดเมื่อยังไม่ได้เปิดดูอันล่าสุด */
+function NewsLink({ on }: { on: boolean }) {
+  const [unseen, setUnseen] = useState(false);
+  useEffect(() => {
+    const check = () => { try { setUnseen(localStorage.getItem('admin-news-seen') !== LATEST_NEWS); } catch { setUnseen(false); } };
+    check();
+    window.addEventListener('admin-news-seen', check);
+    return () => window.removeEventListener('admin-news-seen', check);
+  }, []);
+  return (
+    <Link href={to('/admin/whats-new')} className={`btn sm ${css.newsBtn}${on ? ' soft' : ''}`} title="มีอะไรใหม่">
+      <span aria-hidden>✨</span><span className={css.full}> ใหม่</span>{unseen && <i className={css.dot} aria-label="มีอัปเดตใหม่" />}
+    </Link>
   );
 }
