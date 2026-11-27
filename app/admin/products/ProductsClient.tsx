@@ -214,16 +214,6 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                   <input className="input" inputMode="numeric" value={f.preorderLimit} placeholder="รับจองสูงสุด (ว่าง = ไม่จำกัด)" aria-label="รับจองสูงสุด" onChange={(e) => setF({ ...f, preorderLimit: e.target.value.replace(/\D/g, '').slice(0, 5) })} />
                 </div>}</div>
             )}
-            <label className="field"><span>ขอข้อมูลจากลูกค้าตอนสั่ง (ไม่บังคับ)</span><input className="input" value={f.askInfo} maxLength={60} placeholder="เช่น อีเมลสำหรับเชิญเข้าครอบครัว" onChange={(e) => setF({ ...f, askInfo: e.target.value })} />
-              <small className="faint" style={{ fontSize: 12 }}>ใส่หัวข้อแล้วลูกค้าต้องกรอกในตะกร้าก่อนจ่าย · ดูได้ในหน้าออเดอร์</small></label>
-            <label className="field"><span>รายละเอียด (ลูกค้าเห็นก่อนซื้อ)</span><textarea className="input" rows={4} value={f.description} maxLength={3000} onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
-            <label className="field"><span>วิธีการใช้งาน (ลูกค้าเห็นหลังซื้อ คู่กับรหัส / ลิงก์ที่ได้)</span>
-              <textarea className="input" rows={6} value={usage} maxLength={3000} disabled={!usageReady} onChange={(e) => setUsage(e.target.value)}
-                placeholder={'เช่น\n1. นำลิงก์ไปเปิดผ่าน Google Chrome / Safari\n2. ล็อกอินด้วยเมลของลูกค้า แล้วกด "เข้าร่วมทีม"\n3. ไม่แจ้งเมล = ไม่รับเคลมทุกกรณี'} />
-              <small className="faint" style={{ fontSize: 12 }}>{usageReady ? 'ใส่ครั้งเดียว ใช้กับทุกชิ้นของสินค้านี้ · ไม่ต้องพิมพ์ซ้ำในสต็อกทุกชิ้น' : '⚠️ ต้องรัน SQL 0011_product_usage.sql ก่อน'}</small></label>
-            <div className="field"><span>รูปวิธีการใช้งาน (ลูกค้าดูและดาวน์โหลดได้หลังซื้อ{galleryReady ? ' · ใส่กี่รูปก็ได้' : ''})</span>
-              <ImageList urls={usageImgs} onChange={setUsageImgs} max={galleryReady ? MAX_IMAGES : 1} disabled={busy || !imgReady} upload={uploadMany} addLabel="รูปวิธีใช้" />
-              <small className="faint" style={{ fontSize: 12 }}>{!imgReady ? '⚠️ ต้องรัน SQL 0012_usage_image.sql ก่อน' : galleryReady ? 'เช่น รูปขั้นตอนการเข้าใช้ทีละขั้น / ภาพแคปหน้าจอ · ลูกค้าเห็นเรียงตามลำดับนี้' : '⚠️ ตอนนี้ใส่ได้ 1 รูป · รัน SQL 0029_product_images.sql เพื่อใส่ได้หลายรูป'}</small></div>
             </div>
 
             <div className="pe-col">
@@ -256,6 +246,20 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
               <button type="button" className="btn sm" onClick={() => setF({ ...f, options: [...f.options, { name: '', price: '', compare_at: '', cost: '', duration_days: '', agent_price: '', active: true }] })}>+ เพิ่มแพ็กเกจ</button>
             </div>
             {msg && <p style={{ color: msg.startsWith('เพิ่มสต็อก') ? 'var(--ok)' : 'var(--bad)', margin: 0 }} role="alert">{msg}</p>}
+            </div>
+
+            <div className="pe-col">
+            <h3 className="pe-h">รายละเอียด · วิธีใช้</h3>
+            <label className="field"><span>ขอข้อมูลจากลูกค้าตอนสั่ง (ไม่บังคับ)</span><input className="input" value={f.askInfo} maxLength={60} placeholder="เช่น อีเมลสำหรับเชิญเข้าครอบครัว" onChange={(e) => setF({ ...f, askInfo: e.target.value })} />
+              <small className="faint" style={{ fontSize: 12 }}>ใส่หัวข้อแล้วลูกค้าต้องกรอกในตะกร้าก่อนจ่าย · ดูได้ในหน้าออเดอร์</small></label>
+            <label className="field"><span>รายละเอียด (ลูกค้าเห็นก่อนซื้อ)</span><textarea className="input" rows={4} value={f.description} maxLength={3000} onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
+            <label className="field"><span>วิธีการใช้งาน (ลูกค้าเห็นหลังซื้อ คู่กับรหัส / ลิงก์ที่ได้)</span>
+              <textarea className="input" rows={6} value={usage} maxLength={3000} disabled={!usageReady} onChange={(e) => setUsage(e.target.value)}
+                placeholder={'เช่น\n1. นำลิงก์ไปเปิดผ่าน Google Chrome / Safari\n2. ล็อกอินด้วยเมลของลูกค้า แล้วกด "เข้าร่วมทีม"\n3. ไม่แจ้งเมล = ไม่รับเคลมทุกกรณี'} />
+              <small className="faint" style={{ fontSize: 12 }}>{usageReady ? 'ใส่ครั้งเดียว ใช้กับทุกชิ้นของสินค้านี้ · ไม่ต้องพิมพ์ซ้ำในสต็อกทุกชิ้น' : '⚠️ ต้องรัน SQL 0011_product_usage.sql ก่อน'}</small></label>
+            <div className="field"><span>รูปวิธีการใช้งาน (ลูกค้าดูและดาวน์โหลดได้หลังซื้อ{galleryReady ? ' · ใส่กี่รูปก็ได้' : ''})</span>
+              <ImageList urls={usageImgs} onChange={setUsageImgs} max={galleryReady ? MAX_IMAGES : 1} disabled={busy || !imgReady} upload={uploadMany} addLabel="รูปวิธีใช้" />
+              <small className="faint" style={{ fontSize: 12 }}>{!imgReady ? '⚠️ ต้องรัน SQL 0012_usage_image.sql ก่อน' : galleryReady ? 'เช่น รูปขั้นตอนการเข้าใช้ทีละขั้น / ภาพแคปหน้าจอ · ลูกค้าเห็นเรียงตามลำดับนี้' : '⚠️ ตอนนี้ใส่ได้ 1 รูป · รัน SQL 0029_product_images.sql เพื่อใส่ได้หลายรูป'}</small></div>
             </div>
           </div>
           <div className="drawer-foot">
