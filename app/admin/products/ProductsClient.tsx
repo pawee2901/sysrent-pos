@@ -271,7 +271,8 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
       </aside>
       {(() => { const sp = stock && products.find((p) => p.id === stock.pid); return sp ? (
         <StockModal product={{ id: sp.id, name: sp.name, options: sp.options.map((o) => ({ id: o.id, name: o.name, days: o.durationDays?.toString() ?? '', stock: o.stock ?? 0 })) }}
-          optionId={stock?.oid} forms={forms} otp={otp} onClose={() => setStock(null)} />
+          optionId={stock?.oid} forms={forms} otp={otp} onClose={() => setStock(null)}
+          targets={products.filter((p) => p.fulfillment === 'stock').flatMap((p) => p.options.map((o) => ({ id: o.id, label: `${p.name} · ${o.name}` })))} />
       ) : null; })()}
     </>
   );

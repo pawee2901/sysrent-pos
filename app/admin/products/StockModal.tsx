@@ -4,13 +4,14 @@ import { useRouter } from 'next/navigation';
 import { notify } from '@/components/dialog';
 import type { DForm } from './DeliveryForm';
 import { StockPanel } from './StockPanel';
+import type { MoveTarget } from './StockList';
 import css from './dform.module.css';
 
 export type StockProduct = { id: string; name: string; options: { id: string; name: string; days: string; stock: number }[] };
 export type OtpInfo = { ready: boolean; apps: { id: string; name: string }[]; picks: Record<string, string> } | null;
 
 /** หน้าต่างสต็อก (แยกจากหน้าแก้สินค้า): เลือกแพ็กเกจ → เติม / ดูของในสต็อก */
-export function StockModal({ product, optionId, forms, otp, onClose }: { product: StockProduct; optionId?: string; forms: Record<string, DForm>; otp: OtpInfo; onClose: () => void }) {
+export function StockModal({ product, optionId, forms, otp, onClose, targets }: { product: StockProduct; optionId?: string; forms: Record<string, DForm>; otp: OtpInfo; onClose: () => void; targets: MoveTarget[] }) {
   const router = useRouter();
   const [opt, setOpt] = useState(optionId ?? product.options[0]?.id ?? '');
   const [formMap, setFormMap] = useState(forms);
@@ -43,7 +44,7 @@ export function StockModal({ product, optionId, forms, otp, onClose }: { product
             <StockPanel key={o.id} productId={product.id} option={{ id: o.id, name: o.name, days: o.days }} left={o.stock}
               form={formMap[o.id] ?? null} onForm={(fm) => setFormMap((m) => { const n = { ...m }; if (fm) n[o.id] = fm; else delete n[o.id]; return n; })}
               otp={otp} otpApp={otpApp} setOtpApp={setOtpApp} savedOtpApp={otp?.picks[product.id] ?? ''}
-              onAdded={(notice) => { if (notice) notify(notice); router.refresh(); }} />
+              onAdded={(notice) => { if (notice) notify(notice); router.refresh(); }} targets={targets} />
           )}
         </div>
       </div>

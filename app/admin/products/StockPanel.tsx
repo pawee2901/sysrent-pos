@@ -5,7 +5,7 @@ import { notify } from '@/components/dialog';
 import { Delivered } from '@/components/Delivered';
 import { markPlain } from '@/lib/fields';
 import { FormBuilder, renderForm, type DForm } from './DeliveryForm';
-import { StockList } from './StockList';
+import { StockList, type MoveTarget } from './StockList';
 import css from './dform.module.css';
 
 /**
@@ -18,11 +18,11 @@ const EMAIL = /[^\s|:：,;]+@[^\s|:：,;]+\.[a-z]{2,}/i;
 const clean = (s: string) => s.replace(/\r\n/g, '\n');
 const noSep = (s: string) => s.replace(/^\s*-{3,}\s*$/gm, '───────');
 
-export function StockPanel({ productId, option, left, form, onForm, otp, otpApp, setOtpApp, savedOtpApp, onAdded }: {
+export function StockPanel({ productId, option, left, form, onForm, otp, otpApp, setOtpApp, savedOtpApp, onAdded, targets = [] }: {
   productId: string; option: { id: string; name: string; days: string }; left: number;
   form: DForm | null; onForm: (f: DForm | null) => void;
   otp: Otp; otpApp: string; setOtpApp: (v: string) => void; savedOtpApp: string;
-  onAdded: (notice: string) => void;
+  onAdded: (notice: string) => void; targets?: MoveTarget[];
 }) {
   const [tab, setTab] = useState<'add' | 'list'>('add');
   const [shared, setShared] = useState(false);
@@ -82,7 +82,7 @@ export function StockPanel({ productId, option, left, form, onForm, otp, otpApp,
         <button type="button" role="tab" aria-selected={tab === 'list'} className={tab === 'list' ? css.on : ''} onClick={() => setTab('list')}>📦 ในสต็อก <b>{left}</b></button>
       </div>
 
-      {tab === 'list' ? <StockList optionId={option.id} onChanged={() => onAdded('')} /> : <>
+      {tab === 'list' ? <StockList optionId={option.id} targets={targets} onChanged={() => onAdded('')} /> : <>
         {/* 1. ลูกค้าได้อะไร */}
         <div className={css.seg} role="radiogroup" aria-label="ลูกค้าแต่ละคนได้">
           <button type="button" role="radio" aria-checked={!shared} className={!shared ? css.on : ''} onClick={() => { setShared(false); setRep('1'); }}>🔑 คนละชิ้น<small>ไม่ซ้ำกัน</small></button>

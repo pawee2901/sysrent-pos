@@ -9,6 +9,7 @@ import { after } from 'next/server';
 import { pushItem } from '@/lib/push';
 import { lineItemNotice } from '@/lib/line-shop';
 import { sendItemMail } from '@/lib/customer-mail';
+import type { Shop } from '@/lib/shop';
 
 const SHORT_PLANS = [25, 15, 7, 3];
 const httpsUrl = z.string().trim().max(500).refine((u) => /^https:\/\//.test(u), 'ลิงก์รูปต้องเป็น https');
@@ -58,6 +59,8 @@ const schema = z.discriminatedUnion('action', [
   // รายการในสต็อกที่ยังไม่ขาย · ลบ (= void ไม่ลบจริง) เฉพาะชิ้นที่ยังไม่ขาย
   z.object({ action: z.literal('stock_list'), optionId: z.string().uuid() }),
   z.object({ action: z.literal('stock_delete'), optionId: z.string().uuid(), ids: z.array(z.string().uuid()).min(1).max(500) }),
+  // ย้ายสต็อกที่ยังไม่ขายไปแพ็กเกจอื่น (สินค้าเดียวกัน หรือสินค้าอื่นของร้าน ที่ส่งอัตโนมัติ)
+  z.object({ action: z.literal('stock_move'), optionId: z.string().uuid(), ids: z.array(z.string().uuid()).min(1).max(500), to: z.string().uuid() }),
   z.object({ action: z.literal('form'), optionId: z.string().uuid(), form: z.object({ tpl: z.string().min(1).max(4000), fields: z.array(z.string().trim().min(1).max(30)).min(1).max(12) }).nullable() }),
 ]);
 
@@ -204,9 +207,19 @@ export async function POST(req: Request) {
     return fail(/usage_images|\bimages\b/.test(error.message) ? 'ยังไม่ได้รัน SQL 0029_product_images.sql' : error.message.includes('usage_image') ? 'ยังไม่ได้รัน SQL 0012_usage_image.sql' : error.message.includes('usage') ? 'ยังไม่ได้รัน SQL 0011_product_usage.sql' : 'บันทึกไม่สำเร็จ', 500);
   }
 
-  if (x.action === 'stock_list' || x.action === 'stock_delete') {
+  if (x.action === 'stock_list' || x.action === 'stock_delete' || x.action === 'stock_move') {
     const { data: so } = await d.from('shop_options').select('id, shop_products!inner(shop_id)').eq('id', x.optionId).eq('shop_products.shop_id', sid).maybeSingle();
     if (!so) return fail('ไม่พบแพ็กเกจ', 404);
+    if (x.action === 'stock_move') {
+      if (x.to === x.optionId) return fail('เลือกแพ็กเกจปลายทางอื่น');
+      const { data: to } = await d.from('shop_options').select('id, shop_products!inner(shop_id, fulfillment)').eq('id', x.to).eq('shop_products.shop_id', sid).maybeSingle();
+      if (!to) return fail('ไม่พบแพ็กเกจปลายทาง', 404);
+      if ((to.shop_products as unknown as { fulfillment: string }).fulfillment !== 'stock') return fail('ย้ายได้เฉพาะไปสินค้าแบบส่งอัตโนมัติ');
+      const { data, error } = await d.from('shop_stock').update({ option_id: x.to }).eq('option_id', x.optionId).eq('status', 'available').in('id', x.ids).select('id');
+      if (error) return fail('ย้ายไม่สำเร็จ', 500);
+      const done = data?.length ? await fillPreorders(a.shop, x.to) : [];
+      return NextResponse.json({ ok: true, moved: data?.length ?? 0, notice: `ย้ายแล้ว ${data?.length ?? 0} ชิ้น${done.length ? ` · ส่งให้ลูกค้าที่พรีออเดอร์ไว้ ${done.length} รายการ` : ''}` });
+    }
     if (x.action === 'stock_delete') {
       const { data, error } = await d.from('shop_stock').update({ status: 'void' }).eq('option_id', x.optionId).eq('status', 'available').in('id', x.ids).select('id');
       return error ? fail('ลบไม่สำเร็จ', 500) : NextResponse.json({ ok: true, removed: data?.length ?? 0 });
@@ -247,11 +260,16 @@ export async function POST(req: Request) {
   const withOtp = items.some((c) => pairs.get(c));
   const { error } = await d.from('shop_stock').insert(items.map((content) => ({ option_id: x.optionId, content: x.plain ? markPlain(content) : content, ...(withOtp ? { otp_email: pairs.get(content) || null } : {}) })));
   if (error) return fail(withOtp && error.message.includes('otp_email') ? 'ยังไม่ได้รัน SQL 0032_product_otp_button.sql (เมลรับ OTP)' : 'เพิ่มสต็อกไม่สำเร็จ', 500);
-  // คิวพรีออเดอร์ของแพ็กเกจนี้ → ส่งของให้ตามลำดับ แล้วแจ้งลูกค้า (แอป · LINE · อีเมล)
-  const { data: filled } = await d.rpc('shop_fill_preorders', { p_option: x.optionId }); // ยังไม่รัน 0040 = error → ข้าม
+  const done = await fillPreorders(a.shop, x.optionId);
+  return NextResponse.json({ ok: true, notice: `เพิ่มสต็อกแล้ว ${items.length} ชิ้น${done.length ? ` · ส่งให้ลูกค้าที่พรีออเดอร์ไว้ ${done.length} รายการ` : ''}` });
+}
+
+/** คิวพรีออเดอร์ของแพ็กเกจนี้ → ส่งของให้ตามลำดับ แล้วแจ้งลูกค้า (แอป · LINE · อีเมล) · คืน id รายการที่ส่งแล้ว */
+async function fillPreorders(shop: Shop, optionId: string): Promise<string[]> {
+  const d = db();
+  const { data: filled } = await d.rpc('shop_fill_preorders', { p_option: optionId }); // ยังไม่รัน 0040 = error → ข้าม
   const done = ((filled ?? []) as unknown[]).map((v) => String(typeof v === 'object' && v ? Object.values(v)[0] : v));
   if (done.length) {
-    const shop = a.shop;
     after(async () => {
       for (const id of done) {
         await pushItem(shop, id, 'deliver').catch((e) => console.error('[push] preorder', e));
@@ -261,5 +279,5 @@ export async function POST(req: Request) {
       }
     });
   }
-  return NextResponse.json({ ok: true, notice: `เพิ่มสต็อกแล้ว ${items.length} ชิ้น${done.length ? ` · ส่งให้ลูกค้าที่พรีออเดอร์ไว้ ${done.length} รายการ` : ''}` });
+  return done;
 }

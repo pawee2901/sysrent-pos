@@ -54,7 +54,8 @@ export function StockClient({ products, forms, otp }: { products: P[]; forms: Re
       )}
       {cur && open && (
         <StockModal product={{ id: cur.id, name: cur.name, options: cur.options.map((o) => ({ id: o.id, name: o.name, days: o.days, stock: o.stock })) }}
-          optionId={open.oid} forms={forms} otp={otp} onClose={() => setOpen(null)} />
+          optionId={open.oid} forms={forms} otp={otp} onClose={() => setOpen(null)}
+          targets={products.flatMap((p) => p.options.map((o) => ({ id: o.id, label: `${p.name} · ${o.name}` })))} />
       )}
     </>
   );
