@@ -66,7 +66,7 @@ export async function verifyTopupSlip(shop: Shop, me: { id: string; username: st
   // โควตาตรวจสลิปของร้าน (นับก่อนส่งไปตรวจ เพราะบริการตรวจสลิปคิดเงินทุกครั้ง)
   const { data: allowed, error: qErr } = await d.rpc('shop_use_slip', { p_shop: shop.id });
   if (qErr) { console.error('[slip] quota', qErr.message); return no('ระบบตรวจสลิปขัดข้อง กรุณาลองใหม่', 500); }
-  if (!allowed) return no('ร้านใช้โควตาตรวจสลิปเดือนนี้ครบแล้ว — ระบบยังรับเงินไม่ได้ชั่วคราว กรุณาติดต่อร้านทาง LINE', 503);
+  if (!allowed) return no('ร้านยังตรวจสลิปไม่ได้ชั่วคราว (ยอดกระเป๋าค่าตรวจสลิปของร้านไม่พอ) — ระบบยังรับเงินไม่ได้ กรุณาติดต่อร้านทาง LINE', 503);
 
   await d.from('shop_topups').update({ attempts: t.attempts + 1 }).eq('id', t.id);
   const amount = Number(t.amount);

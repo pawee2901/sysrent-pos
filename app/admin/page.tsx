@@ -32,7 +32,7 @@ export default async function Dashboard() {
   });
   const max = Math.max(1, ...days.map((x) => x[1]));
   const out = products.filter((p) => !p.inStock);
-  const used = usage?.used ?? 0, pct = Math.min(100, Math.round((used / shop.slip_quota) * 100));
+  const used = usage?.used ?? 0, pct = shop.slip_quota > 0 ? Math.min(100, Math.round((used / shop.slip_quota) * 100)) : 0, free = shop.slip_quota > 0;
   const todo = [
     ...(queued?.length ? [{ ic: '🛠️', cls: 'warn', t: `ออเดอร์สั่งทำรอส่ง ${queued.length} รายการ`, s: [...new Set(queued.map((q) => q.name.split(' · ')[0]))].slice(0, 3).join(', '), href: to('/admin/orders?s=queued'), btn: 'ทำเลย' }] : []),
     ...out.slice(0, 3).map((p) => ({ ic: '📦', cls: 'bad', t: `${p.name} หมดสต็อก`, s: 'ลูกค้ากดซื้อไม่ได้', href: to('/admin/products'), btn: 'เพิ่ม' })),
@@ -71,10 +71,10 @@ export default async function Dashboard() {
             )}
           </section>
           <section className="card card-pad">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ fontSize: 16 }}>ตรวจสลิปเดือนนี้</h2><span className={`pill ${pct >= 80 ? 'warn' : 'ok'}`}>{pct}%</span></div>
-            <div className="num" style={{ fontFamily: 'var(--font-head)', fontSize: 28, fontWeight: 700, marginTop: 6 }}>{used} <span className="muted" style={{ fontSize: 16, fontWeight: 500 }}>/ {shop.slip_quota} ครั้ง</span></div>
-            <div className={`meter${pct >= 80 ? ' warn' : ''}`} style={{ margin: '8px 0' }}><i style={{ width: `${pct}%` }} /></div>
-            <p className="muted" style={{ margin: 0, fontSize: 13 }}>เกินโควตาคิด ฿{shop.slip_overage.toFixed(2)}/สลิป ตัดจากกระเป๋าเงินของคุณใน SysRent{usage?.charged ? ` · เดือนนี้ตัดไปแล้ว ${baht(Number(usage.charged))}` : ''} · ถ้ากระเป๋าไม่พอ ลูกค้าจะจ่ายพร้อมเพย์ไม่ได้ชั่วคราว</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ fontSize: 16 }}>ตรวจสลิปเดือนนี้</h2>{free ? <span className={`pill ${pct >= 80 ? 'warn' : 'ok'}`}>{pct}%</span> : <span className="pill accent plain">{baht(Number(usage?.charged ?? 0))}</span>}</div>
+            <div className="num" style={{ fontFamily: 'var(--font-head)', fontSize: 28, fontWeight: 700, marginTop: 6 }}>{used} <span className="muted" style={{ fontSize: 16, fontWeight: 500 }}>{free ? `/ ${shop.slip_quota} ครั้ง` : 'ครั้ง'}</span></div>
+            {free && <div className={`meter${pct >= 80 ? ' warn' : ''}`} style={{ margin: '8px 0' }}><i style={{ width: `${pct}%` }} /></div>}
+            <p className="muted" style={{ margin: free ? 0 : '8px 0 0', fontSize: 13 }}>{free ? 'เกินโควตาคิด' : 'จ่ายตามจริง'} ฿{shop.slip_overage.toFixed(2)}/สลิป ตัดจากกระเป๋าเงินของคุณใน SysRent{usage?.charged ? ` · เดือนนี้ตัดไปแล้ว ${baht(Number(usage.charged))}` : ''} · ถ้ากระเป๋าไม่พอ ลูกค้าจะจ่ายพร้อมเพย์ไม่ได้ชั่วคราว</p>
           </section>
         </div>
       </div>

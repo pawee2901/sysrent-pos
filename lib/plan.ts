@@ -2,7 +2,7 @@
    แพ็กเกจเดียว ฿310/เดือน ใช้ได้ทุกฟังก์ชัน
    shops.plan ยังเก็บไว้ (ร้านเก่า starter / pro / max) แต่ทุกค่าได้ฟังก์ชันครบเท่ากัน
    ร้านใหม่ / เปลี่ยนแพ็กเกจ = บันทึกเป็น max เสมอ (SQL ตัวแทนราคาส่งเช็ก plan in ('pro','max'))
-   ตรวจสลิปเกินโควตาคิดเท่ากันทุกแพ็กเกจ (shops.slip_overage)
+   ตรวจสลิปไม่มีโควตาฟรี จ่ายตามจริงครั้งละ ฿0.30 ตัดจากกระเป๋า SysRent (shops.slip_overage)
    ใช้ได้ทั้งฝั่งเซิร์ฟเวอร์และหน้าเว็บ (ไม่มีข้อมูลลับ)
    ============================================================= */
 
@@ -11,8 +11,10 @@ export const PLANS: Plan[] = ['starter', 'pro', 'max'];
 export const PLAN_PRICE = 310;
 export const PLAN_NAME = `฿${PLAN_PRICE} · ทุกฟังก์ชัน`;
 export const PLAN_LABEL: Record<Plan, string> = { starter: PLAN_NAME, pro: PLAN_NAME, max: PLAN_NAME };
-/** ตรวจสลิปฟรีต่อเดือน */
-export const SLIP_QUOTA: Record<Plan, number> = { starter: 500, pro: 500, max: 500 };
+/** ตรวจสลิปฟรีต่อเดือน (0 = ไม่มีฟรี จ่ายทุกครั้ง) */
+export const SLIP_QUOTA: Record<Plan, number> = { starter: 0, pro: 0, max: 0 };
+/** ค่าตรวจสลิปต่อครั้ง (บาท) */
+export const SLIP_PRICE = 0.3;
 /** จำนวนคูปองสูงสุด (null = ไม่จำกัด) */
 export const COUPON_LIMIT: Record<Plan, number | null> = { starter: null, pro: null, max: null };
 
