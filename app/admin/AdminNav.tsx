@@ -12,13 +12,13 @@ import { NavSearch } from './NavSearch';
 import css from './nav.module.css';
 
 const LOCKS: Record<string, Feature> = { '/otp': 'otp', '/accounting': 'accounting', '/agents': 'agents', '/reports': 'report', '/renewals': 'renewals', '/line-bot': 'line_shop' };
-const PERM_OF: Record<string, string> = Object.fromEntries(PERMS.map((p) => [p.href, p.key]));
+const PERM_OF: Record<string, string> = { ...Object.fromEntries(PERMS.map((p) => [p.href, p.key])), '/stock': 'products' };
 
 /** เมนูหลัก 6 หมวด · แต่ละหมวดมีแท็บย่อย (path, ชื่อ) — หน้าแรกของหมวด = แท็บแรกที่เข้าได้ */
 type Group = { k: string; l: string; i: string; items: [string, string][] };
 const GROUPS: Group[] = [
   { k: 'home', l: 'ภาพรวม', i: 'home', items: [['', 'ภาพรวม']] },
-  { k: 'products', l: 'สินค้า', i: 'products', items: [['/products', 'สินค้าทั้งหมด'], ['/coupons', 'คูปอง'], ['/reviews', 'รีวิว']] },
+  { k: 'products', l: 'สินค้า', i: 'products', items: [['/products', 'สินค้าทั้งหมด'], ['/stock', 'สต็อก'], ['/coupons', 'คูปอง'], ['/reviews', 'รีวิว']] },
   { k: 'orders', l: 'ออเดอร์', i: 'orders', items: [['/orders', 'ออเดอร์ทั้งหมด'], ['/reports', 'แจ้งปัญหา'], ['/renewals', 'ต่อเมล'], ['/otp', 'ค้นหา OTP']] },
   { k: 'money', l: 'การเงิน', i: 'payments', items: [['/payments', 'การชำระเงิน'], ['/accounting', 'บัญชี']] },
   { k: 'customers', l: 'ลูกค้า', i: 'customers', items: [['/customers', 'ลูกค้าทั้งหมด'], ['/agents', 'ตัวแทน']] },

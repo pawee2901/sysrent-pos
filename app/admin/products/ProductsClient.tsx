@@ -10,7 +10,7 @@ import type { Product } from '@/lib/catalog';
 import { CategoriesCard } from './CategoriesCard';
 import type { DForm } from './DeliveryForm';
 import dcss from './dform.module.css';
-import { StockPanel } from './StockPanel';
+import { StockModal } from './StockModal';
 
 type OptF = { id?: string; name: string; price: string; compare_at: string; cost: string; duration_days: string; agent_price: string; active: boolean };
 type Form = { id?: string; name: string; category: string; description: string; image: string; template: string; fulfillment: 'stock' | 'slot' | 'manual'; badge: string; askInfo: string; active: boolean; options: OptF[]; preorder: boolean; preorderNote: string; preorderLimit: string };
@@ -46,19 +46,15 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
   const [f, setF] = useState<Form | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const [stock, setStock] = useState<{ optionId: string } | null>(null);
-  const [formMap, setFormMap] = useState<Record<string, DForm>>(forms);
+  // สต็อกเปิดเป็นหน้าต่างแยก (ไม่ปนกับฟอร์มแก้สินค้า)
+  const [stock, setStock] = useState<{ pid: string; oid?: string } | null>(null);
   const [q, setQ] = useState('');
   const file = useRef<HTMLInputElement>(null);
   const editing = f?.id ? products.find((p) => p.id === f.id) : undefined;
-  const stockBox = useRef<HTMLDivElement>(null);
-  // เปิดฟอร์มเพิ่มสต็อกแล้วเลื่อนไปหา (แพ็กเกจอาจอยู่นอกจอ โดยเฉพาะบนมือถือ)
-  useEffect(() => { if (stock?.optionId) stockBox.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, [stock?.optionId]);
 
   /** เปิดแผงแก้ไข · ส่ง optionId มา = เปิดฟอร์มเพิ่มสต็อกของแพ็กเกจนั้นให้เลย */
-  function openProduct(p: Product, stockOptionId?: string) {
+  function openProduct(p: Product) {
     setF(fromProduct(p, agentPrices)); setOtpApp(otp?.picks[p.id] ?? ''); setUsage(usages[p.id] ?? ''); setUsageImgs(usageImages[p.id] ?? []); setGallery(images[p.id] ?? []); setMsg('');
-    setStock(stockOptionId ? { optionId: stockOptionId } : null);
   }
 
   async function save() {
@@ -137,7 +133,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                 <td className="r num m-hide">{p.sold.toLocaleString('th-TH')}</td>
                 <td className="m-tog"><button type="button" className={`toggle${p.active ? ' on' : ''}`} aria-label="เปิด/ปิดขาย" onClick={(e) => { e.stopPropagation(); simple({ action: 'toggle', id: p.id, active: !p.active }); }} /></td>
                 <td className="m-acts" onClick={(e) => e.stopPropagation()}><div className="row-acts">
-                  {p.fulfillment === 'stock' && <button type="button" className="btn soft sm" onClick={() => openProduct(p, (p.options.find((o) => o.active) ?? p.options[0])?.id)}>+ เพิ่มสต็อก</button>}
+                  {p.fulfillment === 'stock' && <button type="button" className="btn soft sm" onClick={() => setStock({ pid: p.id })}>📦 สต็อก</button>}
                   <button type="button" className="btn sm" onClick={() => openProduct(p)}>แก้ไข</button>
                 </div></td>
               </tr>
@@ -253,15 +249,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                     </label>
                   )}
                   {editing && o.id && f.fulfillment === 'stock' && (
-                    stock?.optionId === o.id ? (
-                      <div ref={stockBox}>
-                        <StockPanel key={o.id} productId={editing.id} option={{ id: o.id, name: o.name, days: o.duration_days }} left={editing.options.find((x) => x.id === o.id)?.stock ?? 0}
-                          form={formMap[o.id] ?? null} onForm={(fm) => setFormMap((m) => { const n = { ...m }; if (fm) n[o.id!] = fm; else delete n[o.id!]; return n; })}
-                          otp={otp} otpApp={otpApp} setOtpApp={setOtpApp} savedOtpApp={otp?.picks[editing.id] ?? ''}
-                          onAdded={(notice) => { if (notice) notify(notice); router.refresh(); }} />
-                        <button type="button" className="btn ghost sm" style={{ marginTop: 6 }} onClick={() => setStock(null)}>ปิด</button>
-                      </div>
-                    ) : <button type="button" className="btn soft sm" onClick={() => setStock({ optionId: o.id! })}>📦 สต็อก · เหลือ {editing.options.find((x) => x.id === o.id)?.stock ?? 0} ชิ้น</button>
+                    <button type="button" className="btn soft sm" onClick={() => setStock({ pid: editing.id, oid: o.id })}>📦 สต็อก · เหลือ {editing.options.find((x) => x.id === o.id)?.stock ?? 0} ชิ้น <span className="faint">· เติม / ดู ›</span></button>
                   )}
                 </div>
               ))}
@@ -277,6 +265,10 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
           </div>
         </>}
       </aside>
+      {(() => { const sp = stock && products.find((p) => p.id === stock.pid); return sp ? (
+        <StockModal product={{ id: sp.id, name: sp.name, options: sp.options.map((o) => ({ id: o.id, name: o.name, days: o.durationDays?.toString() ?? '', stock: o.stock ?? 0 })) }}
+          optionId={stock?.oid} forms={forms} otp={otp} onClose={() => setStock(null)} />
+      ) : null; })()}
     </>
   );
 }

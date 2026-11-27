@@ -21,6 +21,7 @@
     "/orders": "/sales",
     "/payments": "/gateway",
     "/products": "/catalog",
+    "/stock": "/inventory",
     "/reports": "/tickets",
     "/settings": "/config",
     "/reviews": "/feedback",
