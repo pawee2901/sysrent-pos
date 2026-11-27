@@ -67,7 +67,12 @@ export function SettingsClient({ shape: shapeInit, initial, look: lookInit, them
   const [lookTarget, setLookTarget] = useState<Pic>('banner_url');
   // แท็บที่เปิดอยู่ จำไว้ใน #hash (รีเฟรชแล้วอยู่แท็บเดิม · ส่งลิงก์ตรงไปแท็บได้)
   const [tab, setTab] = useState<Tab>('shop');
-  useEffect(() => { const h = window.location.hash.slice(1) as Tab; if (TABS.some(([k]) => k === h)) setTab(h); }, []);
+  useEffect(() => {
+    const read = () => { const h = window.location.hash.slice(1) as Tab; if (TABS.some(([k]) => k === h)) setTab(h); };
+    read();
+    window.addEventListener('hashchange', read); // ช่องค้นหาที่แถบบน → สลับแท็บได้ทั้งที่อยู่หน้าเดิม
+    return () => window.removeEventListener('hashchange', read);
+  }, []);
   const pickTab = (k: Tab) => { setTab(k); history.replaceState(null, '', `#${k}`); };
 
   useEffect(() => { if (!msg) return; const t = setTimeout(() => setMsg(''), 3500); return () => clearTimeout(t); }, [msg]);
