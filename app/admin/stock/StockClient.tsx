@@ -12,7 +12,7 @@ type P = { id: string; name: string; category: string; image: string; template: 
 const appOf = (p: P) => p.category || p.name;
 
 /** หน้าสต็อก: สินค้าส่งอัตโนมัติทั้งหมด · แพ็กเกจละแถว · เหลือเท่าไหร่ · กดเติม */
-export function StockClient({ products, forms, otp }: { products: P[]; forms: Record<string, DForm>; otp: OtpInfo }) {
+export function StockClient({ products, forms, otp, limits }: { products: P[]; forms: Record<string, DForm>; otp: OtpInfo; limits: Record<string, number> }) {
   const [q, setQ] = useState('');
   const [only, setOnly] = useState<'all' | 'low'>('all');
   const [app, setApp] = useState(''); // แยกตามแอป (หมวดสินค้า) · '' = ทุกแอป
@@ -73,7 +73,7 @@ export function StockClient({ products, forms, otp }: { products: P[]; forms: Re
       )}
       {cur && open && (
         <StockModal product={{ id: cur.id, name: cur.name, options: cur.options.map((o) => ({ id: o.id, name: o.name, days: o.days, stock: o.stock })) }}
-          optionId={open.oid} forms={forms} otp={otp} onClose={() => setOpen(null)}
+          optionId={open.oid} forms={forms} otp={otp} limits={limits} onClose={() => setOpen(null)}
           targets={products.flatMap((p) => p.options.map((o) => ({ id: o.id, label: `${p.name} · ${o.name}` })))} />
       )}
     </>

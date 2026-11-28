@@ -3,7 +3,8 @@ import { db } from '@/lib/db';
 import { can } from '@/lib/plan';
 
 /** ปุ่มรับ OTP ของรายการที่ซื้อ: แอปที่ค้น + อีเมลที่แอดมินใส่ไว้ที่สต็อกชิ้นนั้น (การค้นจริงยังเช็กสิทธิ์ซ้ำที่ /api/otp) */
-export type OtpButton = { appId: string; appName: string; emails: string[]; link?: string };
+/** itemId = รายการที่ซื้อ (นับโควตาขอ OTP ของออเดอร์นี้) */
+export type OtpButton = { appId: string; appName: string; emails: string[]; link?: string; itemId?: string };
 
 /**
  * สินค้าที่ร้านเปิดปุ่มรับ OTP → แอปที่ค้น (productId → { appId, appName })

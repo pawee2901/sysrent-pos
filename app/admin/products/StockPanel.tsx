@@ -18,12 +18,13 @@ const EMAIL = /[^\s|:：,;]+@[^\s|:：,;]+\.[a-z]{2,}/i;
 const clean = (s: string) => s.replace(/\r\n/g, '\n');
 const noSep = (s: string) => s.replace(/^\s*-{3,}\s*$/gm, '───────');
 
-export function StockPanel({ productId, option, left, form, onForm, otp, otpApp, setOtpApp, savedOtpApp, onAdded, targets = [] }: {
+export function StockPanel({ productId, option, left, form, onForm, otp, otpApp, setOtpApp, savedOtpApp, onAdded, targets = [], otpLimit = 0 }: {
   productId: string; option: { id: string; name: string; days: string }; left: number;
   form: DForm | null; onForm: (f: DForm | null) => void;
   otp: Otp; otpApp: string; setOtpApp: (v: string) => void; savedOtpApp: string;
-  onAdded: (notice: string) => void; targets?: MoveTarget[];
+  onAdded: (notice: string) => void; targets?: MoveTarget[]; otpLimit?: number;
 }) {
+  const [lim, setLim] = useState(String(otpLimit));
   const [tab, setTab] = useState<'add' | 'list'>('add');
   const [shared, setShared] = useState(false);
   const [split, setSplit] = useState<Split>('line');
@@ -87,13 +88,25 @@ export function StockPanel({ productId, option, left, form, onForm, otp, otpApp,
         {otp && (
           <div className={css.extra}>
             <button type="button" className={css.exHead} aria-expanded={more === 'otp'} onClick={() => setMore(more === 'otp' ? '' : 'otp')}>
-              <span>🔐</span><span><b>ปุ่มรับ OTP</b><small>{otpApp ? `เปิด · ${otp.apps.find((a) => a.id === otpApp)?.name ?? ''}` : 'ปิดอยู่ · ลูกค้ากดรับรหัสเองได้'}</small></span><i>{more === 'otp' ? '−' : '+'}</i></button>
+              <span>🔐</span><span><b>ปุ่มรับ OTP</b><small>{otpApp ? `เปิด · ${otp.apps.find((a) => a.id === otpApp)?.name ?? ''}` : 'ปิดอยู่ · ลูกค้ากดรับรหัสเองได้'}{otpLimit ? ` · ${otpLimit} ครั้ง/ออเดอร์` : ''}</small></span><i>{more === 'otp' ? '−' : '+'}</i></button>
             {more === 'otp' && (
               <div className={css.exBody}>
                 <select className="input" value={otpApp} disabled={!otp.ready || !otp.apps.length} onChange={(e) => setOtpApp(e.target.value)}>
                 <option value="">ปิด — ไม่แสดงปุ่ม</option>
                 {otp.apps.map((a) => <option key={a.id} value={a.id}>เปิด — ค้นรหัสของ {a.name}</option>)}
                 </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 14 }}>1 ออเดอร์ขอ OTP ได้</span>
+                  <input className="input" inputMode="numeric" style={{ width: 64, textAlign: 'center' }} value={lim} aria-label="จำนวนครั้งต่อออเดอร์" onChange={(e) => setLim(e.target.value.replace(/\D/g, '').slice(0, 3))} />
+                  <span style={{ fontSize: 14 }}>ครั้ง</span>
+                  <button type="button" className="btn sm" disabled={busy || Number(lim || 0) === otpLimit} onClick={async () => {
+                    const n = Math.min(100, Number(lim || 0));
+                    const r = await api('/api/admin/products', { action: 'otp_limit', optionId: option.id, limit: n });
+                    if (!r.ok) { notify(r.error, 'error'); return; }
+                    notify(n ? `ออเดอร์แพ็กเกจนี้ขอ OTP ได้ ${n} ครั้ง` : 'ไม่จำกัดจำนวนครั้งแล้ว'); onAdded('');
+                  }}>บันทึก</button>
+                </div>
+                <small className="faint">{Number(lim || 0) ? `ลูกค้าต้องติ๊กยอมรับก่อนค้นหา · ครบ ${Number(lim)} ครั้งแล้วขอไม่ได้อีก` : '0 = ไม่จำกัด (ใช้กับแพ็กเกจนี้ ทั้งหน้าค้นหา OTP และปุ่มในประวัติการซื้อ)'}</small>
                 {otpApp && <input className="input" type="email" value={otpAll} onChange={(e) => setOtpAll(e.target.value)} placeholder="เมลรับ OTP (เว้นว่าง = ใช้อีเมลในแต่ละชิ้น)" />}
                 <small className="faint">{!otp.ready ? '⚠️ ต้องรัน SQL 0032_product_otp_button.sql ก่อน' : !otp.apps.length ? 'เพิ่มแอปในหน้า "ค้นหา OTP" ก่อน' : 'ลูกค้าที่ได้ชิ้นนั้นจะเห็นปุ่มรับรหัสในหน้าประวัติการซื้อ'}</small>
               </div>

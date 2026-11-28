@@ -24,7 +24,7 @@ const fromProduct = (p: Product, ap: Record<string, number> = {}): Form => ({
 });
 
 /** สินค้า: ตาราง + เพิ่มจากแม่แบบ + แผงแก้ไข (ข้อมูล · แพ็กเกจ · สต็อก) */
-export function ProductsClient({ products, categories, usages, usageReady, usageImages, images, imgReady, galleryReady, agentPrices, agentsOn, otp, forms }: { products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string[]>; images: Record<string, string[]>; imgReady: boolean; galleryReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean; otp: { ready: boolean; apps: { id: string; name: string }[]; picks: Record<string, string> } | null; forms: Record<string, DForm>; formReady: boolean }) {
+export function ProductsClient({ products, categories, usages, usageReady, usageImages, images, imgReady, galleryReady, agentPrices, agentsOn, otp, forms, limits }: { products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string[]>; images: Record<string, string[]>; imgReady: boolean; galleryReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean; otp: { ready: boolean; apps: { id: string; name: string }[]; picks: Record<string, string> } | null; forms: Record<string, DForm>; formReady: boolean; limits: Record<string, number> }) {
   const [usage, setUsage] = useState('');
   const [otpApp, setOtpApp] = useState(''); // ปุ่มรับ OTP: '' = ปิด
   const [usageImgs, setUsageImgs] = useState<string[]>([]);
@@ -271,7 +271,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
       </aside>
       {(() => { const sp = stock && products.find((p) => p.id === stock.pid); return sp ? (
         <StockModal product={{ id: sp.id, name: sp.name, options: sp.options.map((o) => ({ id: o.id, name: o.name, days: o.durationDays?.toString() ?? '', stock: o.stock ?? 0 })) }}
-          optionId={stock?.oid} forms={forms} otp={otp} onClose={() => setStock(null)}
+          optionId={stock?.oid} forms={forms} otp={otp} limits={limits} onClose={() => setStock(null)}
           targets={products.filter((p) => p.fulfillment === 'stock').flatMap((p) => p.options.map((o) => ({ id: o.id, label: `${p.name} · ${o.name}` })))} />
       ) : null; })()}
     </>

@@ -4,6 +4,7 @@ import { api } from '@/components/Cart';
 import { notify } from '@/components/dialog';
 import type { OtpButton as Btn } from '@/lib/otp-button';
 import { Layer } from '@/components/Layer';
+import { OtpAck, type NeedAck } from '@/components/OtpAck';
 
 type Hit = { code: string | null; link: string | null; subject: string; date: string };
 const time = (s: string) => new Date(s).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' });
@@ -18,11 +19,15 @@ export function OtpButton({ otp, label }: { otp: Btn; label?: string }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [hits, setHits] = useState<Hit[] | null>(null);
+  const [need, setNeed] = useState<NeedAck | null>(null);
+  const [acked, setAcked] = useState(false);
 
-  async function search() {
-    setBusy(true); setErr(''); setHits(null);
-    const r = await api<{ hits: Hit[] }>('/api/otp', { account, appId: otp.appId });
+  async function search(ack = acked) {
+    setBusy(true); setErr(''); setHits(null); setNeed(null);
+    const r = await api<{ hits: Hit[] }>('/api/otp', { account, appId: otp.appId, ...(otp.itemId ? { itemId: otp.itemId } : {}), ...(ack ? { ack: true } : {}) });
     setBusy(false);
+    const na = (r.data as { need_ack?: NeedAck }).need_ack;
+    if (r.status === 409 && na) { setNeed(na); return; }
     if (!r.ok) { setErr(r.error); return; }
     if (!r.data.hits.length) { setErr(`ยังไม่พบรหัสใน 15 นาทีล่าสุด — กดขอรหัสใน ${otp.appName} ก่อน แล้วกดค้นหาอีกครั้ง`); return; }
     setHits(r.data.hits);
@@ -56,7 +61,7 @@ export function OtpButton({ otp, label }: { otp: Btn; label?: string }) {
                   ? <select className="input" value={account} onChange={(e) => { setAccount(e.target.value); setHits(null); }}>{otp.emails.map((m) => <option key={m} value={m}>{m}</option>)}</select>
                   : <input className="input" value={account} readOnly />}
               </label>
-              <button type="button" className="btn primary lg block" onClick={search} disabled={busy || !account}>{busy ? 'กำลังค้นหา…' : hits ? '🔍 ค้นหาอีกครั้ง' : '🔍 ค้นหารหัส'}</button>
+              <button type="button" className="btn primary lg block" onClick={() => search()} disabled={busy || !account}>{busy ? 'กำลังค้นหา…' : hits ? '🔍 ค้นหาอีกครั้ง' : '🔍 ค้นหารหัส'}</button>
               {err && <div className="otpf-err" role="alert">{err}</div>}
               {h && (
                 <div className="otpf-result">
@@ -69,6 +74,7 @@ export function OtpButton({ otp, label }: { otp: Btn; label?: string }) {
               )}
             </div>
             <div className="rd-foot"><button type="button" className="btn" onClick={close} disabled={busy}>ปิด</button></div>
+            {need && <OtpAck need={need} onCancel={() => setNeed(null)} onOk={() => { setAcked(true); search(true); }} />}
           </div>
         </div>
       </Layer>)}

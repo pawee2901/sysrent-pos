@@ -67,7 +67,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
               {(() => {
                 // ปุ่มรับ OTP: ร้านเปิดที่สินค้านี้ + แอดมินใส่เมลรับ OTP ไว้ที่สต็อกชิ้นที่ลูกค้าได้
                 const app = otp.get(i.product_id), emails = otpMail.get(i.id) ?? [];
-                return app && (emails.length || oLink) && i.status === 'delivered' ? <div style={{ width: '100%' }}><OtpButton otp={{ ...app, emails, link: oLink }} /></div> : null;
+                return app && (emails.length || oLink) && i.status === 'delivered' ? <div style={{ width: '100%' }}><OtpButton otp={{ ...app, emails, link: oLink, itemId: i.id }} /></div> : null;
               })()}
               {i.status === 'delivered' && (usage[i.product_id] || usageImg[i.product_id]?.length) && (
                 <details className="usage-box" open><summary>📖 วิธีการใช้งาน</summary>

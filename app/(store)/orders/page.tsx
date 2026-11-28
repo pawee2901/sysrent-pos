@@ -71,7 +71,7 @@ export default async function Orders() {
         // ปุ่มรับ OTP: ร้านเปิดที่สินค้านี้ + แอดมินใส่เมลรับ OTP ไว้ที่สต็อกชิ้นที่ลูกค้าได้
         const app = otp.get(i.product_id), emails = otpMail.get(i.id) ?? [];
         return {
-          otp: app && (emails.length || oLink) && i.status === 'delivered' ? { ...app, emails, link: oLink } : null,
+          otp: app && (emails.length || oLink) && i.status === 'delivered' ? { ...app, emails, link: oLink, itemId: i.id } : null,
           id: i.id, name: i.name, total: Number(i.total), queued: i.status === 'queued', pre: i.status === 'queued' && i.fulfillment === 'stock',
           review: revOf.get(i.id) ?? null, reviewable: !revs.error && i.status === 'delivered', delivered: i.status === 'delivered' ? i.delivered : null,
           warranty: ends[k] ? `${thDate(ends[k]!)}` : null, usage: p?.usage ?? '', usageImages: p?.usageImages ?? [],

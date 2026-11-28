@@ -2,7 +2,8 @@ import 'server-only';
 import { db } from '@/lib/db';
 import { otpEmails } from '@/lib/otp-button';
 
-export type OtpAccount = { email: string; product: string; until: string };
+/** items = รายการที่ซื้อ (order item) ที่มีอีเมลนี้ · ใช้นับโควตาขอ OTP ต่อออเดอร์ */
+export type OtpAccount = { email: string; product: string; until: string; items: string[] };
 
 const EMAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 const DAY = 86_400_000;
@@ -16,9 +17,11 @@ type Sub = { ends_at: string; shop_products: { name: string } | null; shop_slots
 /** customerId ไม่ใส่ = อีเมลของสินค้าที่ยังไม่หมดอายุทั้งร้าน (หน้ารับ OTP แบบไม่ต้องล็อกอิน) */
 export async function otpAccounts(shopId: string, customerId?: string): Promise<OtpAccount[]> {
   const d = db(), now = Date.now(), found = new Map<string, OtpAccount>();
-  const add = (email: string, product: string, until: number) => {
+  const add = (email: string, product: string, until: number, item?: string) => {
     const key = email.toLowerCase(), cur = found.get(key);
-    if (!cur || new Date(cur.until).getTime() < until) found.set(key, { email: key, product, until: new Date(until).toISOString() });
+    const items = [...new Set([...(cur?.items ?? []), ...(item ? [item] : [])])];
+    if (!cur || new Date(cur.until).getTime() < until) found.set(key, { email: key, product, until: new Date(until).toISOString(), items });
+    else cur.items = items;
   };
 
   let sq = d.from('shop_subscriptions').select('ends_at, shop_products(name), shop_slots(shop_accounts(login))')
@@ -41,11 +44,11 @@ export async function otpAccounts(shopId: string, customerId?: string): Promise<
       const until = start + (i.shop_options?.duration_days ?? DEFAULT_DAYS) * DAY;
       if (until <= now) continue;
       live.push({ id: i.id, name: i.name.split(' · ')[0], until });
-      for (const email of `${i.delivered ?? ''} ${i.customer_info ?? ''}`.match(EMAIL) ?? []) add(email, i.name.split(' · ')[0], until);
+      for (const email of `${i.delivered ?? ''} ${i.customer_info ?? ''}`.match(EMAIL) ?? []) add(email, i.name.split(' · ')[0], until, i.id);
     }
   }
   // เมลรับ OTP ที่แอดมินใส่เองตอนเพิ่มสต็อก (ปุ่มรับรหัส OTP) — อาจไม่อยู่ในข้อความที่ลูกค้าได้
   const fromStock = await otpEmails(live.map((i) => i.id));
-  for (const i of live) for (const email of fromStock.get(i.id) ?? []) add(email, i.name, i.until);
+  for (const i of live) for (const email of fromStock.get(i.id) ?? []) add(email, i.name, i.until, i.id);
   return [...found.values()].sort((a, b) => a.email.localeCompare(b.email));
 }

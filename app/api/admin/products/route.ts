@@ -57,6 +57,8 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('otp'), id: z.string().uuid(), app_id: z.string().uuid().nullable() }),
   // ฟอร์มส่งของของแพ็กเกจ: tpl มีช่อง {{0}} {{1}} … ตาม fields · null = ลบฟอร์ม (ต้องรัน 0046)
   // รายการในสต็อกที่ยังไม่ขาย · ลบ (= void ไม่ลบจริง) เฉพาะชิ้นที่ยังไม่ขาย
+  // ขอ OTP ได้กี่ครั้งต่อออเดอร์ของแพ็กเกจนี้ (0 = ไม่จำกัด · ต้องรัน 0051)
+  z.object({ action: z.literal('otp_limit'), optionId: z.string().uuid(), limit: z.number().int().min(0).max(100) }),
   z.object({ action: z.literal('stock_list'), optionId: z.string().uuid() }),
   z.object({ action: z.literal('stock_delete'), optionId: z.string().uuid(), ids: z.array(z.string().uuid()).min(1).max(500) }),
   // ย้ายสต็อกที่ยังไม่ขายไปแพ็กเกจอื่น (สินค้าเดียวกัน หรือสินค้าอื่นของร้าน ที่ส่งอัตโนมัติ)
@@ -205,6 +207,13 @@ export async function POST(req: Request) {
     if (!error) return NextResponse.json({ ok: true });
     // เช็ก 0029 ก่อน: ชื่อ usage_images มีคำว่า usage_image อยู่ในตัว
     return fail(/usage_images|\bimages\b/.test(error.message) ? 'ยังไม่ได้รัน SQL 0029_product_images.sql' : error.message.includes('usage_image') ? 'ยังไม่ได้รัน SQL 0012_usage_image.sql' : error.message.includes('usage') ? 'ยังไม่ได้รัน SQL 0011_product_usage.sql' : 'บันทึกไม่สำเร็จ', 500);
+  }
+
+  if (x.action === 'otp_limit') {
+    const { data: lo } = await d.from('shop_options').select('id, shop_products!inner(shop_id)').eq('id', x.optionId).eq('shop_products.shop_id', sid).maybeSingle();
+    if (!lo) return fail('ไม่พบแพ็กเกจ', 404);
+    const { error } = await d.from('shop_options').update({ otp_limit: x.limit }).eq('id', x.optionId);
+    return error ? fail(/otp_limit/.test(error.message) ? 'ต้องรัน SQL 0051_otp_order_limit.sql ใน Supabase ก่อน' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
   }
 
   if (x.action === 'stock_list' || x.action === 'stock_delete' || x.action === 'stock_move') {

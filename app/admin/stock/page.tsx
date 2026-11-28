@@ -19,6 +19,8 @@ export default async function AdminStock() {
     otpOn ? db().from('shop_otp_apps').select('id, name').eq('shop_id', shop.id).order('sort').order('created_at') : Promise.resolve(null),
     otpOn ? db().from('shop_products').select('id, otp_app_id').eq('shop_id', shop.id) : Promise.resolve(null),
   ]);
+  const lq = ids.length ? await db().from('shop_options').select('id, otp_limit').in('id', ids) : { data: [] };
+  const limits = Object.fromEntries(((lq.data ?? []) as { id: string; otp_limit: number }[]).filter((r) => r.otp_limit > 0).map((r) => [r.id, r.otp_limit]));
   const forms = Object.fromEntries(((fq.data ?? []) as { id: string; delivery_form: DForm | null }[]).filter((r) => r.delivery_form?.tpl).map((r) => [r.id, r.delivery_form as DForm]));
   const otp = otpOn ? {
     ready: !picks?.error, apps: (apps?.data ?? []) as { id: string; name: string }[],
@@ -28,5 +30,5 @@ export default async function AdminStock() {
     id: p.id, name: p.name, category: p.category, image: p.image, template: p.template, active: p.active, preorder: p.preorder,
     options: p.options.map((o) => ({ id: o.id, name: o.name, days: o.durationDays?.toString() ?? '', stock: o.stock ?? 0, price: o.price, active: o.active })),
   }));
-  return <StockClient products={list} forms={forms} otp={otp} />;
+  return <StockClient products={list} forms={forms} otp={otp} limits={limits} />;
 }

@@ -7,14 +7,15 @@ import { getShop } from '@/lib/shop';
 import { otpAccounts } from '@/lib/otp-access';
 import { otpAgent, otpCustBlocked, otpLink, otpPublic } from '@/lib/otp-link';
 import { clientIp as ipOf, loginFailed, loginLocked, loginOk } from '@/lib/auth';
-import { ACCESS_LABEL, PERIOD_MS, normalizeAccess, type OtpAccess } from '@/lib/otp-agent';
+import { ACCESS_LABEL, PERIOD_LABEL, PERIOD_MS, normalizeAccess, type OtpAccess } from '@/lib/otp-agent';
+import { fullMsg, pickItem } from '@/lib/otp-quota';
 import { OtpMailboxError, searchOtp } from '@/lib/otp-search';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 // code = รหัสยืนยันของระบบตัวแทน (รหัส 4 หลัก / ชื่อยูส / อีเมลตัวแทน)
-const schema = z.object({ account: z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120), appId: z.string().uuid(), code: z.string().trim().max(120).optional() });
+const schema = z.object({ account: z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120), appId: z.string().uuid(), code: z.string().trim().max(120).optional(), ack: z.boolean().optional() });
 const PER_MINUTE = 6;
 const PER_HOUR = 40;
 
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
   if (!(await otpPublic(shop.id)) || (await otpLink(shop.id))) return fail('ร้านปิดหน้ารับ OTP อยู่', 403);
   const b = await body(req, schema);
   if ('res' in b) return b.res;
-  const { account, appId, code = '' } = b.data, d = db(), shopId = shop.id, ip = await ipOf();
+  const { account, appId, code = '', ack } = b.data, d = db(), shopId = shop.id, ip = await ipOf();
 
   const recent = (ms: number) => d.from('shop_otp_requests').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).eq('ip', ip).gte('created_at', new Date(Date.now() - ms).toISOString());
   const [m, h] = await Promise.all([recent(60_000), recent(3_600_000)]);
@@ -37,8 +38,8 @@ export async function POST(req: Request) {
 
   const { data: app } = await d.from('shop_otp_apps').select('name, keywords, code').eq('id', appId).eq('shop_id', shopId).maybeSingle();
   if (!app) return fail('ไม่พบแอปนี้', 404);
-  let accessId: string | null = null;
-  const log = (found: boolean) => d.from('shop_otp_requests').insert({ shop_id: shopId, customer_id: null, ip, account, app: app.name, found, ...(accessId ? { access_id: accessId } : {}) });
+  let accessId: string | null = null, itemId: string | null = null;
+  const log = (found: boolean) => d.from('shop_otp_requests').insert({ shop_id: shopId, customer_id: null, ip, account, app: app.name, found, ...(accessId ? { access_id: accessId } : {}), ...(itemId ? { order_item_id: itemId } : {}) });
 
   if (await otpAgent(shopId)) {
     // ระบบตัวแทน: อีเมล + รหัสยืนยันที่ร้านตั้งให้ (กรอกผิด 5 ครั้ง ล็อก 15 นาที ต่อ IP และต่ออีเมล)
@@ -56,11 +57,17 @@ export async function POST(req: Request) {
     if (hit.use_limit > 0) {
       const { count } = await d.from('shop_otp_requests').select('id', { count: 'exact', head: true }).eq('access_id', hit.id).eq('found', true).gte('created_at', new Date(Date.now() - PERIOD_MS[hit.period]).toISOString());
       if ((count ?? 0) >= hit.use_limit) return fail(`รับรหัสครบ ${hit.use_limit} ครั้งแล้ว (ต่อ${hit.period === 'day' ? 'วัน' : hit.period === 'week' ? 'สัปดาห์' : 'เดือน'}) กรุณาติดต่อแอดมินร้าน`, 429);
+      if (!ack) return NextResponse.json({ error: 'กรุณายอมรับเงื่อนไขก่อนค้นหา', need_ack: { limit: hit.use_limit, used: count ?? 0, name: hit.label, per: PERIOD_LABEL[hit.period] } }, { status: 409 });
     }
     accessId = hit.id;
   } else {
     const allowed = await otpAccounts(shopId);
-    if (!allowed.some((a) => a.email === account)) { await log(false); return fail('ไม่พบอีเมลนี้ในสินค้าของร้านที่ยังไม่หมดอายุ', 403); }
+    const mine = allowed.find((a) => a.email === account);
+    if (!mine) { await log(false); return fail('ไม่พบอีเมลนี้ในสินค้าของร้านที่ยังไม่หมดอายุ', 403); }
+    const { pick, full } = await pickItem(mine.items);
+    if (full) return fail(fullMsg(full), 429);
+    if (pick?.limit && !ack) return NextResponse.json({ error: 'กรุณายอมรับเงื่อนไขก่อนค้นหา', need_ack: { limit: pick.limit, used: pick.used, name: pick.name } }, { status: 409 });
+    if (pick?.limit) itemId = pick.itemId;
     const blocked = await otpCustBlocked(shopId, account);
     if (blocked) return fail(blocked, 429);
   }
