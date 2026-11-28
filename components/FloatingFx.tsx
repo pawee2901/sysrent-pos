@@ -5,7 +5,7 @@ type P = { id: number; x: number; dur: number; delay: number; size: number; drif
 const CH: Record<string, string[]> = {
   hearts: ['💗', '💖', '💕'], sakura: ['🌸', '💮'], snow: ['❄', '❅', '❆'], stars: ['✨', '⭐', '🌟'], lantern: ['🏮'], bubbles: [''],
   flowers: ['🌼', '🌷', '🌺', '🌻'], butterfly: ['🦋'], balloons: ['🎈'], sweets: ['🍬', '🍭', '🍩', '🧁', '🍪'], paws: ['🐾'], teddy: ['🧸', '💝'],
-  gifts: ['🎁', '🎀'], lotus: ['🪷'], spooky: ['🎃', '👻', '🦇'], leaves: ['🍁', '🍂', '🍃'], rain: [''], clover: ['🍀', '☘️'],
+  gifts: ['🎁', '🎀'], santa: ['img:/fx/santa.svg', 'img:/fx/santa.svg', 'img:/fx/santa.svg', '❄', '❅'], lotus: ['🪷'], spooky: ['🎃', '👻', '🦇'], leaves: ['🍁', '🍂', '🍃'], rain: [''], clover: ['🍀', '☘️'],
   money: ['💸', '💵', '💰'], coins: ['🪙'], gems: ['💎'], percent: ['%', '%', 'SALE'], fire: ['🔥'],
   glitter: ['✦', '✧', '✦'], fireflies: [''], embers: [''], matrix: ['0', '1', '0', '1', 'ア', 'カ'], game: ['🎮', '👾', '🕹️', '⭐'], rocket: ['🚀'], music: ['🎵', '🎶'],
 };
@@ -33,7 +33,8 @@ export function FloatingFx({ effect, contained = false }: { effect: string; cont
   return (
     <div className={`fx${contained ? ' contained' : ''} fx-${effect}`} aria-hidden="true">
       {items.map((p) => (
-        <span key={p.id} className={cls} style={{ left: `${p.x}%`, animationDuration: `${p.dur}s`, animationDelay: `${p.delay}s`, fontSize: `${p.size * 20}px`, ['--drift' as string]: `${p.drift}px`, ['--c' as string]: p.color }}>{p.ch}</span>
+        <span key={p.id} className={cls} style={{ left: `${p.x}%`, animationDuration: `${p.dur}s`, animationDelay: `${p.delay}s`, fontSize: `${p.size * 20}px`, ['--drift' as string]: `${p.drift}px`, ['--c' as string]: p.color }}>
+          {p.ch.startsWith('img:') ? <img src={p.ch.slice(4)} alt="" style={{ width: `${p.size * 1.7}em`, height: 'auto', display: 'block' }} /> : p.ch}</span>
       ))}
     </div>
   );

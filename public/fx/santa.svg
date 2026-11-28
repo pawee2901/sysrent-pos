@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- หมวกแดง -->
+  <path d="M14 27 C15 13 27 5 40 7 C47 8 52 13 54 20 L57 30 Z" fill="#e3343f"/>
+  <path d="M40 7 C47 8 52 13 54 20 L57 30 L50 27 C49 19 45 12 40 7 Z" fill="#c4232f"/>
+  <circle cx="56" cy="30" r="5.5" fill="#fff"/>
+  <!-- หน้า -->
+  <circle cx="32" cy="35" r="15" fill="#ffd9c2"/>
+  <!-- ขอบหมวกขาว -->
+  <rect x="11" y="22" width="42" height="9" rx="4.5" fill="#fff"/>
+  <!-- เครา -->
+  <path d="M15 37 C14 50 22 59 32 59 C42 59 50 50 49 37 C46 44 40 46 36 44 C34 46 30 46 28 44 C24 46 18 44 15 37 Z" fill="#fff"/>
+  <!-- หนวด -->
+  <path d="M32 42 C29 39 24 40 23 43 C26 45 30 45 32 43 C34 45 38 45 41 43 C40 40 35 39 32 42 Z" fill="#fff" stroke="#eee" stroke-width=".6"/>
+  <!-- ตายิ้ม -->
+  <path d="M24 34 Q26.5 31.5 29 34" fill="none" stroke="#5a3a2e" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M35 34 Q37.5 31.5 40 34" fill="none" stroke="#5a3a2e" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- แก้มแดง + จมูก -->
+  <ellipse cx="21.5" cy="38" rx="3" ry="2" fill="#ff9aa8" opacity=".8"/>
+  <ellipse cx="42.5" cy="38" rx="3" ry="2" fill="#ff9aa8" opacity=".8"/>
+  <circle cx="32" cy="38.5" r="2.4" fill="#f08a8a"/>
+</svg>

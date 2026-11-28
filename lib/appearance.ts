@@ -26,7 +26,7 @@ export const EFFECTS = [
   ['hearts', 'หัวใจ', '💗'], ['sakura', 'ซากุระ', '🌸'], ['bubbles', 'ฟองสบู่', '🫧'], ['flowers', 'ดอกไม้', '🌼'], ['butterfly', 'ผีเสื้อ', '🦋'],
   ['balloons', 'ลูกโป่ง', '🎈'], ['sweets', 'ขนมหวาน', '🍭'], ['paws', 'อุ้งเท้าแมว', '🐾'], ['teddy', 'ตุ๊กตาหมี', '🧸'],
   // เทศกาล · ฤดู
-  ['confetti', 'คอนเฟตติ', '🎊'], ['snow', 'หิมะ', '❄️'], ['stars', 'ดาว', '✨'], ['lantern', 'โคมลอย', '🏮'], ['gifts', 'กล่องของขวัญ', '🎁'],
+  ['confetti', 'คอนเฟตติ', '🎊'], ['snow', 'หิมะ', '❄️'], ['stars', 'ดาว', '✨'], ['lantern', 'โคมลอย', '🏮'], ['gifts', 'กล่องของขวัญ', '🎁'], ['santa', 'ซานต้า', '🎅'],
   ['lotus', 'ดอกบัว', '🪷'], ['spooky', 'ฮาโลวีน', '🎃'], ['leaves', 'ใบไม้ร่วง', '🍁'], ['rain', 'ฝนตก', '🌧️'], ['clover', 'ใบโคลเวอร์', '🍀'],
   // ขายของ · โชคลาภ
   ['money', 'เงินปลิว', '💸'], ['coins', 'เหรียญทอง', '🪙'], ['gems', 'เพชร', '💎'], ['percent', 'ลดราคา %', '🏷️'], ['fire', 'ไฟลุก', '🔥'],
@@ -37,7 +37,7 @@ export const EFFECTS = [
 /** กลุ่มของเอฟเฟกต์ลอย (หน้าตั้งค่า) */
 export const EFFECT_GROUPS: [string, string[]][] = [
   ['น่ารัก', ['hearts', 'sakura', 'bubbles', 'flowers', 'butterfly', 'balloons', 'sweets', 'paws', 'teddy']],
-  ['เทศกาล · ฤดู', ['confetti', 'snow', 'stars', 'lantern', 'gifts', 'lotus', 'spooky', 'leaves', 'rain', 'clover']],
+  ['เทศกาล · ฤดู', ['confetti', 'snow', 'santa', 'stars', 'lantern', 'gifts', 'lotus', 'spooky', 'leaves', 'rain', 'clover']],
   ['ขายของ · โชคลาภ', ['money', 'coins', 'gems', 'percent', 'fire']],
   ['เท่ · เกม · ไฮเทค', ['glitter', 'fireflies', 'embers', 'matrix', 'game', 'rocket', 'music']],
 ];
