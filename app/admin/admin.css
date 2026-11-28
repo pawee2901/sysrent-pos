@@ -1302,3 +1302,46 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
 .tabs-menu button > b { margin-left: auto; }
 .tabs-menu .dot-warn { position: static; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
 @media (max-width: 1100px) { .tabs-burger { display: flex; } }
+
+/* =========================================================
+   จัดหน้าร้าน · มือถือ / แท็บเล็ต
+   - แผงตั้งค่า: มีฉากหลังมืด แตะนอกแผง = ปิด
+   - มือถือ: แถบกล่องไม่กองบนสุดแล้ว → ปุ่ม "＋ เพิ่มกล่อง" ลอยล่างจอ เปิดแผงเลือกจากด้านล่าง
+   - ตัวอย่างหน้าร้านเต็มจอ ปุ่มเครื่องมือกล่องใหญ่ขึ้น กดง่าย
+   ========================================================= */
+.lb-pal-head, .lb-add-fab, .lb-m-only, .lb-scrim { display: none; }
+@media (max-width: 1200px) {
+  .lb-scrim { display: block; position: fixed; inset: 0; z-index: 89; background: rgba(15, 17, 23, .35); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .lb-scrim.show { opacity: 1; pointer-events: auto; }
+}
+@media (max-width: 760px) {
+  .lb-pc-only { display: none; }
+  .lb-m-only { display: inline; }
+  .lb-top { padding: 12px 14px; }
+  .lb-pages { padding: 10px 14px; }
+  .lb-body { min-height: 0; }
+  /* แผงเลือกกล่อง = แผ่นเลื่อนขึ้นจากล่าง */
+  .lb-pal { position: fixed; z-index: 91; left: 0; right: 0; bottom: 0; max-height: 72vh; overflow-y: auto; padding: 0 14px 18px; border: 0; border-radius: 22px 22px 0 0; background: var(--surface); box-shadow: 0 -18px 40px -20px rgba(0, 0, 0, .45); transform: translateY(105%); transition: transform .22s; }
+  .lb-pal.open { transform: none; }
+  .lb-pal-head { display: flex; align-items: center; gap: 8px; position: sticky; top: 0; z-index: 1; margin: 0 -14px 4px; padding: 14px 14px 10px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .lb-pal-head b { font-size: 16px; }
+  .lb-pal-head small { flex: 1; font-size: 12px; }
+  .lb-pal-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lb-tile { padding: 12px 4px 10px; }
+  .lb-tile span { font-size: 22px; }
+  .lb-tile b { font-size: 12px; }
+  .lb-scrim.pal { z-index: 90; }
+  /* ปุ่มเพิ่มกล่อง ลอยเหนือเมนูล่าง */
+  .lb-add-fab { display: inline-flex; align-items: center; gap: 6px; position: fixed; z-index: 35; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); height: 46px; padding: 0 22px; border: 0; border-radius: 99px; background: var(--grad, var(--accent)); color: #fff; font: inherit; font-size: 15px; font-weight: 700; box-shadow: 0 10px 24px -8px var(--accent); cursor: pointer; }
+  /* ตัวอย่างหน้าร้าน: เต็มความกว้าง ไม่มีกรอบมือถือซ้อน */
+  .lb-stage { padding: 8px 6px 120px; background: none; }
+  .lb-canvas, .lb-canvas.phone { max-width: 100%; border: 1px solid var(--line); border-radius: 16px; }
+  .cv-tools { top: -20px; right: 4px; padding: 4px; border-radius: 12px; }
+  .cv-tools button, .cv-grip { width: 34px; height: 32px; font-size: 15px; }
+  .cv-tag { font-size: 11px; }
+  /* แผงตั้งค่ากล่อง = แผ่นจากล่าง สูงขึ้น มีที่จับ */
+  .lb-panel { max-height: 82vh; padding: 10px 16px 24px; }
+  .lb-panel::before { content: ''; display: block; width: 42px; height: 5px; border-radius: 99px; background: var(--line); margin: 0 auto 10px; }
+  .lb-props-head { position: sticky; top: -10px; z-index: 1; background: var(--surface); padding-top: 4px; }
+  .lb-panel-empty { display: none; }
+}

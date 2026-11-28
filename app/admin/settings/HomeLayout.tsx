@@ -144,6 +144,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
   const [meta, setMeta] = useState<{ title: string; slug: string; in_menu: boolean } | null>(null);
   const curPage = pages.find((x) => x.id === page) ?? null;
   const [sel, setSel] = useState<string | null>(null);
+  const [palOpen, setPalOpen] = useState(false); // มือถือ: แผงเลือกกล่องเลื่อนขึ้นจากล่าง
   const [view, setView] = useState<'pc' | 'phone'>('pc');
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -455,7 +456,9 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
 
       <div className="lb-body">
         {/* แถบกล่อง */}
-        <aside className="lb-pal" aria-label="กล่องที่ลากมาวางได้">
+        <aside className={`lb-pal${palOpen ? ' open' : ''}`} aria-label="กล่องที่ลากมาวางได้">
+          <div className="lb-pal-head"><b>เพิ่มกล่อง</b><small className="muted">แตะเพื่อเพิ่มต่อจากกล่องที่เลือก</small>
+            <button type="button" className="btn ghost sm" aria-label="ปิด" onClick={() => setPalOpen(false)}>✕</button></div>
           {PALETTE.map(([group, types]) => (
             <div key={group} className="lb-pal-g">
               <small>{group}</small>
@@ -463,7 +466,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                 const taken = BUILTIN.includes(t) && has(t);
                 return (
                   <button key={t} type="button" className="lb-tile" disabled={taken} title={taken ? 'มีอยู่บนหน้าแล้ว' : `${BLOCK_INFO[t].desc} · ลากไปวาง หรือกดเพื่อเพิ่ม`}
-                    onPointerDown={(e) => startPress(e, { kind: 'new', type: t }, `${BLOCK_INFO[t].icon} ${BLOCK_INFO[t].label}`, () => insert(t, selIdx >= 0 ? selIdx + 1 : blocksRef.current.length))}>
+                    onPointerDown={(e) => startPress(e, { kind: 'new', type: t }, `${BLOCK_INFO[t].icon} ${BLOCK_INFO[t].label}`, () => { insert(t, selIdx >= 0 ? selIdx + 1 : blocksRef.current.length); setPalOpen(false); })}>
                     <span aria-hidden>{BLOCK_INFO[t].icon}</span><b>{BLOCK_INFO[t].label}</b>
                   </button>
                 );
@@ -499,10 +502,14 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                 )];
               })}
               {dropLine(blocks.length)}
-              {!blocks.length && <div className="cv-start">ลากกล่องจากด้านซ้ายมาวางตรงนี้</div>}
+              {!blocks.length && <div className="cv-start"><span className="lb-pc-only">ลากกล่องจากด้านซ้ายมาวางตรงนี้</span><span className="lb-m-only">กด ＋ เพิ่มกล่อง ด้านล่าง</span></div>}
             </div>
           </div>
         </div>
+
+        {/* มือถือ: ปุ่มเพิ่มกล่อง (ลอยล่างจอ) · ฉากหลังปิดแผง */}
+        <button type="button" className="lb-add-fab" onClick={() => { setPalOpen(true); }}>＋ เพิ่มกล่อง</button>
+        <div className={`lb-scrim${palOpen || cur ? ' show' : ''}${palOpen ? ' pal' : ''}`} onClick={() => { setPalOpen(false); setSel(null); }} aria-hidden />
 
         {/* ตั้งค่ากล่องที่เลือก */}
         <aside className={`lb-panel${cur ? ' show' : ''}`} aria-label="ตั้งค่ากล่อง">
