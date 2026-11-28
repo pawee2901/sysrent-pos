@@ -735,6 +735,24 @@ body::before { height: 360px; }
 .rn-unit .input { min-width: 0; }
 .rn-unit i { flex: none; font-style: normal; font-size: 13px; color: var(--muted); }
 @media (max-width: 1100px) { .rn-grid { grid-template-columns: 1fr; } }
+/* รายชื่อต่อเมล: ตัวกรองด่วน + การ์ดต่อคน (แถบสีซ้ายตามสถานะ · ข้อมูล 2 คอลัมน์) */
+.rn-views { display: flex; gap: 6px; padding: 0 22px 12px; overflow-x: auto; scrollbar-width: none; }
+.rn-views::-webkit-scrollbar { display: none; }
+.rn-views button { flex: none; padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); font: inherit; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.rn-views button b { margin-left: 2px; color: var(--text); }
+.rn-views button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.rn-views button.on b { color: var(--accent); }
+.rn-card { position: relative; }
+.rn-card::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: var(--line); }
+.rn-card.t-ok::before { background: var(--ok); } .rn-card.t-warn::before { background: var(--warn); } .rn-card.t-bad::before { background: var(--bad); }
+.rn-who b { overflow-wrap: anywhere; }
+.rn-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin: 2px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.rn-info > div { min-width: 0; }
+.rn-info dt { font-size: 11.5px; color: var(--muted); }
+.rn-info dd { margin: 0; font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
+.rn-unlinked { color: var(--warn); }
+.rn-codebox { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 8px 10px 8px 12px; border: 1px dashed color-mix(in srgb, var(--warn) 45%, var(--line)); border-radius: 12px; font-size: 13px; }
+
 /* ตั้งค่าการต่อ: ป้ายชื่อ + คำอธิบายสั้น · ช่องสุดท้ายเต็มแถว */
 .rn-fields .field > span { display: grid; gap: 1px; }
 .rn-fields .field > span small { font-size: 11.5px; font-weight: 400; color: var(--muted); }
@@ -755,6 +773,10 @@ body::before { height: 360px; }
   .rn-unit { gap: 6px; }
   .rn-unit .input { height: 42px; padding: 0 10px; text-align: center; font-weight: 700; }
   .rn-save .btn { width: 100%; }
+  .rn-views { padding: 0 16px 10px; }
+  .rn-card .rn-acts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-card .rn-acts .btn { width: 100%; padding: 0 8px; }
+  .rn-codebox .btn { flex: 1; }
   .rn-search { max-width: none; flex: 1; }
   .rn .card-head { flex-wrap: wrap; }
   .rn-row, .rn-fam, .rn-body { padding-left: 16px; padding-right: 16px; }

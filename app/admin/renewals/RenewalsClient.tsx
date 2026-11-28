@@ -76,6 +76,7 @@ export function RenewalsClient({ rows, groups, contacts, pending, settings, fams
   const [msg, setMsg] = useState('');
   const [code, setCode] = useState('');
   const [q, setQ] = useState('');
+  const [view, setView] = useState<'all' | 'soon' | 'late' | 'unlinked' | 'off'>('all');
 
   async function call(body: object, confirmText?: string) {
     if (confirmText && !(await ask(confirmText, { ok: 'ยืนยัน' }))) return false;
@@ -100,7 +101,14 @@ export function RenewalsClient({ rows, groups, contacts, pending, settings, fams
 
   const active = rows.filter((r) => r.active);
   const k = q.trim().toLowerCase();
-  const shown = k ? rows.filter((r) => [r.customerEmail, r.famEmail, r.lineName ?? '', r.code, r.note].some((x) => x.toLowerCase().includes(k))) : rows;
+  // ตัวกรองด่วน (ใกล้หมด / เลยกำหนด / ยังไม่ผูกแชท / เลิกต่อ) + ช่องค้นหา
+  const isSoon = (r: RenewalView) => r.active && r.left >= 0 && r.left <= settings.remindDays && r.fee === 0 && !r.removed;
+  const isLate = (r: RenewalView) => r.active && (r.fee > 0 || r.removed);
+  const inView = (r: RenewalView) => view === 'all' ? true : view === 'off' ? !r.active : view === 'soon' ? isSoon(r) : view === 'late' ? isLate(r) : r.active && !r.lineUserId;
+  const views: [typeof view, string, number][] = [
+    ['all', 'ทั้งหมด', rows.length], ['soon', 'ใกล้หมด', rows.filter(isSoon).length], ['late', 'เลยกำหนด', rows.filter(isLate).length],
+    ['unlinked', 'ยังไม่ผูกแชท', active.filter((r) => !r.lineUserId).length], ['off', 'เลิกต่อ', rows.length - active.length]];
+  const shown = rows.filter(inView).filter((r) => !k || [r.customerEmail, r.famEmail, r.lineName ?? '', r.code, r.note].some((x) => x.toLowerCase().includes(k)));
   const editing = f?.id ? rows.find((r) => r.id === f.id) : undefined;
 
   return (
@@ -148,6 +156,8 @@ export function RenewalsClient({ rows, groups, contacts, pending, settings, fams
               <h2>รายชื่อ <span className="muted">({active.length})</span></h2>
               <input className="input rn-search" placeholder="🔍 ค้นเมล / ชื่อ LINE / รหัส" value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
+            {rows.length > 0 && <div className="rn-views" role="tablist">{views.filter(([v, , n]) => v === 'all' || n > 0 || view === v).map(([v, l, n]) => (
+              <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? 'on' : ''} onClick={() => setView(v)}>{l} <b>{n}</b></button>))}</div>}
             {!shown.length && (
               <div className="rn-empty">
                 <p>{rows.length ? 'ไม่พบรายการที่ค้น' : 'ยังไม่มีลูกค้าต่อเมล'}</p>
@@ -158,19 +168,25 @@ export function RenewalsClient({ rows, groups, contacts, pending, settings, fams
               const tone = !r.active ? 'plain' : r.removed || r.fee > 0 ? 'bad' : r.left <= settings.remindDays ? 'warn' : 'ok';
               const label = !r.active ? 'เลิกต่อแล้ว' : r.removed ? 'ลบเมลแล้ว' : r.fee > 0 ? `เลยกำหนด (+${r.fee})` : r.left < 0 ? `หมดแล้ว ${-r.left} วัน` : r.left === 0 ? 'หมดวันนี้' : `อีก ${r.left} วัน`;
               return (
-                <div key={r.id} className="rn-row" style={{ opacity: r.active ? 1 : .6 }}>
+                <div key={r.id} className={`rn-row rn-card t-${tone}`} style={{ opacity: r.active ? 1 : .6 }}>
                   <div className="rn-row-top">
-                    <div className="rn-who"><b>{r.customerEmail}</b><small>{r.famEmail ? `fam: ${r.famEmail} · ` : ''}{r.option}</small></div>
+                    <div className="rn-who"><b>{r.customerEmail}</b><small>{r.option}</small></div>
                     <span className={`pill ${tone}`}>{label}</span>
                   </div>
-                  <div className="rn-meta">
-                    <span>📅 หมดอายุ {dateTh(r.expiresOn)} · ต่อราคาปกติได้ถึง {dateTh(r.deadline)}{r.renewed > 0 ? ` · ต่อผ่านระบบ ${r.renewed} ครั้ง` : ''}{r.reminded && r.active ? ' · เตือนรอบนี้แล้ว' : ''}</span>
-                    <span>💬 LINE: {r.lineName ? <b>{r.lineName}</b> : <>ยังไม่ผูก · รหัส <b style={{ userSelect: 'all' }}>{r.code}</b> <button type="button" className="rn-link" onClick={() => copy(codeMsg(r.code))}>คัดลอกข้อความให้ลูกค้า</button></>}</span>
+                  <dl className="rn-info">
+                    <div><dt>หมดอายุ</dt><dd>{dateTh(r.expiresOn)}</dd></div>
+                    <div><dt>ต่อราคาปกติได้ถึง</dt><dd>{dateTh(r.deadline)}</dd></div>
+                    <div><dt>LINE</dt><dd>{r.lineName ? r.lineName : <span className="rn-unlinked">ยังไม่ผูก</span>}</dd></div>
+                    <div><dt>เมลร้าน (fam)</dt><dd>{r.famEmail || '—'}</dd></div>
+                  </dl>
+                  {!r.lineName && <div className="rn-codebox"><span>รหัสผูกแชท <b style={{ userSelect: 'all' }}>{r.code}</b></span><button type="button" className="btn sm soft" onClick={() => copy(codeMsg(r.code))}>คัดลอกข้อความ</button></div>}
+                  {(r.renewed > 0 || (r.reminded && r.active) || r.note) && <div className="rn-meta">
+                    {(r.renewed > 0 || (r.reminded && r.active)) && <span>{[r.renewed > 0 ? `🔁 ต่อผ่านระบบ ${r.renewed} ครั้ง` : '', r.reminded && r.active ? '🔔 เตือนรอบนี้แล้ว' : ''].filter(Boolean).join(' · ')}</span>}
                     {r.note && <span>📝 {r.note}</span>}
-                  </div>
+                  </div>}
                   <div className="rn-acts">
-                    <button type="button" className="btn sm" onClick={() => openEdit(r)}>แก้ไข</button>
-                    {r.active && <button type="button" className="btn sm ghost" disabled={!r.lineUserId || !line} onClick={() => call({ action: 'remind', id: r.id })}>ส่งเตือนทาง LINE ตอนนี้</button>}
+                    <button type="button" className="btn sm" onClick={() => openEdit(r)}>✏️ แก้ไข</button>
+                    {r.active && <button type="button" className="btn sm ghost" disabled={!r.lineUserId || !line} onClick={() => call({ action: 'remind', id: r.id })}>🔔 เตือนทาง LINE</button>}
                     {r.active && !r.removed && <button type="button" className="btn sm ghost" onClick={() => call({ action: 'removed', id: r.id, removed: true }, `ลบเมล ${r.customerEmail} ออกจาก fam แล้ว? ถ้าลูกค้ามาต่อทีหลังจะคิด +${settings.removedFee} บาท และระบบจะแจ้งให้เพิ่มเมลกลับ`)}>ลบเมลแล้ว</button>}
                     {r.active && r.removed && <button type="button" className="btn sm ghost" onClick={() => call({ action: 'removed', id: r.id, removed: false })}>ยังอยู่ใน fam</button>}
                     {r.active
