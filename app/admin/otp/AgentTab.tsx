@@ -33,7 +33,7 @@ export function AgentTab({ agent, openPage, busy, call }: { agent: AgentInit; op
           <span style={{ flex: 'none', width: 42, height: 42, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'var(--accent-soft)', fontSize: 20 }}>🤝</span>
           <div style={{ flex: 1, minWidth: 0, display: 'grid' }}><b>ระบบตัวแทน</b>
             <small className="muted">{agent.on ? 'เปิดอยู่ · ที่หน้ารับ OTP ต้องกรอกอีเมล + รหัสที่ร้านให้ ถึงจะได้รหัส' : 'ปิดอยู่ · หน้ารับ OTP ค้นได้ด้วยอีเมลอย่างเดียว (เฉพาะอีเมลในสินค้าที่ยังไม่หมดอายุ)'}</small>
-            {!openPage && <small style={{ color: 'var(--warn)' }}>ต้องเปิด &quot;หน้ารับ OTP&quot; ด้านบนก่อน ลูกค้าถึงจะใช้ได้</small>}</div>
+            {!openPage && <small style={{ color: 'var(--warn)' }}>ต้องเลือก &quot;💬 หน้ารับ OTP&quot; ในการ์ด ลูกค้าค้นหา OTP ที่ไหน ด้านบนก่อน ลูกค้าถึงจะใช้ได้</small>}</div>
           <button type="button" className={`toggle${agent.on ? ' on' : ''}`} aria-label="เปิด / ปิดระบบตัวแทน" disabled={busy}
             onClick={() => call({ action: 'agent_mode', on: !agent.on }, agent.on ? 'ปิดระบบตัวแทนแล้ว' : 'เปิดระบบตัวแทนแล้ว')} />
         </div>

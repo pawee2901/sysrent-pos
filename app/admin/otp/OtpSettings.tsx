@@ -35,7 +35,9 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
   const [tab, setTab] = useState<Tab>('mail');
   const [busy, setBusy] = useState(false);
   // ลูกค้าค้น OTP ที่ไหน: ในเว็บร้าน / ลิงก์เว็บ OTP อื่น
-  const [where, setWhere] = useState<'site' | 'link'>(link ? 'link' : 'site');
+  // โหมดที่ใช้อยู่: ลิงก์เว็บอื่น > หน้ารับ OTP > ค้นในเว็บร้าน
+  const mode: 'site' | 'page' | 'link' = link ? 'link' : openPage ? 'page' : 'site';
+  const [where, setWhere] = useState<'site' | 'page' | 'link'>(mode);
   const [url, setUrl] = useState(link);
   const [adding, setAdding] = useState<'gmail' | 'maily' | null>(null);
   const [guide, setGuide] = useState<'gmail' | 'hotmail' | 'msapp' | null>(null);
@@ -102,16 +104,27 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
     <div className="otp-page">
       <div className="page-head"><div><h1>ค้นหา OTP</h1><p>ลูกค้าที่ล็อกอินค้นรหัสได้เอง เฉพาะอีเมลในสินค้าที่ยังไม่หมดอายุของตัวเอง</p></div></div>
       {!ready && <div className="card card-pad" style={{ color: 'var(--warn)' }}>⚠️ ต้องรัน SQL <code>0024</code>, <code>0025</code> และ <code>0026</code> ใน Supabase ก่อน</div>}
-      {/* หน้ารับ OTP: ลิงก์เดียวให้ลูกค้าทุกคน ไม่ต้องล็อกอิน */}
+      {/* ลูกค้าค้นหา OTP ที่ไหน: ในเว็บร้าน (ล็อกอิน) · หน้ารับ OTP (ไม่ต้องล็อกอิน) · ลิงก์ไปเว็บอื่น */}
       <section className="card" style={{ marginBottom: 14, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px' }}>
-          <span style={{ flex: 'none', width: 42, height: 42, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'var(--accent-soft)', fontSize: 20 }}>💬</span>
-          <div style={{ flex: 1, minWidth: 0, display: 'grid' }}><b>หน้ารับ OTP</b>
-            <small className="muted">{link ? 'ใช้ไม่ได้ตอนตั้งให้ลิงก์ไปเว็บ OTP อื่น (ด้านล่าง)' : openPage ? 'เปิดอยู่ · ใครมีลิงก์ก็รับรหัสได้ ไม่ต้องล็อกอิน (เฉพาะอีเมลในสินค้าที่ยังไม่หมดอายุ)' : 'ปิดอยู่ · ลูกค้าต้องล็อกอินก่อนค้นหา'}</small></div>
-          <button type="button" className={`toggle${openPage ? ' on' : ''}`} aria-label="เปิด / ปิดหน้ารับ OTP" disabled={busy || !!link}
-            onClick={() => call({ action: 'public_page', on: !openPage }, openPage ? 'ปิดหน้ารับ OTP แล้ว' : 'เปิดหน้ารับ OTP แล้ว · ส่งลิงก์ให้ลูกค้าได้เลย')} />
+        <div className="card-pad" style={{ display: 'grid', gap: 12 }}>
+          <div><h2 style={{ margin: 0, fontSize: 16 }}>ลูกค้าค้นหา OTP ที่ไหน</h2><small className="muted">ใช้กับเมนู ค้นหา OTP · แถบล่าง · ปุ่มรับ OTP ในประวัติการซื้อ · เมนู LINE</small></div>
+          <div className="otp-where" role="radiogroup" aria-label="ลูกค้าค้นหา OTP ที่ไหน" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
+            {([['site', '🔎 ค้นหาในเว็บร้าน', 'ลูกค้าต้องล็อกอินก่อน แล้วค้นรหัสจากสินค้าของตัวเอง'], ['page', '💬 หน้ารับ OTP', 'ลิงก์เดียวให้ลูกค้าทุกคน ไม่ต้องล็อกอิน · เลือกแอป กรอกอีเมล รหัสขึ้นเอง'], ['link', '🔗 ลิงก์ไปเว็บ OTP อื่น', 'เช่น เว็บเช่า OTP ของร้าน · กดแล้วเปิดลิงก์นั้น']] as const).map(([k, l, dsc]) => (
+              <button key={k} type="button" role="radio" aria-checked={where === k} onClick={() => setWhere(k)}
+                style={{ textAlign: 'left', padding: '12px 14px', borderRadius: 14, border: `1.5px solid ${where === k ? 'var(--accent)' : 'var(--line)'}`, background: where === k ? 'var(--accent-soft)' : 'var(--surface)', font: 'inherit', color: 'inherit', cursor: 'pointer', display: 'grid', gap: 2 }}>
+                <b style={{ color: where === k ? 'var(--accent)' : undefined }}>{l}{k === mode && <small style={{ marginLeft: 6, fontWeight: 600 }}>· ใช้อยู่</small>}</b><small className="muted">{dsc}</small></button>
+            ))}
+          </div>
+          {where === 'link' && <input className="input" type="url" inputMode="url" value={url} placeholder="https://otp.ร้านของคุณ.com" onChange={(e) => setUrl(e.target.value)} />}
+          <div><button type="button" className="btn primary sm" disabled={busy || (where === 'link' && !/^https:\/\/\S+$/.test(url.trim())) || (where === mode && (where !== 'link' || url.trim() === link))}
+            onClick={async () => {
+              if (where === 'link') { await call({ action: 'save_link', link: url.trim() }, 'ลูกค้าจะถูกพาไปลิงก์นี้แล้ว'); return; }
+              if (link && !(await call({ action: 'save_link', link: '' }))) return;
+              await call({ action: 'public_page', on: where === 'page' }, where === 'page' ? 'เปิดหน้ารับ OTP แล้ว · คัดลอกลิงก์ส่งให้ลูกค้าได้เลย' : 'ลูกค้าค้นหาในเว็บร้าน (ต้องล็อกอิน) แล้ว');
+            }}>บันทึก</button>
+            {where === 'link' && url && !/^https:\/\//.test(url.trim()) && <small style={{ color: 'var(--bad)', marginLeft: 8 }}>ลิงก์ต้องขึ้นต้นด้วย https://</small>}</div>
         </div>
-        {openPage && !link && pageUrl && (
+        {mode === 'page' && pageUrl && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '12px 18px', borderTop: '1px solid var(--line)', background: 'var(--surface-2)' }}>
             <code style={{ flex: '1 1 220px', minWidth: 0, overflowWrap: 'anywhere', fontSize: 13.5 }}>🌐 {pageUrl}</code>
             <button type="button" className="btn sm" onClick={() => navigator.clipboard?.writeText(pageUrl).then(() => notify('คัดลอกลิงก์แล้ว'), () => {})}>⧉ คัดลอกลิงก์</button>
@@ -132,20 +145,6 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
             onClick={() => call({ action: 'cust_limit', limit: Math.min(1000, Number(lim.n || 0)), period: lim.period }, Number(lim.n || 0) ? `จำกัด ${Number(lim.n)} ครั้งต่อ${PERIOD_LABEL[lim.period]}แล้ว` : 'ไม่จำกัดแล้ว')}>บันทึก</button>
         </div>
         <small className="faint">{Number(lim.n || 0) ? `ครบ ${Number(lim.n)} ครั้งแล้ว ลูกค้าจะเห็นข้อความให้ติดต่อแอดมินร้าน` : 'ใส่ 0 = ไม่จำกัด'}</small>
-      </section>
-      <section className="card card-pad" style={{ display: 'grid', gap: 12, marginBottom: 18 }}>
-        <div><h2 style={{ margin: 0, fontSize: 16 }}>ลูกค้าค้นหา OTP ที่ไหน</h2><small className="muted">ใช้กับเมนู ค้นหา OTP · แถบล่าง · ปุ่มรับ OTP ในประวัติการซื้อ · เมนู LINE</small></div>
-        <div className="otp-where" role="radiogroup" aria-label="ลูกค้าค้นหา OTP ที่ไหน" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
-          {([['site', '🔎 ค้นหาในเว็บร้าน', 'แบบปกติ · ลูกค้าล็อกอินแล้วค้นรหัสได้ในเว็บนี้'], ['link', '🔗 ลิงก์ไปเว็บ OTP อื่น', 'เช่น เว็บเช่า OTP ของร้าน · กดแล้วเปิดลิงก์นั้น']] as const).map(([k, l, dsc]) => (
-            <button key={k} type="button" role="radio" aria-checked={where === k} onClick={() => setWhere(k)}
-              style={{ textAlign: 'left', padding: '12px 14px', borderRadius: 14, border: `1.5px solid ${where === k ? 'var(--accent)' : 'var(--line)'}`, background: where === k ? 'var(--accent-soft)' : 'var(--surface)', font: 'inherit', color: 'inherit', cursor: 'pointer', display: 'grid', gap: 2 }}>
-              <b style={{ color: where === k ? 'var(--accent)' : undefined }}>{l}</b><small className="muted">{dsc}</small></button>
-          ))}
-        </div>
-        {where === 'link' && <input className="input" type="url" inputMode="url" value={url} placeholder="https://otp.ร้านของคุณ.com" onChange={(e) => setUrl(e.target.value)} />}
-        <div><button type="button" className="btn primary sm" disabled={busy || (where === 'link' && !/^https:\/\/\S+$/.test(url.trim())) || (where === 'site' ? !link : url.trim() === link)}
-          onClick={() => call({ action: 'save_link', link: where === 'link' ? url.trim() : '' }, where === 'link' ? 'ลูกค้าจะถูกพาไปลิงก์นี้แล้ว' : 'กลับมาค้นหาในเว็บร้านแล้ว')}>บันทึก</button>
-          {where === 'link' && url && !/^https:\/\//.test(url.trim()) && <small style={{ color: 'var(--bad)', marginLeft: 8 }}>ลิงก์ต้องขึ้นต้นด้วย https://</small>}</div>
       </section>
       <div className="set-tabs" role="tablist">{TABS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}{k === 'asks' && asks.list.some((a) => a.status === 'open') && <span className="pill warn">{asks.list.filter((a) => a.status === 'open').length}</span>}</button>)}</div>
 
