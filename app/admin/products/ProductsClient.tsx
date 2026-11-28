@@ -25,7 +25,7 @@ const fromProduct = (p: Product, ap: Record<string, number> = {}): Form => ({
 });
 
 /** สินค้า: ตาราง + เพิ่มจากแม่แบบ + แผงแก้ไข (ข้อมูล · แพ็กเกจ · สต็อก) */
-export function ProductsClient({ products, categories, usages, usageReady, usageImages, images, imgReady, galleryReady, agentPrices, agentsOn, otp, forms, limits }: { products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string[]>; images: Record<string, string[]>; imgReady: boolean; galleryReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean; otp: { ready: boolean; apps: { id: string; name: string }[]; picks: Record<string, string> } | null; forms: Record<string, DForm>; formReady: boolean; limits: Record<string, number> }) {
+export function ProductsClient({ catImages = {}, catImgReady = false, products, categories, usages, usageReady, usageImages, images, imgReady, galleryReady, agentPrices, agentsOn, otp, forms, limits }: { catImages?: Record<string, string>; catImgReady?: boolean; products: Product[]; categories: string[]; usages: Record<string, string>; usageReady: boolean; usageImages: Record<string, string[]>; images: Record<string, string[]>; imgReady: boolean; galleryReady: boolean; agentPrices: Record<string, number>; agentsOn: boolean; otp: { ready: boolean; apps: { id: string; name: string }[]; picks: Record<string, string> } | null; forms: Record<string, DForm>; formReady: boolean; limits: Record<string, number> }) {
   const [usage, setUsage] = useState('');
   const [otpApp, setOtpApp] = useState(''); // ปุ่มรับ OTP: '' = ปิด
   const [usageImgs, setUsageImgs] = useState<string[]>([]);
@@ -119,7 +119,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
         <div className="card kpi"><span className="lbl">ขายแล้วทั้งหมด</span><span className="val num">{products.reduce((s, p) => s + p.sold, 0).toLocaleString('th-TH')}</span><span className="delta mute">ชิ้น</span></div>
         <div className="card kpi"><span className="lbl">ขายดีสุด</span><span className="val" style={{ fontSize: 20 }}>{[...products].sort((a, b) => b.sold - a.sold)[0]?.name ?? '—'}</span><span className="delta mute">{[...products].sort((a, b) => b.sold - a.sold)[0]?.sold ?? 0} ชิ้น</span></div>
       </div>
-      <CategoriesCard categories={categories} counts={counts} />
+      <CategoriesCard categories={categories} counts={counts} images={catImages} imgReady={catImgReady} />
       <section className="card">
         <div className="toolbar"><input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 ค้นหาสินค้า" /></div>
         {!products.length ? <div className="card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีสินค้า — กด &quot;+ เพิ่มสินค้า&quot; เพื่อเริ่มต้น</p></div> : (

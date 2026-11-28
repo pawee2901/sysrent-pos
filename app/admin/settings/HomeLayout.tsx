@@ -12,7 +12,7 @@ import { blockStyle, hasStyle, type BlockStyle, BLOCK_INFO, BUILTIN, DEFAULT_LAY
 
 type P = { id: string; name: string; category: string; image: string; template: string; from: number | null; sold: number };
 export type LayoutInit = {
-  ready: boolean; blocks: Block[]; products: P[]; categories: string[];
+  ready: boolean; blocks: Block[]; products: P[]; categories: string[]; catImages?: Record<string, string>;
   shop: { name: string; tagline: string; banner: string; line: boolean; facebook: boolean }; promos: string[];
   /** คนเพิ่งซื้อจริงของร้าน (ตัวอย่างการ์ดกิจกรรม) · ว่าง = ใช้ตัวอย่างสมมุติ */
   recent?: { initial: string; dots: string; name: string; avatar: string; when: string }[];
@@ -79,7 +79,13 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
         : b.variant === 'scroll' && list.length ? <div className="cv-hscroll">{list.map((p) => <div key={p.id} className="cv-pcard"><AppLogo image={p.image} template={p.template} name={p.name} /><b>{p.name}</b>{p.from !== null && <span>{baht(p.from)}</span>}</div>)}</div>
         : <Cards list={list} />}</>;
     }
-    case 'cats': return <>{head(b.title)}{d.categories.length ? <div className="cv-cats">{d.categories.map((c) => { const p = d.products.find((x) => x.category === c); return <div key={c}>{p && <AppLogo image={p.image} template={p.template} name={p.name} />}<span>{c}</span></div>; })}</div> : <Ph>ยังไม่มีหมวดสินค้า</Ph>}</>;
+    case 'cats': if (b.variant === 'cover') return <>{head(b.title)}{d.categories.length ? <div className="cv-cols" style={{ ['--c' as string]: 2 } as React.CSSProperties}>{d.categories.map((c) => {
+      const list = d.products.filter((x) => x.category === c), p = list[0], img = d.catImages?.[c];
+      return <div key={c} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--surface)' }}>
+        <div style={{ aspectRatio: '2 / 1', display: 'grid', placeItems: 'center', background: 'var(--accent-soft)' }}>{img ? <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : p && <AppLogo image={p.image} template={p.template} name={p.name} />}</div>
+        <div style={{ padding: '6px 8px', fontSize: 11 }}><b style={{ display: 'block' }}>{c}</b><small className="muted">มีสินค้า {list.length} รายการ</small></div></div>;
+    })}</div> : <Ph>ยังไม่มีหมวดสินค้า</Ph>}</>;
+      return <>{head(b.title)}{d.categories.length ? <div className="cv-cats">{d.categories.map((c) => { const p = d.products.find((x) => x.category === c); return <div key={c}>{p && <AppLogo image={p.image} template={p.template} name={p.name} />}<span>{c}</span></div>; })}</div> : <Ph>ยังไม่มีหมวดสินค้า</Ph>}</>;
     case 'text': return b.title || b.text ? <div className={`cv-card${b.align === 'center' ? ' center' : ''}`}>{b.title && <b>{b.title}</b>}{b.text && <p>{b.text}</p>}</div> : <Ph>📝 พิมพ์ข้อความทางขวา</Ph>;
     case 'image': return b.image ? <img src={b.image} alt="" className="cv-img round" /> : <Ph>🖼️ อัปโหลดรูปทางขวา</Ph>;
     case 'richmenu': {
@@ -552,6 +558,10 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                   <p className="muted lb-note">ใช้ออเดอร์และการสมัครสมาชิกจริงของร้าน ชื่อลูกค้าถูกปิดบางส่วนให้อัตโนมัติ · ตัวอย่างในหน้านี้เป็นข้อมูลสมมติ</p>
                 </>}
                 {builtin && b.type !== 'live' && <p className="muted lb-note">{b.type === 'hero' || b.type === 'promos' ? 'รูปของกล่องนี้แก้ได้ที่แท็บ "รูปหน้าแรก · ป๊อปอัป"' : b.type === 'products' ? 'ถ้าซ่อนหรือลบกล่องนี้ ลูกค้าที่ค้นหาจะเห็นผลค้นหาบนสุดแทน' : 'กล่องนี้ใช้ข้อมูลจริงของร้าน ไม่ต้องตั้งค่า'}</p>}
+                {b.type === 'cats' && <>
+                  <div className="field"><span>รูปแบบ</span><Seg value={b.variant === 'cover' ? 'cover' : 'icon'} set={(v) => patch(b.id, { variant: v })} opts={[['icon', 'ไอคอนเล็ก'], ['cover', 'รูปปกใหญ่']]} /></div>
+                  {b.variant === 'cover' && <p className="muted lb-note">ใส่รูปปกของแต่ละหมวดที่ สินค้า → สินค้าทั้งหมด → การ์ดหมวดหมู่ (แนะนำ 1200 × 600 px) · ไม่มีรูปปก = ใช้โลโก้สินค้าในหมวดแทน</p>}
+                </>}
                 {TITLED.includes(b.type) && txt('title', b.type === 'spotlight' ? 'ป้ายเล็กด้านบน (ไม่บังคับ)' : b.type === 'quote' ? 'ผู้พูด / ที่มา (ไม่บังคับ)' : 'หัวข้อ')}
                 {b.type === 'featured' && <>
                   <div className="field"><span>เลือกสินค้าจาก</span><Seg value={b.pick ?? 'best'} set={(v) => patch(b.id, { pick: v })} opts={[['best', 'ขายดี'], ['cat', 'ตามหมวด'], ['ids', 'เลือกเอง']]} /></div>

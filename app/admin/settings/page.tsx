@@ -7,7 +7,7 @@ import { parseLayout } from '@/lib/home-layout';
 import { loadProducts } from '@/lib/catalog';
 import { parseContacts } from '@/lib/contacts';
 import { PUSH_EVENT_KEYS } from '@/lib/push-events';
-import { mergeCategories, shopCategories } from '@/lib/categories';
+import { mergeCategories, shopCategories , categoryImages } from '@/lib/categories';
 
 export default async function AdminSettings() {
   const shop = await adminShop('settings');
@@ -43,6 +43,7 @@ export default async function AdminSettings() {
     };
   });
   const layout = { recent, pages, ready: !hl.error, blocks: parseLayout(hl.data?.home_layout), products: plist,
+    catImages: (await categoryImages(shop.id)).map,
     categories: mergeCategories(await shopCategories(shop.id), plist.map((p) => p.category).filter(Boolean)).filter((c) => plist.some((p) => p.category === c)),
     shop: { name: shop.name, tagline: shop.tagline, banner: shop.banner_url ?? '', line: !!shop.line_url, facebook: !!shop.facebook_url }, promos: promoImgs };
   const ct = await d.from('shops').select('contact_links').eq('id', shop.id).maybeSingle(); // ยังไม่รัน 0037 = error

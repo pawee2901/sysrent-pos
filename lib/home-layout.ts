@@ -26,7 +26,7 @@ export type Block = {
   tone?: 'accent' | 'ok' | 'warn' | 'info' | 'dark'; align?: 'left' | 'center'; size?: 's' | 'm' | 'l'; video?: string;
   items?: BlockItem[]; cols?: number; flip?: boolean; code?: string; until?: string;
   /** สินค้าแนะนำ: ตาราง / เลื่อนข้าง / รายการ */
-  variant?: 'grid' | 'scroll' | 'list' | 'bar' | 'feed' | 'ticker';
+  variant?: 'grid' | 'scroll' | 'list' | 'bar' | 'feed' | 'ticker' | 'icon' | 'cover';
   /** ป้ายมุมขวา (การ์ดกิจกรรม: "อัปเดตสด") */
   badge?: string;
   /** กล่องกิจกรรม: แสดงคนซื้อ + คนสมัคร / เฉพาะคนซื้อ / เฉพาะคนสมัคร (ไม่ใส่ = ทั้งสองอย่าง) */

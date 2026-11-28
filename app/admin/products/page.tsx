@@ -4,14 +4,14 @@ import { ProductsClient } from './ProductsClient';
 import type { DForm } from './DeliveryForm';
 import { agentPrices } from '@/lib/agents';
 import { can } from '@/lib/plan';
-import { mergeCategories, shopCategories } from '@/lib/categories';
+import { categoryImages, mergeCategories, shopCategories } from '@/lib/categories';
 import { productMedia } from '@/lib/media';
 import { db } from '@/lib/db';
 
 export default async function AdminProducts() {
   const shop = await adminShop('products');
   if (!shop) return null;
-  const [products, list, media] = await Promise.all([loadProducts(shop.id, { includeHidden: true }), shopCategories(shop.id), productMedia({ shopId: shop.id })]);
+  const [products, list, media, catImgs] = await Promise.all([loadProducts(shop.id, { includeHidden: true }), shopCategories(shop.id), productMedia({ shopId: shop.id }), categoryImages(shop.id)]);
   const agentsOn = can(shop.plan, 'agents');
   // ปุ่มรับ OTP: แอปที่ร้านตั้งไว้ในหน้า OTP + แอปที่แต่ละสินค้าเลือก (ร้านไม่มีฟีเจอร์ OTP / ยังไม่รัน 0032 = ไม่แสดงช่องนี้)
   const otpOn = can(shop.plan, 'otp');
@@ -30,7 +30,7 @@ export default async function AdminProducts() {
   const limits = Object.fromEntries(((lq.data ?? []) as { id: string; otp_limit: number }[]).filter((r) => r.otp_limit > 0).map((r) => [r.id, r.otp_limit]));
   const forms = Object.fromEntries(((fq.data ?? []) as { id: string; delivery_form: DForm | null }[]).filter((r) => r.delivery_form?.tpl).map((r) => [r.id, r.delivery_form as DForm]));
   const pick = <T,>(fn: (m: { usage: string; usageImages: string[]; images: string[] }) => T) => Object.fromEntries([...media.map].map(([id, m]) => [id, fn(m)]));
-  return <ProductsClient products={products} categories={mergeCategories(list, products.map((p) => p.category))}
+  return <ProductsClient products={products} catImages={catImgs.map} catImgReady={catImgs.ready} categories={mergeCategories(list, products.map((p) => p.category))}
     usages={pick((m) => m.usage)} usageImages={pick((m) => m.usageImages)} images={pick((m) => m.images)}
     usageReady={media.level !== 'none'} imgReady={media.level === 'multi' || media.level === 'single'} galleryReady={media.level === 'multi'}
     agentPrices={agentsOn ? await agentPrices(products.flatMap((p) => p.options.map((o) => o.id))) : {}} agentsOn={agentsOn} otp={otp} forms={forms} formReady={!fq.error} limits={limits} />;

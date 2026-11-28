@@ -14,6 +14,7 @@ export const IMG_SIZE = {
   logoSmall: ['400 × 200 px', 'โลโก้พื้นใส (PNG)'],
   avatar: ['400 × 400 px', 'จัตุรัส · หน้าคนอยู่กลางรูป'],
   otpLogo: ['512 × 512 px', 'จัตุรัส · แสดงเป็นวงกลม'],
+  catCover: ['1200 × 600 px', 'แนวนอน 2:1 · โลโก้แอปไว้กลางรูป'],
 } as const;
 export type ImgKind = keyof typeof IMG_SIZE;
 
