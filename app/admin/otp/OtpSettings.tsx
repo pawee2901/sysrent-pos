@@ -6,6 +6,7 @@ import { api } from '@/components/Cart';
 import { ask, input, notify } from '@/components/dialog';
 import { GmailGuide, HotmailGuide, MsAppGuide } from '@/components/otp/MailGuides';
 import { AgentTab, type AgentInit } from './AgentTab';
+import { AsksTab, type AckInit, type OtpAsk } from './AsksTab';
 import { PERIODS, PERIOD_LABEL, type Period } from '@/lib/otp-agent';
 
 type Box = { id: string; email: string; provider: string; active: boolean; error: string };
@@ -22,10 +23,10 @@ const MS_RESULT: Record<string, string> = {
   sql: 'ต้องรัน SQL 0024, 0025 และ 0026 ใน Supabase ก่อน', save: 'บันทึกไม่สำเร็จ กรุณาลองใหม่',
 };
 const LABEL: Record<string, string> = { gmail: 'Gmail', maily: 'Maily', graph: 'Hotmail / Outlook' };
-const TABS = [['mail', 'บัญชีอีเมล'], ['apps', 'แอปพลิเคชัน'], ['agent', 'ระบบตัวแทน'], ['api', 'ตั้งค่า API']] as const;
+const TABS = [['mail', 'บัญชีอีเมล'], ['apps', 'แอปพลิเคชัน'], ['asks', 'คำขอ · ป๊อปอัป'], ['agent', 'ระบบตัวแทน'], ['api', 'ตั้งค่า API']] as const;
 type Tab = (typeof TABS)[number][0];
 
-export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent, custLimit }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit; custLimit: { limit: number; period: Period } }) {
+export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent, custLimit, asks }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit; custLimit: { limit: number; period: Period }; asks: { ready: boolean; list: OtpAsk[]; ack: AckInit } }) {
   const [lim, setLim] = useState({ n: String(custLimit.limit), period: custLimit.period });
   const [pageUrl, setPageUrl] = useState('');
   useEffect(() => setPageUrl(`${window.location.origin}${to('/otp')}`), []);
@@ -146,7 +147,7 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
           onClick={() => call({ action: 'save_link', link: where === 'link' ? url.trim() : '' }, where === 'link' ? 'ลูกค้าจะถูกพาไปลิงก์นี้แล้ว' : 'กลับมาค้นหาในเว็บร้านแล้ว')}>บันทึก</button>
           {where === 'link' && url && !/^https:\/\//.test(url.trim()) && <small style={{ color: 'var(--bad)', marginLeft: 8 }}>ลิงก์ต้องขึ้นต้นด้วย https://</small>}</div>
       </section>
-      <div className="set-tabs" role="tablist">{TABS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
+      <div className="set-tabs" role="tablist">{TABS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}{k === 'asks' && asks.list.some((a) => a.status === 'open') && <span className="pill warn">{asks.list.filter((a) => a.status === 'open').length}</span>}</button>)}</div>
 
       {tab === 'mail' && <>
         <section className="card">
@@ -225,6 +226,7 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
         </section>
       </>}
 
+      {tab === 'asks' && <AsksTab asks={asks.list} ack={asks.ack} ready={asks.ready} busy={busy} call={call} />}
       {tab === 'agent' && <AgentTab agent={agent} openPage={openPage} busy={busy} call={call} />}
 
       {tab === 'api' && <>

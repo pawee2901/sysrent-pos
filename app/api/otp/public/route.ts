@@ -8,7 +8,7 @@ import { otpAccounts } from '@/lib/otp-access';
 import { otpAgent, otpCustBlocked, otpLink, otpPublic } from '@/lib/otp-link';
 import { clientIp as ipOf, loginFailed, loginLocked, loginOk } from '@/lib/auth';
 import { ACCESS_LABEL, PERIOD_LABEL, PERIOD_MS, normalizeAccess, type OtpAccess } from '@/lib/otp-agent';
-import { fullMsg, pickItem } from '@/lib/otp-quota';
+import { ackConfig, fullRes, needAck, pickItem } from '@/lib/otp-quota';
 import { OtpMailboxError, searchOtp } from '@/lib/otp-search';
 
 export const dynamic = 'force-dynamic';
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     if (hit.use_limit > 0) {
       const { count } = await d.from('shop_otp_requests').select('id', { count: 'exact', head: true }).eq('access_id', hit.id).eq('found', true).gte('created_at', new Date(Date.now() - PERIOD_MS[hit.period]).toISOString());
       if ((count ?? 0) >= hit.use_limit) return fail(`รับรหัสครบ ${hit.use_limit} ครั้งแล้ว (ต่อ${hit.period === 'day' ? 'วัน' : hit.period === 'week' ? 'สัปดาห์' : 'เดือน'}) กรุณาติดต่อแอดมินร้าน`, 429);
-      if (!ack) return NextResponse.json({ error: 'กรุณายอมรับเงื่อนไขก่อนค้นหา', need_ack: { limit: hit.use_limit, used: count ?? 0, name: hit.label, per: PERIOD_LABEL[hit.period] } }, { status: 409 });
+      if (!ack) { const a = await ackConfig(shopId); if (a.on) return needAck({ limit: hit.use_limit, used: count ?? 0, name: hit.label, per: PERIOD_LABEL[hit.period] }, a.text); }
     }
     accessId = hit.id;
   } else {
@@ -65,8 +65,8 @@ export async function POST(req: Request) {
     const mine = allowed.find((a) => a.email === account);
     if (!mine) { await log(false); return fail('ไม่พบอีเมลนี้ในสินค้าของร้านที่ยังไม่หมดอายุ', 403); }
     const { pick, full } = await pickItem(mine.items);
-    if (full) return fail(fullMsg(full), 429);
-    if (pick?.limit && !ack) return NextResponse.json({ error: 'กรุณายอมรับเงื่อนไขก่อนค้นหา', need_ack: { limit: pick.limit, used: pick.used, name: pick.name } }, { status: 409 });
+    if (full) return fullRes(full);
+    if (pick?.limit && !ack) { const a = await ackConfig(shopId); if (a.on) return needAck({ limit: pick.limit, used: pick.used, name: pick.name }, a.text); }
     if (pick?.limit) itemId = pick.itemId;
     const blocked = await otpCustBlocked(shopId, account);
     if (blocked) return fail(blocked, 429);

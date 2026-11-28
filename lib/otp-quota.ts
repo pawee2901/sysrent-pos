@@ -18,7 +18,16 @@ export async function itemQuotas(itemIds: string[]): Promise<Map<string, ItemQuo
     const { data: rq } = await d.from('shop_otp_requests').select('order_item_id').in('order_item_id', limited).eq('found', true).limit(5000);
     for (const x of (rq ?? []) as { order_item_id: string }[]) used.set(x.order_item_id, (used.get(x.order_item_id) ?? 0) + 1);
   }
-  for (const r of rows) out.set(r.id, { itemId: r.id, name: r.name.split(' · ')[0], limit: Number(r.shop_options?.otp_limit ?? 0), used: used.get(r.id) ?? 0 });
+  // คำขอ OTP เพิ่มที่แอดมินอนุมัติแล้ว (ยังไม่รัน 0052 = ไม่มี)
+  const extra = new Map<string, number>();
+  if (limited.length) {
+    const { data: ex } = await d.from('shop_otp_asks').select('order_item_id, extra').in('order_item_id', limited).eq('status', 'approved');
+    for (const x of (ex ?? []) as { order_item_id: string; extra: number }[]) extra.set(x.order_item_id, (extra.get(x.order_item_id) ?? 0) + Number(x.extra ?? 0));
+  }
+  for (const r of rows) {
+    const base = Number(r.shop_options?.otp_limit ?? 0);
+    out.set(r.id, { itemId: r.id, name: r.name.split(' · ')[0], limit: base ? base + (extra.get(r.id) ?? 0) : 0, used: used.get(r.id) ?? 0 });
+  }
   return out;
 }
 
@@ -37,3 +46,15 @@ export async function pickItem(items: string[], itemId?: string): Promise<{ pick
 }
 
 export const fullMsg = (q: ItemQuota) => `ออเดอร์${q.name ? ` ${q.name}` : 'นี้'} ขอ OTP ครบ ${q.limit} ครั้งแล้ว ไม่สามารถขอได้อีก (ติดต่อแอดมินร้านถ้ามีปัญหา)`;
+
+/** ป๊อปอัปก่อนขอ OTP: เปิดไหม + ข้อความที่ร้านเขียนเอง ('' = มาตรฐาน) · ยังไม่รัน 0052 = เปิด / มาตรฐาน */
+export async function ackConfig(shopId: string): Promise<{ on: boolean; text: string }> {
+  const { data, error } = await db().from('shop_otp_config').select('ack_on, ack_text').eq('shop_id', shopId).maybeSingle();
+  if (error || !data) return { on: true, text: '' };
+  return { on: data.ack_on !== false, text: String(data.ack_text ?? '') };
+}
+
+/** ตอบกลับ: ต้องยอมรับก่อน (409) · ครบแล้ว + ขอเพิ่มได้ (429) */
+export const needAck = (x: { limit: number; used: number; name?: string; per?: string }, text: string) =>
+  Response.json({ error: 'กรุณายอมรับเงื่อนไขก่อนค้นหา', need_ack: { ...x, text } }, { status: 409 });
+export const fullRes = (q: ItemQuota) => Response.json({ error: fullMsg(q), can_ask: { itemId: q.itemId, name: q.name } }, { status: 429 });

@@ -6,6 +6,7 @@ import { AppLogo } from '@/components/AppLogo';
 import { templateOf } from '@/lib/templates';
 import type { OtpAccount } from '@/lib/otp-access';
 import { OtpAck, type NeedAck } from '@/components/OtpAck';
+import { OtpAskBox, type CanAsk } from '@/components/OtpAskBox';
 
 type Hit = { code: string | null; link: string | null; subject: string; from: string; date: string };
 type App = { id: string; name: string; image: string; template: string };
@@ -24,16 +25,17 @@ export function OtpBox({ accounts, apps, open = false, agent = false }: { accoun
   const [pick, setPick] = useState(0);
   const [need, setNeed] = useState<NeedAck | null>(null); // ป๊อปอัปจำกัดจำนวนครั้ง
   const [acked, setAcked] = useState(false); // ยอมรับแล้ว = ค้นซ้ำไม่ต้องถามอีก
+  const [canAsk, setCanAsk] = useState<CanAsk | null>(null); // ขอครบแล้ว → ขอเพิ่มจากแอดมิน
 
   async function search(e?: React.FormEvent, ack = acked) {
     e?.preventDefault();
     if (!app) return;
-    setBusy(true); setErr(''); setNeed(null);
+    setBusy(true); setErr(''); setNeed(null); setCanAsk(null);
     const r = await api<{ hits: Hit[] }>(open ? '/api/otp/public' : '/api/otp', { account: account.trim(), appId: app.id, ...(agent ? { code: code.trim() } : {}), ...(ack ? { ack: true } : {}) });
     setBusy(false);
     const na = (r.data as { need_ack?: NeedAck }).need_ack;
     if (r.status === 409 && na) { setNeed(na); return; }
-    if (!r.ok) { setErr(r.error); return; }
+    if (!r.ok) { setErr(r.error); setCanAsk((r.data as { can_ask?: CanAsk }).can_ask ?? null); return; }
     if (!r.data.hits.length) { setErr('ไม่พบรหัสใน 15 นาทีล่าสุด กรุณากดขอรหัสจากแอปก่อน แล้วค้นหาอีกครั้ง'); return; }
     setHits(r.data.hits); setPick(0);
   }
@@ -76,6 +78,7 @@ export function OtpBox({ accounts, apps, open = false, agent = false }: { accoun
           <input className="input" required autoComplete="off" value={code} maxLength={120} placeholder="รหัส 4 หลัก / ชื่อยูส / อีเมลตัวแทน" onChange={(e) => setCode(e.target.value)} /></label>}
         <button type="submit" className="btn primary lg block" disabled={busy}>{busy ? 'กำลังค้นหา…' : 'ค้นหารหัส'}</button>
         {failed}
+        {canAsk && <OtpAskBox ask={canAsk} account={account.trim().toLowerCase()} />}
         {need && <OtpAck need={need} onCancel={() => setNeed(null)} onOk={() => { setAcked(true); search(undefined, true); }} />}
       </form>
     );

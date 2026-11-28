@@ -157,6 +157,15 @@ export function notifySignup(shop: Pick<Shop, 'id' | 'name' | 'slug'>, username:
   });
 }
 
+/** ลูกค้าขอ OTP เพิ่ม (ขอครบแล้ว) → แอดมินอนุมัติที่ ค้นหา OTP → คำขอ OTP */
+export function notifyOtpAsk(shop: Pick<Shop, 'id' | 'name' | 'slug'>, username: string, account: string, product: string, note: string) {
+  fire(shop, 'report', async () => ({ content: '@here ลูกค้าขอ OTP เพิ่ม', embeds: [{
+    title: `🔐 ขอ OTP เพิ่ม · ${product || account}`, color: COLOR.report, url: adminUrl(shop, to('/admin/otp')),
+    description: note.slice(0, 500) || undefined,
+    fields: [{ name: 'อีเมล', value: account, inline: true }, { name: 'ลูกค้า', value: username ? `@${username}` : 'หน้ารับ OTP', inline: true }],
+  }] }));
+}
+
 /** ลูกค้าแจ้งปัญหาออเดอร์ (แท็ก @here ให้ร้านเห็นเร็ว) */
 export function notifyReport(shop: Pick<Shop, 'id' | 'name' | 'slug'>, username: string, code: string, topic: string, message: string, image = '') {
   fire(shop, 'report', async () => ({ content: '@here ลูกค้าแจ้งปัญหา', embeds: [{

@@ -7,6 +7,8 @@ import { redirectUri } from '@/lib/msgraph';
 import { OtpSettings } from './OtpSettings';
 import { otpAgent, otpCustLimit, otpLink, otpPublic } from '@/lib/otp-link';
 import { PERIOD_MS, type OtpAccess } from '@/lib/otp-agent';
+import { ackConfig, itemQuotas } from '@/lib/otp-quota';
+import type { OtpAsk } from './AsksTab';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +33,14 @@ export default async function AdminOtp({ searchParams }: { searchParams: Promise
     const { data: used } = await d.from('shop_otp_requests').select('access_id, created_at').in('access_id', access.map((a) => a.id)).eq('found', true).gte('created_at', since).limit(5000);
     for (const a of access) a.used = ((used ?? []) as { access_id: string; created_at: string }[]).filter((u) => u.access_id === a.id && Date.now() - new Date(u.created_at).getTime() < PERIOD_MS[a.period]).length;
   }
+  // คำขอ OTP เพิ่ม (ยังไม่รัน 0052 = ไม่พร้อม)
+  const ak = await d.from('shop_otp_asks').select('id, order_item_id, account, note, status, extra, reply, created_at, shop_customers(username), shop_order_items(name, shop_orders(code))')
+    .eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(200);
+  type AR = { id: string; order_item_id: string; account: string; note: string; status: string; extra: number; reply: string; created_at: string; shop_customers: { username: string } | null; shop_order_items: { name: string; shop_orders: { code: string } | null } | null };
+  const akRows = (ak.data ?? []) as unknown as AR[];
+  const quotas = await itemQuotas([...new Set(akRows.filter((a) => a.status === 'open').map((a) => a.order_item_id))]);
+  const asks: OtpAsk[] = akRows.map((a) => ({ id: a.id, account: a.account, note: a.note, status: a.status, extra: a.extra, reply: a.reply, user: a.shop_customers?.username ?? '',
+    item: (a.shop_order_items?.name ?? '').split(' · ')[0], code: a.shop_order_items?.shop_orders?.code ?? '', used: quotas.get(a.order_item_id)?.used ?? 0, limit: quotas.get(a.order_item_id)?.limit ?? 0, when: when(a.created_at) }));
   type Log = { id: string; account: string; app: string; found: boolean; created_at: string; shop_customers: { username: string } | null };
   return (
     <OtpSettings
@@ -44,6 +54,7 @@ export default async function AdminOtp({ searchParams }: { searchParams: Promise
       link={await otpLink(shop.id)}
       openPage={await otpPublic(shop.id)}
       custLimit={await otpCustLimit(shop.id)}
+      asks={{ ready: !ak.error, list: asks, ack: await ackConfig(shop.id) }}
       agent={{ ready: !acc.error, on: await otpAgent(shop.id), list: access }}
     />
   );

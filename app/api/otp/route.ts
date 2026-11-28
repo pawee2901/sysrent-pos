@@ -5,7 +5,7 @@ import { can } from '@/lib/plan';
 import { body, fail, requireCustomer } from '@/lib/api';
 import { otpAccounts } from '@/lib/otp-access';
 import { otpCustBlocked } from '@/lib/otp-link';
-import { fullMsg, pickItem } from '@/lib/otp-quota';
+import { ackConfig, fullRes, needAck, pickItem } from '@/lib/otp-quota';
 import { OtpMailboxError, searchOtp } from '@/lib/otp-search';
 
 export const dynamic = 'force-dynamic';
@@ -29,8 +29,8 @@ export async function POST(req: Request) {
   if (!mine) return fail('ค้นได้เฉพาะอีเมลในสินค้าที่ยังไม่หมดอายุของคุณ', 403);
   // โควตาต่อออเดอร์ (ตั้งที่แพ็กเกจ): ครบแล้ว = ขอไม่ได้ · ยังไม่ยอมรับเงื่อนไข = ให้หน้าเว็บขึ้นป๊อปอัปก่อน
   const { pick, full } = await pickItem(mine.items, itemId);
-  if (full) return fail(fullMsg(full), 429);
-  if (pick?.limit && !ack) return NextResponse.json({ error: 'กรุณายอมรับเงื่อนไขก่อนค้นหา', need_ack: { limit: pick.limit, used: pick.used, name: pick.name } }, { status: 409 });
+  if (full) return fullRes(full);
+  if (pick?.limit && !ack) { const a = await ackConfig(shopId); if (a.on) return needAck({ limit: pick.limit, used: pick.used, name: pick.name }, a.text); }
 
   const { data: app } = await d.from('shop_otp_apps').select('name, keywords, code').eq('id', appId).eq('shop_id', shopId).maybeSingle();
   if (!app) return fail('ไม่พบแอปนี้', 404);
