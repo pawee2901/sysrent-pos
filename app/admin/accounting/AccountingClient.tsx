@@ -145,8 +145,29 @@ export function AccountingClient({ l }: { l: LedgerData }) {
       </>}
 
       {tab === 'acc' && <>
-        <p className={css.note}>ยอดคงเหลือ = ยอดตั้งต้น + รายรับ − รายจ่าย ± โอน · บัญชีที่ตั้งเป็น <b>รับเงินขาย</b> นับยอดขายจากออเดอร์เข้าให้อัตโนมัติ (นับตั้งแต่วันที่สร้างบัญชี)</p>
-        <div className={css.accts}>
+        {!l.accounts.length ? (
+          <section className={css.box}>
+            <div className={css.boxHead}><h2>บัญชีเงิน คืออะไร</h2><small>ไม่บังคับ — ไม่ใช้ก็ได้</small></div>
+            <div style={{ padding: 16, display: 'grid', gap: 14 }}>
+              <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.7 }}>คือ <b>ที่เก็บเงินของร้าน</b> เช่น บัญชีธนาคารที่ลูกค้าโอนเข้า · เงินสดในมือ · TrueMoney Wallet<br />
+                ใส่ไว้แล้วระบบจะบอกว่า <b>ตอนนี้แต่ละที่มีเงินเหลือเท่าไหร่</b> โดยไม่ต้องเปิดแอปธนาคารดู</p>
+              <ol style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 6, fontSize: 14, lineHeight: 1.6, color: 'var(--muted)' }}>
+                <li>เพิ่มบัญชี แล้วใส่ <b style={{ color: 'var(--text)' }}>เงินที่มีอยู่ตอนนี้</b> (ดูจากแอปธนาคาร)</li>
+                <li>ลูกค้าซื้อของ → ยอดขายบวกเข้าบัญชีที่รับเงินขายให้เอง</li>
+                <li>จ่ายค่าของ / ค่าโฆษณา → กด <b style={{ color: 'var(--text)' }}>+ จดรายการ</b> เลือกว่าจ่ายจากบัญชีไหน ระบบหักให้</li>
+              </ol>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <small className="muted">เริ่มเลย — กดเลือก</small>
+                <div className={css.bar}>
+                  <button type="button" className="btn primary" disabled={!l.ledgerReady} onClick={() => setAcc({ name: 'บัญชีธนาคารร้าน', kind: 'bank', number: '', opening: '0', is_sales: true, active: true })}>+ บัญชีธนาคาร (รับเงินลูกค้า)</button>
+                  <button type="button" className="btn" disabled={!l.ledgerReady} onClick={() => setAcc({ name: 'เงินสด', kind: 'cash', number: '', opening: '0', is_sales: false, active: true })}>+ เงินสด</button>
+                  <button type="button" className="btn" disabled={!l.ledgerReady} onClick={() => setAcc({ name: 'TrueMoney Wallet', kind: 'wallet', number: '', opening: '0', is_sales: false, active: true })}>+ วอลเล็ต</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : <p className={css.note}>ตัวเลขในแต่ละการ์ด = <b>เงินที่เหลืออยู่ตอนนี้</b> (ยอดเริ่มต้น + เงินเข้า − เงินออก) · บัญชีที่มีป้าย <b>รับเงินขาย</b> ยอดขายจากลูกค้าบวกเข้าให้เอง · แตะการ์ดเพื่อแก้ไข</p>}
+        {l.accounts.length > 0 && <div className={css.accts}>
           {l.accounts.map((a) => (
             <button key={a.id} type="button" className={css.acct} style={{ opacity: a.active ? 1 : 0.55 }} disabled={!l.ledgerReady}
               onClick={() => setAcc({ id: a.id, name: a.name, kind: a.kind, number: a.number, opening: String(a.opening), is_sales: a.isSales, active: a.active })}>
@@ -155,7 +176,7 @@ export function AccountingClient({ l }: { l: LedgerData }) {
               <small>{KIND_LABEL[a.kind]}{a.number ? ` · ${a.number}` : ''}</small>
             </button>))}
           <button type="button" className={`${css.acct} ${css.acctAdd}`} disabled={!l.ledgerReady} onClick={() => setAcc({ name: '', kind: 'bank', number: '', opening: '0', is_sales: !l.accounts.some((a) => a.isSales), active: true })}>+ เพิ่มบัญชีเงิน</button>
-        </div>
+        </div>}
         {l.accounts.length > 0 && <div className={css.kpis} style={{ gridTemplateColumns: '1fr' }}><div className={css.kpi}><span>รวมทุกบัญชีที่เปิดใช้</span><b>{baht(accTotal)}</b></div></div>}
       </>}
 
@@ -265,10 +286,10 @@ function AccModal({ f0, onClose, onSaved }: { f0: AccForm; onClose: () => void; 
           <label className="field"><span>ประเภท</span><select className="input" value={f.kind} onChange={(e) => set({ kind: e.target.value as AccForm['kind'] })}>{Object.entries(KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
           <label className="field"><span>เลขบัญชี (ไม่บังคับ)</span><input className="input" maxLength={40} placeholder="xxx-x-xxxxx-x" value={f.number} onChange={(e) => set({ number: e.target.value })} /></label>
         </div>
-        <label className="field"><span>ยอดตั้งต้น (บาท)</span><input className="input" inputMode="decimal" value={f.opening} onChange={(e) => set({ opening: e.target.value.replace(/[^\d.-]/g, '') })} />
-          <small className={css.help}>ยอดเงินในบัญชีวันที่เริ่มใช้ระบบ</small></label>
+        <label className="field"><span>เงินที่มีอยู่ตอนนี้ (บาท)</span><input className="input" inputMode="decimal" value={f.opening} onChange={(e) => set({ opening: e.target.value.replace(/[^\d.-]/g, '') })} />
+          <small className={css.help}>เปิดแอปธนาคารดูยอดตอนนี้แล้วใส่ตามนั้น ไม่รู้ใส่ 0 ก็ได้</small></label>
         <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 14 }}><input type="checkbox" checked={f.is_sales} onChange={(e) => set({ is_sales: e.target.checked })} style={{ marginTop: 3 }} />
-          <span>บัญชีรับเงินขาย<small className={css.help} style={{ display: 'block' }}>ยอดขายจากออเดอร์นับเข้าบัญชีนี้อัตโนมัติ (มีได้บัญชีเดียว)</small></span></label>
+          <span>ลูกค้าโอนเงินเข้าบัญชีนี้<small className={css.help} style={{ display: 'block' }}>ติ๊ก = ยอดขายจากลูกค้าบวกเข้าบัญชีนี้ให้เอง (เลือกได้บัญชีเดียว)</small></span></label>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14 }}><input type="checkbox" checked={f.active} onChange={(e) => set({ active: e.target.checked })} />เปิดใช้งาน</label>
       </div>
     </Modal>
