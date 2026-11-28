@@ -28,7 +28,7 @@ export function ReviewsClient({ list, ready, filter }: { list: AdminReview[]; re
     <>
       <div className="page-head"><div><h1>รีวิว</h1><p>รีวิวจากผู้ซื้อจริง · แสดงที่หน้าสินค้า และกล่อง &quot;รีวิวจากผู้ซื้อจริง&quot; ในหน้าจัดร้าน</p></div></div>
       {!ready && <div className="card card-pad" style={{ color: 'var(--warn)' }}>⚠️ ต้องรัน SQL <code>0042_reviews.sql</code> ใน Supabase ก่อน ลูกค้าถึงจะรีวิวได้</div>}
-      <nav className="set-tabs" aria-label="กรองรีวิว">{TABS.map(([k, l]) => <Link key={k} href={`${to('/admin/reviews')}${k ? `?s=${k}` : ''}`} className={filter === k ? 'on' : ''} style={{ padding: '8px 14px', borderRadius: 10 }}>{l}</Link>)}</nav>
+      <nav className="set-tabs" aria-label="กรองรีวิว">{TABS.map(([k, l]) => <Link key={k} href={`${to('/admin/reviews')}${k ? `?s=${k}` : ''}`} className={filter === k ? 'on' : ''} aria-current={filter === k ? 'page' : undefined}>{l}</Link>)}</nav>
       <section className="card">
         <div className="card-head"><h2>{list.length} รีวิว</h2>{list.length > 0 && <span className="pill accent plain">เฉลี่ย ★ {avg}</span>}</div>
         {!list.length ? <div className="card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีรีวิว · ลูกค้ารีวิวได้ที่หน้าประวัติการซื้อหลังได้ของ</p></div> : (

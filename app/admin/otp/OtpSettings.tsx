@@ -92,7 +92,7 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis }: { rea
     <div className="otp-page">
       <div className="page-head"><div><h1>ค้นหา OTP</h1><p>ลูกค้าที่ล็อกอินค้นรหัสได้เอง เฉพาะอีเมลในสินค้าที่ยังไม่หมดอายุของตัวเอง</p></div></div>
       {!ready && <div className="card card-pad" style={{ color: 'var(--warn)' }}>⚠️ ต้องรัน SQL <code>0024</code>, <code>0025</code> และ <code>0026</code> ใน Supabase ก่อน</div>}
-      <div className="seg" role="tablist" style={{ marginBottom: 14 }}>{TABS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
+      <div className="set-tabs" role="tablist">{TABS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
 
       {tab === 'mail' && <>
         <section className="card">
