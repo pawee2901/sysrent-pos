@@ -10,7 +10,7 @@ import css from './dform.module.css';
 
 /**
  * เติมสต็อก (แบบง่าย): เลือกว่าลูกค้าได้ของไม่ซ้ำ / เหมือนกันทุกคน → วางข้อมูลช่องเดียว → เพิ่ม
- * ตัวเลือกเสริม (ฟอร์มส่งของ · ปุ่มรับ OTP) พับไว้ เปิดเมื่ออยากใช้
+ * ตัวเลือกเสริม (แบบฟอร์มร้าน · ปุ่มรับ OTP) พับไว้ เปิดเมื่ออยากใช้
  */
 type Split = 'line' | 'blank';
 type Otp = { ready: boolean; apps: { id: string; name: string }[] } | null;
@@ -68,8 +68,8 @@ export function StockPanel({ productId, option, left, form, onForm, otp, otpApp,
     setBusy(true);
     const r = await api('/api/admin/products', { action: 'form', optionId: option.id, form: fm });
     setBusy(false);
-    if (!r.ok) notify(/0046/.test(r.error) ? 'ใช้ฟอร์มได้เลย แต่ระบบยังจำฟอร์มไว้ไม่ได้ (ต้องรัน SQL 0046_delivery_form.sql)' : r.error, 'info');
-    else notify(fm ? 'บันทึกฟอร์มแล้ว ✓' : 'เลิกใช้ฟอร์มแล้ว');
+    if (!r.ok) notify(/0046/.test(r.error) ? 'ใช้แบบฟอร์มได้เลย แต่ระบบยังจำไว้ไม่ได้ (ต้องรัน SQL 0046_delivery_form.sql)' : r.error, 'info');
+    else notify(fm ? 'บันทึกแบบฟอร์มแล้ว ✓' : 'เลิกใช้แบบฟอร์มแล้ว');
     onForm(fm); setBuilding(false); setText('');
   }
 
@@ -83,6 +83,24 @@ export function StockPanel({ productId, option, left, form, onForm, otp, otpApp,
       </div>
 
       {tab === 'list' ? <StockList optionId={option.id} targets={targets} onChanged={() => onAdded('')} /> : <>
+        {/* ปุ่มรับ OTP ไว้บนสุด (ตั้งครั้งเดียวใช้กับทั้งสินค้า) */}
+        {otp && (
+          <div className={css.extra}>
+            <button type="button" className={css.exHead} aria-expanded={more === 'otp'} onClick={() => setMore(more === 'otp' ? '' : 'otp')}>
+              <span>🔐</span><span><b>ปุ่มรับ OTP</b><small>{otpApp ? `เปิด · ${otp.apps.find((a) => a.id === otpApp)?.name ?? ''}` : 'ปิดอยู่ · ลูกค้ากดรับรหัสเองได้'}</small></span><i>{more === 'otp' ? '−' : '+'}</i></button>
+            {more === 'otp' && (
+              <div className={css.exBody}>
+                <select className="input" value={otpApp} disabled={!otp.ready || !otp.apps.length} onChange={(e) => setOtpApp(e.target.value)}>
+                <option value="">ปิด — ไม่แสดงปุ่ม</option>
+                {otp.apps.map((a) => <option key={a.id} value={a.id}>เปิด — ค้นรหัสของ {a.name}</option>)}
+                </select>
+                {otpApp && <input className="input" type="email" value={otpAll} onChange={(e) => setOtpAll(e.target.value)} placeholder="เมลรับ OTP (เว้นว่าง = ใช้อีเมลในแต่ละชิ้น)" />}
+                <small className="faint">{!otp.ready ? '⚠️ ต้องรัน SQL 0032_product_otp_button.sql ก่อน' : !otp.apps.length ? 'เพิ่มแอปในหน้า "ค้นหา OTP" ก่อน' : 'ลูกค้าที่ได้ชิ้นนั้นจะเห็นปุ่มรับรหัสในหน้าประวัติการซื้อ'}</small>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 1. ลูกค้าได้อะไร */}
         <div className={css.seg} role="radiogroup" aria-label="ลูกค้าแต่ละคนได้">
           <button type="button" role="radio" aria-checked={!shared} className={!shared ? css.on : ''} onClick={() => { setShared(false); setRep('1'); }}>🔑 คนละชิ้น<small>ไม่ซ้ำกัน</small></button>
@@ -96,7 +114,7 @@ export function StockPanel({ productId, option, left, form, onForm, otp, otpApp,
             <button type="button" role="radio" aria-checked={split === 'blank'} className={split === 'blank' ? css.on : ''} onClick={() => setSplit('blank')}>เว้นบรรทัด = ชิ้นใหม่</button>
           </div>
         )}
-        {useFormNow && <div className={css.hint}>🎨 ใช้ฟอร์มส่งของ · 1 บรรทัด = 1 ชิ้น ใส่ <b>{form!.fields.join(' | ')}</b></div>}
+        {useFormNow && <div className={css.hint}>🎨 ใช้แบบฟอร์มร้าน · 1 บรรทัด = 1 ชิ้น ใส่ <b>{form!.fields.join(' | ')}</b></div>}
         <textarea className={`input ${css.paste}`} rows={shared ? 4 : 7} value={text} onChange={(e) => setText(e.target.value)}
           placeholder={shared ? 'ข้อมูลที่ลูกค้าทุกคนได้ เช่น\nhttps://drive.google.com/…'
             : useFormNow ? form!.fields.map((f) => f).join(' | ') + '\n' + form!.fields.map((_, i) => `ค่า${i + 1}`).join(' | ')
@@ -122,30 +140,14 @@ export function StockPanel({ productId, option, left, form, onForm, otp, otpApp,
           {!shared && (
             <div className={css.extra}>
               <button type="button" className={css.exHead} aria-expanded={more === 'form'} onClick={() => setMore(more === 'form' ? '' : 'form')}>
-                <span>🎨</span><span><b>ฟอร์มส่งของ</b><small>{form ? `ใช้อยู่ · ${form.fields.length} ช่อง` : 'ให้ลูกค้าได้ข้อความสวย ๆ ตามแบบของร้าน'}</small></span><i>{more === 'form' ? '−' : '+'}</i></button>
+                <span>🎨</span><span><b>แบบฟอร์มร้าน</b><small>{form ? `ใช้อยู่ · ${form.fields.length} ช่อง` : 'ให้ลูกค้าได้ข้อความสวย ๆ ตามแบบของร้าน'}</small></span><i>{more === 'form' ? '−' : '+'}</i></button>
               {more === 'form' && (
                 <div className={css.exBody}>
                   <small className="muted">วางข้อความที่เคยส่งลูกค้า 1 ใบ แล้วแตะคำที่เปลี่ยนทุกชิ้น ตอนเติมสต็อกใส่แค่ค่าที่เปลี่ยน</small>
                   <div className={css.row}>
-                    {form && <button type="button" className="btn ghost sm" disabled={busy} onClick={() => saveForm(null)}>เลิกใช้ฟอร์ม</button>}
-                    <button type="button" className="btn sm" onClick={() => setBuilding(true)}>{form ? '✏️ แก้ฟอร์ม' : '+ สร้างฟอร์ม'}</button>
+                    {form && <button type="button" className="btn ghost sm" disabled={busy} onClick={() => saveForm(null)}>เลิกใช้แบบฟอร์ม</button>}
+                    <button type="button" className="btn sm" onClick={() => setBuilding(true)}>{form ? '✏️ แก้แบบฟอร์ม' : '+ สร้างแบบฟอร์ม'}</button>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-          {otp && (
-            <div className={css.extra}>
-              <button type="button" className={css.exHead} aria-expanded={more === 'otp'} onClick={() => setMore(more === 'otp' ? '' : 'otp')}>
-                <span>🔐</span><span><b>ปุ่มรับ OTP</b><small>{otpApp ? `เปิด · ${otp.apps.find((a) => a.id === otpApp)?.name ?? ''}` : 'ปิดอยู่ · ลูกค้ากดรับรหัสเองได้'}</small></span><i>{more === 'otp' ? '−' : '+'}</i></button>
-              {more === 'otp' && (
-                <div className={css.exBody}>
-                  <select className="input" value={otpApp} disabled={!otp.ready || !otp.apps.length} onChange={(e) => setOtpApp(e.target.value)}>
-                    <option value="">ปิด — ไม่แสดงปุ่ม</option>
-                    {otp.apps.map((a) => <option key={a.id} value={a.id}>เปิด — ค้นรหัสของ {a.name}</option>)}
-                  </select>
-                  {otpApp && <input className="input" type="email" value={otpAll} onChange={(e) => setOtpAll(e.target.value)} placeholder="เมลรับ OTP (เว้นว่าง = ใช้อีเมลในแต่ละชิ้น)" />}
-                  <small className="faint">{!otp.ready ? '⚠️ ต้องรัน SQL 0032_product_otp_button.sql ก่อน' : !otp.apps.length ? 'เพิ่มแอปในหน้า "ค้นหา OTP" ก่อน' : 'ลูกค้าที่ได้ชิ้นนั้นจะเห็นปุ่มรับรหัสในหน้าประวัติการซื้อ'}</small>
                 </div>
               )}
             </div>

@@ -25,7 +25,7 @@ export default async function AdminStock() {
     picks: Object.fromEntries(((picks?.data ?? []) as { id: string; otp_app_id: string | null }[]).filter((r) => r.otp_app_id).map((r) => [r.id, r.otp_app_id as string])),
   } : null;
   const list = products.map((p) => ({
-    id: p.id, name: p.name, image: p.image, template: p.template, active: p.active, preorder: p.preorder,
+    id: p.id, name: p.name, category: p.category, image: p.image, template: p.template, active: p.active, preorder: p.preorder,
     options: p.options.map((o) => ({ id: o.id, name: o.name, days: o.durationDays?.toString() ?? '', stock: o.stock ?? 0, price: o.price, active: o.active })),
   }));
   return <StockClient products={list} forms={forms} otp={otp} />;

@@ -110,3 +110,9 @@
 .bulk { position: sticky; bottom: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1.5px solid var(--accent); box-shadow: 0 -6px 20px rgba(0,0,0,.06); }
 .bulk b { font-size: 14px; }
 .bulk select { flex: 1 1 180px; height: 38px; }
+
+/* หน้าสต็อก: แยกตามแอป (หมวด) */
+.sGroups { display: grid; gap: 22px; }
+.sGroup { display: grid; gap: 10px; }
+.sGroupH { display: flex; align-items: baseline; gap: 8px; margin: 0 0 0 4px; font-size: 16px; }
+.sGroupH small { font-size: 12.5px; font-weight: 500; color: var(--muted); }

@@ -110,7 +110,7 @@ export function FormBuilder({ initial, onSave, onCancel, busy }: { initial: DFor
       ) : <small style={{ color: 'var(--bad)' }}>แตะคำที่เปลี่ยนทุกชิ้นอย่างน้อย 1 คำ</small>}
       <div className={css.row}>
         <button type="button" className="btn ghost sm" onClick={() => setStep('paste')}>← วางฟอร์มใหม่</button>
-        <button type="button" className="btn primary sm" disabled={!order.length || busy} onClick={save}>{busy ? 'กำลังบันทึก…' : 'บันทึกฟอร์ม'}</button>
+        <button type="button" className="btn primary sm" disabled={!order.length || busy} onClick={save}>{busy ? 'กำลังบันทึก…' : 'บันทึกแบบฟอร์ม'}</button>
       </div>
     </div>
   );
