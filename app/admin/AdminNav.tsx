@@ -69,7 +69,7 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
         <nav className="nav"><div>{groups.map((g) => gLink(g))}</div></nav>
         <div className="side-foot">
           {/* ราคาที่จ่ายจริงอยู่ที่เว็บหลัก (มีทั้งทดลอง / โปร) → แสดงแค่วันหมดอายุ ไม่แสดงราคา */}
-          <div className="plan-row"><span className="pill accent">แพ็กเกจ {PLAN_LABEL[isPlan(plan) ? plan : 'max']}</span>{shop.expires && <span className="muted">ถึง {new Date(shop.expires).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: '2-digit' })}</span>}</div>
+          <div className="plan-row"><span className="pill accent">แพ็กเกจ {PLAN_LABEL[isPlan(plan) ? plan : 'max']}</span>{shop.expires && <span className="muted">📅 ใช้ได้ถึง {new Date(shop.expires).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: '2-digit' })}</span>}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><b>ตรวจสลิปเดือนนี้</b><span className="num">{used}{slip.quota > 0 ? ` / ${slip.quota}` : ' ครั้ง'}</span></div>
           {slip.quota > 0 && <div className={`meter${pct >= 80 ? ' warn' : ''}`}><i style={{ width: `${pct}%` }} /></div>}
           <span className="muted" style={{ fontSize: 12 }}>{slip.quota > 0 ? `ฟรี ${slip.quota} ครั้ง/เดือน · เกินคิด ` : 'จ่ายตามจริง '}฿{slip.overage.toFixed(2)}/สลิป ตัดจากกระเป๋า SysRent</span>
