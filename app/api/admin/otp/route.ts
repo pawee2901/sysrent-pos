@@ -22,6 +22,7 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('save_ms'), client_id: z.string().trim().regex(/^[0-9a-f-]{36}$/i, 'Client ID ต้องเป็นรูปแบบ xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'), client_secret: z.string().trim().max(200).default('') }),
   z.object({ action: z.literal('delete_ms') }),
   // ลูกค้าค้น OTP ที่ไหน: '' = ในเว็บร้าน · https://… = ลิงก์เว็บ OTP อื่น
+  z.object({ action: z.literal('public_page'), on: z.boolean() }),
   z.object({ action: z.literal('save_link'), link: z.string().trim().max(500).refine((v) => !v || /^https:\/\/[^\s]+$/.test(v), 'ลิงก์ต้องขึ้นต้นด้วย https://') }),
   z.object({ action: z.literal('add_api'), name: z.string().trim().min(1, 'ตั้งชื่ออ้างอิง').max(40), type: z.enum(['maily', 'cloud_run']), token: z.string().trim().min(8, 'กรอก Token หรือ URL').max(500) }),
   z.object({ action: z.literal('delete_api'), id }),
@@ -74,6 +75,10 @@ export async function POST(req: Request) {
   }
   // ลบแค่ Microsoft App (ไม่ลบแถว — เก็บลิงก์เว็บ OTP ไว้)
   if (x.action === 'delete_ms') return done((await d.from('shop_otp_config').update({ ms_client_id: null, ms_secret_enc: null, updated_at: new Date().toISOString() }).eq('shop_id', sid)).error);
+  if (x.action === 'public_page') {
+    const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, public_page: x.on, updated_at: new Date().toISOString() });
+    return error ? fail(/public_page/.test(error.message) ? 'ต้องรัน SQL 0048_otp_public_page.sql ใน Supabase ก่อน' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
   if (x.action === 'save_link') {
     const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, otp_link: x.link || null, updated_at: new Date().toISOString() });
     return error ? fail(/otp_link/.test(error.message) ? 'ต้องรัน SQL 0047_otp_link.sql ใน Supabase ก่อน' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });

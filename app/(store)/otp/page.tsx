@@ -1,4 +1,4 @@
-import { otpLink } from '@/lib/otp-link';
+import { otpLink, otpPublic } from '@/lib/otp-link';
 import { notFound, redirect } from 'next/navigation';
 import { loginUrl } from '@/lib/routes';
 import { getShop } from '@/lib/shop';
@@ -25,9 +25,10 @@ export default async function OtpPage() {
   const link = await otpLink(shop.id);
   if (link) redirect(link);
   const me = await getCustomer();
-  if (!me) redirect(loginUrl('/otp'));
+  const open = !me && (await otpPublic(shop.id)); // หน้ารับ OTP: ไม่ต้องล็อกอิน
+  if (!me && !open) redirect(loginUrl('/otp'));
   const [accounts, { data: apps }, { data: products }] = await Promise.all([
-    otpAccounts(shop.id, me.id),
+    me ? otpAccounts(shop.id, me.id) : Promise.resolve([]),
     db().from('shop_otp_apps').select('id, name').eq('shop_id', shop.id).order('sort').order('created_at'),
     db().from('shop_products').select('name, image, template').eq('shop_id', shop.id),
   ]);
@@ -39,7 +40,8 @@ export default async function OtpPage() {
   });
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', display: 'grid', gap: 14 }}>
-      <OtpBox accounts={accounts} apps={withLogo} />
+      {open && <div className="otpf-center" style={{ textAlign: 'center' }}><h1 style={{ margin: '4px 0' }}>รับรหัส OTP</h1><p className="muted" style={{ margin: 0 }}>เลือกแอป กรอกอีเมลบัญชีที่ได้จากร้าน แล้วกดค้นหา</p></div>}
+      <OtpBox accounts={accounts} apps={withLogo} open={open} />
     </div>
   );
 }

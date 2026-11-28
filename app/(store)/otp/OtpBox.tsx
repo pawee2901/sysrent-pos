@@ -12,7 +12,8 @@ const time = (s: string) => new Date(s).toLocaleTimeString('th-TH', { hour: '2-d
 const tint = (a: App) => ({ '--app': templateOf(a.template)?.bg ?? 'var(--accent)' }) as React.CSSProperties;
 
 /** ค้นหา OTP 3 ขั้น: เลือกแอป → เลือกอีเมลแล้วค้นหา → แสดงรหัส */
-export function OtpBox({ accounts, apps }: { accounts: OtpAccount[]; apps: App[] }) {
+/** open = หน้ารับ OTP แบบไม่ต้องล็อกอิน (พิมพ์อีเมลเอง · ค้นผ่าน /api/otp/public) */
+export function OtpBox({ accounts, apps, open = false }: { accounts: OtpAccount[]; apps: App[]; open?: boolean }) {
   const [account, setAccount] = useState(accounts[0]?.email ?? '');
   const [app, setApp] = useState<App | null>(null);
   const [busy, setBusy] = useState(false);
@@ -24,7 +25,7 @@ export function OtpBox({ accounts, apps }: { accounts: OtpAccount[]; apps: App[]
     e?.preventDefault();
     if (!app) return;
     setBusy(true); setErr('');
-    const r = await api<{ hits: Hit[] }>('/api/otp', { account, appId: app.id });
+    const r = await api<{ hits: Hit[] }>(open ? '/api/otp/public' : '/api/otp', { account: account.trim(), appId: app.id });
     setBusy(false);
     if (!r.ok) { setErr(r.error); return; }
     if (!r.data.hits.length) { setErr('ไม่พบรหัสใน 15 นาทีล่าสุด กรุณากดขอรหัสจากแอปก่อน แล้วค้นหาอีกครั้ง'); return; }
@@ -34,7 +35,7 @@ export function OtpBox({ accounts, apps }: { accounts: OtpAccount[]; apps: App[]
     navigator.clipboard?.writeText(code).then(() => notify('คัดลอกรหัสแล้ว'), () => {});
   }
 
-  if (!accounts.length) return <div className="card card-pad muted">ยังไม่มีสินค้าที่ค้นหา OTP ได้ หรือสินค้าหมดอายุแล้ว</div>;
+  if (!open && !accounts.length) return <div className="card card-pad muted">ยังไม่มีสินค้าที่ค้นหา OTP ได้ หรือสินค้าหมดอายุแล้ว</div>;
   if (!apps.length) return <div className="card card-pad muted">ร้านยังไม่ได้ตั้งค่าแอปสำหรับค้นหา OTP</div>;
 
   if (!app) {
@@ -61,9 +62,10 @@ export function OtpBox({ accounts, apps }: { accounts: OtpAccount[]; apps: App[]
         <div className="otpf-bar"><button type="button" className="otpf-back" onClick={() => { setApp(null); setErr(''); }}>← ย้อนกลับ</button>{tag}</div>
         <div className="otpf-center"><h3>ค้นหารหัสยืนยัน</h3><p className="muted">ขอรหัสจากแอปก่อน แล้วกดค้นหาภายใน 15 นาที</p></div>
         <label className="field"><span>อีเมลบัญชี</span>
-          <select className="input" value={account} onChange={(e) => setAccount(e.target.value)}>
+          {open ? <input className="input" type="email" inputMode="email" autoComplete="email" required value={account} placeholder="อีเมลบัญชีที่ได้จากร้าน" onChange={(e) => setAccount(e.target.value)} />
+            : <select className="input" value={account} onChange={(e) => setAccount(e.target.value)}>
             {accounts.map((a) => <option key={a.email} value={a.email}>{a.email}{a.product ? ` · ${a.product}` : ''}</option>)}
-          </select></label>
+          </select>}</label>
         <button type="submit" className="btn primary lg block" disabled={busy}>{busy ? 'กำลังค้นหา…' : 'ค้นหารหัส'}</button>
         {failed}
       </form>

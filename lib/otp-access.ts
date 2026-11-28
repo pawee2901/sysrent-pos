@@ -13,19 +13,21 @@ type Order = { paid_at: string | null; shop_order_items: Item[] };
 type Sub = { ends_at: string; shop_products: { name: string } | null; shop_slots: { shop_accounts: { login: string } | null } | null };
 
 /** อีเมลที่ลูกค้าคนนี้ค้น OTP ได้: จากสินค้าของตัวเองที่ยังไม่หมดอายุเท่านั้น */
-export async function otpAccounts(shopId: string, customerId: string): Promise<OtpAccount[]> {
+/** customerId ไม่ใส่ = อีเมลของสินค้าที่ยังไม่หมดอายุทั้งร้าน (หน้ารับ OTP แบบไม่ต้องล็อกอิน) */
+export async function otpAccounts(shopId: string, customerId?: string): Promise<OtpAccount[]> {
   const d = db(), now = Date.now(), found = new Map<string, OtpAccount>();
   const add = (email: string, product: string, until: number) => {
     const key = email.toLowerCase(), cur = found.get(key);
     if (!cur || new Date(cur.until).getTime() < until) found.set(key, { email: key, product, until: new Date(until).toISOString() });
   };
 
-  const [subs, orders] = await Promise.all([
-    d.from('shop_subscriptions').select('ends_at, shop_products(name), shop_slots(shop_accounts(login))')
-      .eq('shop_id', shopId).eq('customer_id', customerId).eq('status', 'active').gt('ends_at', new Date(now).toISOString()).limit(200),
-    d.from('shop_orders').select('paid_at, shop_order_items(id, name, status, fulfillment, delivered, customer_info, updated_at, shop_options(duration_days))')
-      .eq('shop_id', shopId).eq('customer_id', customerId).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(300),
-  ]);
+  let sq = d.from('shop_subscriptions').select('ends_at, shop_products(name), shop_slots(shop_accounts(login))')
+    .eq('shop_id', shopId).eq('status', 'active').gt('ends_at', new Date(now).toISOString());
+  let oq = d.from('shop_orders').select('paid_at, shop_order_items(id, name, status, fulfillment, delivered, customer_info, updated_at, shop_options(duration_days))')
+    .eq('shop_id', shopId).not('paid_at', 'is', null);
+  if (customerId) { sq = sq.eq('customer_id', customerId); oq = oq.eq('customer_id', customerId); }
+  else oq = oq.gt('paid_at', new Date(now - 400 * DAY).toISOString()); // ทั้งร้าน: ย้อนหลังพอสำหรับแพ็กเกจยาวสุด
+  const [subs, orders] = await Promise.all([sq.limit(customerId ? 200 : 3000), oq.order('paid_at', { ascending: false }).limit(customerId ? 300 : 3000)]);
 
   for (const s of (subs.data ?? []) as unknown as Sub[]) {
     const login = s.shop_slots?.shop_accounts?.login ?? '';
