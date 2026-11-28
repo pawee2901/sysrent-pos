@@ -876,3 +876,22 @@ a.hb-rich-cell:hover { filter: brightness(1.05); transform: scale(.985); }
 .hb-catcard-foot b { font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hb-catcard-foot small { font-size: 12.5px; color: var(--muted); }
 .hb-catcard-btn { flex: none; padding: 7px 14px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 700; }
+
+/* หัวเว็บแบบโลโก้กลาง (ตั้งในหน้าจัดหน้าร้าน) */
+.top.top-center .top-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.top.top-center .shop-brand { grid-column: 2; grid-row: 1; justify-self: center; }
+.top.top-center .search { grid-column: 1; grid-row: 1; max-width: 320px; }
+.top.top-center .top-acts { grid-column: 3; grid-row: 1; justify-self: end; }
+
+/* หมวดหมู่แบบยาว: หมวดละแถบ */
+.hb-catrows { display: grid; gap: 22px; }
+.hb-catrow { display: grid; gap: 12px; padding: 16px; border-radius: var(--hb-r, 22px); background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px solid var(--line); }
+.hb-catrow-head { display: flex; align-items: center; gap: 12px; }
+.hb-catrow-head > div { flex: 1; min-width: 0; display: grid; }
+.hb-catrow-head h2 { margin: 0; font-size: 19px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb-catrow-head small { color: var(--muted); font-size: 12.5px; }
+.hb-catrow-ic { flex: none; width: 52px; height: 52px; border-radius: 14px; overflow: hidden; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 20px; }
+.hb-catrow-ic img { width: 100%; height: 100%; object-fit: cover; }
+.hb-catrow-ic .applogo { width: 100%; height: 100%; border-radius: 0; }
+.hb-catrow-all { flex: none; padding: 8px 14px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 13px; white-space: nowrap; }
+@media (max-width: 560px) { .hb-catrow { padding: 12px; } .hb-catrow-head h2 { font-size: 17px; } .hb-catrow-ic { width: 44px; height: 44px; } }

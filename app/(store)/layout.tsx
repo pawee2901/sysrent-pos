@@ -21,6 +21,8 @@ import { can } from '@/lib/plan';
 import { TabBar } from './TabBar';
 import { shopContacts } from '@/lib/contacts-server';
 import { CONTACT_KINDS, contactHref } from '@/lib/contacts';
+import { shopDesign } from '@/lib/palette-server';
+import { paletteVars } from '@/lib/palette';
 import '../store.css';
 
 /** โครงหน้าร้าน: หัวเว็บ · เนื้อหา · ท้ายเว็บ · ปุ่ม LINE · เมนูล่าง (มือถือ) */
@@ -37,6 +39,9 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const { data: pageRows } = await db().from('shop_pages').select('slug, title').eq('shop_id', shop.id).eq('in_menu', true).order('sort').order('created_at').limit(20);
   const pages = (pageRows ?? []) as { slug: string; title: string }[];
   const contacts = await shopContacts(shop);
+  // โทนสีทั้งร้าน + หัวเว็บ/ท้ายเว็บ (ตั้งในหน้าจัดหน้าร้าน · ยังไม่รัน 0056 = ตามธีม)
+  const design = await shopDesign(shop.id);
+  const frame = design.frame;
   const [isAdmin, agent, email, av] = me ? await Promise.all([isShopAdmin(), getAgent(shop, me.id), customerEmail(me.id),
     db().from('shop_customers').select('avatar_url').eq('id', me.id).maybeSingle()]) : [false, null, '', null]; // ยังไม่รัน 0043 = ไม่มีรูป
   const look = apErr || !can(shop.plan, 'appearance') ? null : ap;
@@ -47,7 +52,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const bg = (shop.bg_style === 'image' && !shop.bg_image) || (shop.bg_style === 'color' && !shop.bg_color) ? 'default' : shop.bg_style;
   return (
     <CartProvider shop={shop.slug}>
-    <div className="store" data-style={theme} data-card={shop.card_style ?? 'white'} data-fest={fest ?? undefined} {...shape.attrs} style={{ ...shape.vars, ...(bg === 'color' ? { ['--tint' as string]: shop.bg_color } : {}), ...(font ? { ['--font' as string]: fontStack(font.family), ['--font-head' as string]: fontStack(font.family) } : {}) }}>
+    <div className="store" data-style={theme} data-card={shop.card_style ?? 'white'} data-fest={fest ?? undefined} {...shape.attrs} style={{ ...paletteVars(design.palette), ...shape.vars, ...(bg === 'color' ? { ['--tint' as string]: shop.bg_color } : {}), ...(font ? { ['--font' as string]: fontStack(font.family), ['--font-head' as string]: fontStack(font.family) } : {}) }}>
       {font && <link rel="stylesheet" href={fontHref(font.key)} precedence="default" />}
       <PageLoader kind={look?.loader ?? 'none'} logo={shop.logo_url} />
       {!fest && <FloatingFx effect={look?.effect ?? 'none'} />}
@@ -58,17 +63,17 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       {/* ร้านเลือกพื้นหลังเอง = ใช้พื้นหลังนั้นแทนฉากเทศกาล (เหลือแค่เอฟเฟกต์ขยับ) */}
       {fest && <FestivalFx code={fest} scene={bg === 'default'} />}
       {shop.announcement && <div className="announce">{shop.announcement}</div>}
-      <header className="top">
+      <header className={`top${frame.logo === 'center' ? ' top-center' : ''}`}>
         <div className="wrap top-row">
           {/* มีโลโก้ = แสดงโลโก้อย่างเดียว (รูปยาว/สี่เหลี่ยมได้) · ไม่มี = ตัวอักษรแรก + ชื่อร้าน */}
           <Link href="/" className="shop-brand" aria-label={shop.name}>
             {shop.logo_url ? <img src={shop.logo_url} alt={shop.name} className="shop-logo" />
               : <><span className="shop-mark">{shop.name.slice(0, 1).toUpperCase()}</span>{shop.name}</>}
           </Link>
-          <form className="search" action="/" role="search">
+          {frame.search !== false && <form className="search" action="/" role="search">
             <Icon name="search" size={18} />
             <input className="input" name="q" placeholder="ค้นหาแอป เช่น Netflix, YouTube" aria-label="ค้นหา" />
-          </form>
+          </form>}
           <div className="top-acts">
             {me && <Link href={to('/wallet')} className="wallet-chip" title="เติมเงิน"><Icon name="wallet" size={18} />{baht(me.balance)}</Link>}
             <Link href={to('/cart')} className="icon-btn" aria-label="ตะกร้า"><Icon name="bag" size={22} /><CartCount /></Link>
@@ -86,14 +91,14 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       <main className="wrap">{children}</main>
       <footer>
         <div className="wrap">
-          <span>© {new Date().getFullYear()} {shop.name} · ร้านค้าบน <b>SysRent</b></span>
-          <span><Link href="/">หน้าแรก</Link> · <Link href={to('/orders')}>ออเดอร์</Link> · <Link href={to('/terms')}>เงื่อนไขการใช้งาน</Link>{pages.map((p) => <span key={p.slug}> · <Link href={to(`/page/${p.slug}`)}>{p.title}</Link></span>)}
-            {contacts.map((c, i) => <span key={i}> · <a href={contactHref(c)} target={c.kind === 'phone' || c.kind === 'email' ? undefined : '_blank'} rel="noopener noreferrer">{c.label || CONTACT_KINDS[c.kind].label}</a></span>)}</span>
+          <span>{frame.footer ? <span style={{ display: 'block', whiteSpace: 'pre-line', marginBottom: 4 }}>{frame.footer}</span> : null}© {new Date().getFullYear()} {shop.name} · ร้านค้าบน <b>SysRent</b></span>
+          {frame.footerLinks !== false && <span><Link href="/">หน้าแรก</Link> · <Link href={to('/orders')}>ออเดอร์</Link> · <Link href={to('/terms')}>เงื่อนไขการใช้งาน</Link>{pages.map((p) => <span key={p.slug}> · <Link href={to(`/page/${p.slug}`)}>{p.title}</Link></span>)}
+            {contacts.map((c, i) => <span key={i}> · <a href={contactHref(c)} target={c.kind === 'phone' || c.kind === 'email' ? undefined : '_blank'} rel="noopener noreferrer">{c.label || CONTACT_KINDS[c.kind].label}</a></span>)}</span>}
         </div>
       </footer>
       <ContactFab links={contacts} />
       {(shop.popup_text || shop.popup_image) && <Popup shop={shop.slug} text={shop.popup_text} image={shop.popup_image} link={shop.popup_link} />}
-      <TabBar loggedIn={!!me} otp={can(shop.plan, 'otp')} />
+      {frame.tabbar !== false && <TabBar loggedIn={!!me} otp={can(shop.plan, 'otp')} />}
     </div>
     </CartProvider>
   );

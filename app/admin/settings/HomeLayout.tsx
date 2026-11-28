@@ -1,5 +1,7 @@
 'use client';
 import { ImgHint } from '@/components/ImgHint';
+import { DesignPanel, type DesignInit } from './DesignPanel';
+import { paletteVars, type Palette } from '@/lib/palette';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { uploadImage } from '@/components/upload';
@@ -13,6 +15,8 @@ import { blockStyle, hasStyle, type BlockStyle, BLOCK_INFO, BUILTIN, DEFAULT_LAY
 type P = { id: string; name: string; category: string; image: string; template: string; from: number | null; sold: number };
 export type LayoutInit = {
   ready: boolean; blocks: Block[]; products: P[]; categories: string[]; catImages?: Record<string, string>;
+  /** โทนสี + หัว/ท้ายเว็บ (ออกแบบทั้งร้าน) */
+  design?: DesignInit;
   shop: { name: string; tagline: string; banner: string; line: boolean; facebook: boolean }; promos: string[];
   /** คนเพิ่งซื้อจริงของร้าน (ตัวอย่างการ์ดกิจกรรม) · ว่าง = ใช้ตัวอย่างสมมุติ */
   recent?: { initial: string; dots: string; name: string; avatar: string; when: string }[];
@@ -78,6 +82,14 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
       return <>{head(b.title)}{b.variant === 'list' && list.length ? <div className="cv-plist">{list.map((p) => <div key={p.id}><AppLogo image={p.image} template={p.template} name={p.name} /><span>{p.name}</span><b>{p.from !== null ? baht(p.from) : ''}</b></div>)}</div>
         : b.variant === 'scroll' && list.length ? <div className="cv-hscroll">{list.map((p) => <div key={p.id} className="cv-pcard"><AppLogo image={p.image} template={p.template} name={p.name} /><b>{p.name}</b>{p.from !== null && <span>{baht(p.from)}</span>}</div>)}</div>
         : <Cards list={list} />}</>;
+    }
+    case 'catrows': {
+      const cs = (b.cats?.length ? b.cats.filter((c) => d.categories.includes(c)) : d.categories);
+      return cs.length ? <div style={{ display: 'grid', gap: 10 }}>{cs.map((c) => { const list = d.products.filter((x) => x.category === c); return (
+        <div key={c} style={{ display: 'grid', gap: 6, padding: 8, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 26, height: 26, borderRadius: 8, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--accent-soft)' }}>{d.catImages?.[c] ? <img src={d.catImages[c]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : list[0] && <AppLogo image={list[0].image} template={list[0].template} name={list[0].name} />}</span>
+            <b style={{ flex: 1, fontSize: 13 }}>{c}</b><small style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 11 }}>ดูทั้งหมด →</small></div>
+          <Cards list={list.slice(0, Math.min(4, b.limit ?? 8))} /></div>); })}</div> : <Ph>ยังไม่มีหมวดสินค้า</Ph>;
     }
     case 'cats': if (b.variant === 'cover') return <>{head(b.title)}{d.categories.length ? <div className="cv-cols" style={{ ['--c' as string]: 2 } as React.CSSProperties}>{d.categories.map((c) => {
       const list = d.products.filter((x) => x.category === c), p = list[0], img = d.catImages?.[c];
@@ -145,6 +157,8 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
   const [homeSaved, setHomeSaved] = useState<Block[]>(init.blocks);
   const [newPage, setNewPage] = useState<{ title: string; slug: string; tpl: string } | null>(null);
   const [tplOpen, setTplOpen] = useState(false);
+  const [designOpen, setDesignOpen] = useState(false); // แผงออกแบบทั้งร้าน (สี · หัว/ท้ายเว็บ)
+  const [live, setLive] = useState<Palette>(init.design?.palette ?? {}); // โทนสีบนหน้าจำลอง
   /** ไอคอนกล่องของแต่ละแม่แบบ (ไว้วาดผังย่อในการ์ด) */
   const tplShapes = useMemo(() => Object.fromEntries(LAYOUT_TEMPLATES.map((t) => [t.key, t.build()])), []);
   const [meta, setMeta] = useState<{ title: string; slug: string; in_menu: boolean } | null>(null);
@@ -176,6 +190,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
   const has = (t: BlockType) => blocks.some((b) => b.type === t);
   const selIdx = blocks.findIndex((b) => b.id === sel);
   const cur = selIdx >= 0 ? blocks[selIdx] : null;
+  useEffect(() => { if (sel) setDesignOpen(false); }, [sel]);
 
   function insert(type: BlockType, at: number) {
     if (BUILTIN.includes(type) && blocksRef.current.some((b) => b.type === type)) { notify(`มี "${BLOCK_INFO[type].label}" อยู่แล้ว`, 'info'); return; }
@@ -418,7 +433,8 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
       <div className="lb-top">
         <div><h2>จัดหน้าร้าน</h2><small className="muted">ลากกล่องจากด้านซ้ายไปวางบนหน้าร้าน · กดกล่องเพื่อแก้ไข · ลากกล่องบนหน้าร้านเพื่อย้ายที่</small></div>
         <div className="lb-top-acts">
-          <button type="button" className="btn sm lb-tpl-btn" onClick={() => setTplOpen(true)}>🎨 แม่แบบ</button>
+          <button type="button" className="btn sm" onClick={() => { setSel(null); setPalOpen(false); setDesignOpen(true); }}>🎨 สี · หัว/ท้ายเว็บ</button>
+          <button type="button" className="btn sm lb-tpl-btn" onClick={() => setTplOpen(true)}>🧩 แม่แบบ</button>
           <Seg value={view} set={setView} opts={[['pc', '🖥 คอม'], ['phone', '📱 มือถือ']]} />
           <button type="button" className="btn ghost sm" disabled={busy || !init.ready} onClick={reset}>{curPage ? 'ล้างหน้า' : 'กลับเป็นแบบเดิม'}</button>
           <a href={curPage ? `/s/${curPage.slug}` : '/'} target="_blank" rel="noopener" className="btn ghost sm">ดูหน้านี้ ↗</a>
@@ -483,7 +499,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
 
         {/* หน้าร้านจำลอง */}
         <div className="lb-stage" onPointerDown={(e) => { if (e.target === e.currentTarget) setSel(null); }}>
-          <div className={`lb-canvas ${view}`}>
+          <div className={`lb-canvas ${view}`} style={paletteVars(live) as React.CSSProperties}>
             <div className="cv-topbar"><b>{init.shop.name}</b><span /><span /></div>
             <div ref={canvas} className="cv-flow">
               {blocks.flatMap((b, i) => {
@@ -515,11 +531,11 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
 
         {/* มือถือ: ปุ่มเพิ่มกล่อง (ลอยล่างจอ) · ฉากหลังปิดแผง */}
         <button type="button" className="lb-add-fab" onClick={() => { setPalOpen(true); }}>＋ เพิ่มกล่อง</button>
-        <div className={`lb-scrim${palOpen || cur ? ' show' : ''}${palOpen ? ' pal' : ''}`} onClick={() => { setPalOpen(false); setSel(null); }} aria-hidden />
+        <div className={`lb-scrim${palOpen || cur || designOpen ? ' show' : ''}${palOpen ? ' pal' : ''}`} onClick={() => { setPalOpen(false); setSel(null); setDesignOpen(false); }} aria-hidden />
 
         {/* ตั้งค่ากล่องที่เลือก */}
-        <aside className={`lb-panel${cur ? ' show' : ''}`} aria-label="ตั้งค่ากล่อง">
-          {!cur ? <div className="lb-panel-empty"><span aria-hidden>👆</span><p>กดกล่องบนหน้าร้านเพื่อแก้ไข</p></div> : (() => {
+        <aside className={`lb-panel${cur || designOpen ? ' show' : ''}`} aria-label="ตั้งค่ากล่อง">
+          {designOpen && !cur ? <DesignPanel init={init.design ?? { ready: false, palette: {}, frame: {} }} onLive={setLive} onClose={() => setDesignOpen(false)} /> : !cur ? <div className="lb-panel-empty"><span aria-hidden>👆</span><p>กดกล่องบนหน้าร้านเพื่อแก้ไข</p></div> : (() => {
             const b = cur, info = BLOCK_INFO[b.type], builtin = BUILTIN.includes(b.type);
             const txt = (k: 'title' | 'text' | 'label' | 'link' | 'code', label: string, o: { max?: number; rows?: number; ph?: string } = {}) => (
               <label className="field"><span>{label}</span>{o.rows
@@ -558,6 +574,14 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                   <p className="muted lb-note">ใช้ออเดอร์และการสมัครสมาชิกจริงของร้าน ชื่อลูกค้าถูกปิดบางส่วนให้อัตโนมัติ · ตัวอย่างในหน้านี้เป็นข้อมูลสมมติ</p>
                 </>}
                 {builtin && b.type !== 'live' && <p className="muted lb-note">{b.type === 'hero' || b.type === 'promos' ? 'รูปของกล่องนี้แก้ได้ที่แท็บ "รูปหน้าแรก · ป๊อปอัป"' : b.type === 'products' ? 'ถ้าซ่อนหรือลบกล่องนี้ ลูกค้าที่ค้นหาจะเห็นผลค้นหาบนสุดแทน' : 'กล่องนี้ใช้ข้อมูลจริงของร้าน ไม่ต้องตั้งค่า'}</p>}
+                {b.type === 'catrows' && <>
+                  <div className="field"><span>หมวดที่โชว์ (ไม่เลือก = ทุกหมวด เรียงตามลำดับหมวด)</span>
+                    <div className="lb-picks">{init.categories.map((c) => { const on = (b.cats ?? []).includes(c); return (
+                      <label key={c} className={on ? 'on' : ''}><input type="checkbox" checked={on} onChange={() => patch(b.id, { cats: on ? (b.cats ?? []).filter((x) => x !== c) : [...(b.cats ?? []), c] })} />{c}</label>); })}</div></div>
+                  <div className="field"><span>สินค้าในแต่ละหมวด</span><Seg value={b.variant === 'grid' ? 'grid' : 'scroll'} set={(v) => patch(b.id, { variant: v })} opts={[['scroll', 'เลื่อนข้าง'], ['grid', 'ตาราง']]} /></div>
+                  <label className="field"><span>จำนวนสินค้าต่อหมวด</span><select className="input" value={b.limit ?? 8} onChange={(e) => patch(b.id, { limit: Number(e.target.value) })}>{[4, 6, 8, 12, 16, 24].map((n) => <option key={n} value={n}>{n} ชิ้น</option>)}</select></label>
+                  <p className="muted lb-note">รูปหัวหมวดใช้รูปปกที่ตั้งไว้ที่ สินค้า → การ์ดหมวดหมู่ (ไม่มี = โลโก้สินค้า)</p>
+                </>}
                 {b.type === 'cats' && <>
                   <div className="field"><span>รูปแบบ</span><Seg value={b.variant === 'cover' ? 'cover' : 'icon'} set={(v) => patch(b.id, { variant: v })} opts={[['icon', 'ไอคอนเล็ก'], ['cover', 'รูปปกใหญ่']]} /></div>
                   {b.variant === 'cover' && <p className="muted lb-note">ใส่รูปปกของแต่ละหมวดที่ สินค้า → สินค้าทั้งหมด → การ์ดหมวดหมู่ (แนะนำ 1200 × 600 px) · ไม่มีรูปปก = ใช้โลโก้สินค้าในหมวดแทน</p>}

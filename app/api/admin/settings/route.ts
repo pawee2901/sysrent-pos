@@ -35,12 +35,20 @@ const block = z.object({
     radius: z.number().int().min(0).max(48).optional(), pad: z.number().int().min(0).max(64).optional(),
     border: z.enum(['none', 'line', 'accent']).optional(), shadow: z.enum(['none', 'soft', 'strong']).optional(),
   }).optional(),
-  cols: z.number().int().min(1).max(4).optional(), flip: z.boolean().optional(), grid: z.enum(RICH_KEYS as [RichGrid, ...RichGrid[]]).optional(),
+  cols: z.number().int().min(1).max(4).optional(), flip: z.boolean().optional(), grid: z.enum(RICH_KEYS as [RichGrid, ...RichGrid[]]).optional(), cats: z.array(z.string().trim().min(1).max(30)).max(40).optional(),
   code: z.string().trim().max(40).optional(), until: z.string().regex(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})?$/, 'วันเวลาไม่ถูกต้อง').optional(),
 });
 const pageTitle = z.string().trim().min(1, 'ใส่ชื่อหน้า').max(60);
 const pageSlug = z.string().trim().toLowerCase().regex(PAGE_SLUG, 'ลิงก์หน้าใช้ a-z 0-9 และ - (ยาวไม่เกิน 40 ตัว)');
+const hexOpt = z.string().trim().refine((c) => !c || HEX6.test(c), 'สีไม่ถูกต้อง').optional();
+/** โทนสีทั้งร้าน + หัวเว็บ / ท้ายเว็บ (0056) */
+const design = z.object({
+  action: z.literal('design'),
+  palette: z.object({ accent: hexOpt, accent2: hexOpt, bg: hexOpt, surface: hexOpt, text: hexOpt }),
+  frame: z.object({ logo: z.enum(['left', 'center']).optional(), search: z.boolean().optional(), footer: z.string().trim().max(300).optional(), footerLinks: z.boolean().optional(), tabbar: z.boolean().optional() }),
+});
 const schema = z.discriminatedUnion('action', [
+  design,
   z.object({
     action: z.literal('shop'),
     name: z.string().trim().min(1, 'ใส่ชื่อร้าน').max(40), tagline: z.string().trim().max(60), logo_url: https(500),
@@ -193,6 +201,11 @@ export async function POST(req: Request) {
   if (b.data.action === 'page_delete') {
     const { error } = await d.from('shop_pages').delete().eq('id', b.data.id).eq('shop_id', a.shop.id);
     return error ? fail('ลบไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
+  if (b.data.action === 'design') {
+    const clean = Object.fromEntries(Object.entries(b.data.palette).filter(([, v]) => v));
+    const { error } = await d.from('shops').update({ palette: clean, site_frame: b.data.frame }).eq('id', a.shop.id);
+    return error ? fail(/palette|site_frame/.test(error.message) ? 'ยังไม่ได้รัน SQL 0056_shop_design.sql' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
   }
   if (b.data.action === 'layout') {
     const { error } = await d.from('shops').update({ home_layout: b.data.blocks.length ? b.data.blocks : null }).eq('id', a.shop.id);

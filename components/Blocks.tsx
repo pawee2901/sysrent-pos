@@ -62,7 +62,7 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
   const used = new Set(products.map((p) => p.category).filter(Boolean));
   const cats = mergeCategories(await shopCategories(shop.id), [...used]).filter((x) => used.has(x));
   // รูปปกหมวด (เฉพาะเมื่อมีกล่องหมวดแบบรูปปกใหญ่ · ยังไม่รัน 0055 = ใช้โลโก้สินค้าแทน)
-  const catImgs = input.some((b) => b.on && b.type === 'cats' && b.variant === 'cover') ? await categoryImages(shop.id) : { ready: false, map: {} as Record<string, string> };
+  const catImgs = input.some((b) => b.on && ((b.type === 'cats' && b.variant === 'cover') || b.type === 'catrows')) ? await categoryImages(shop.id) : { ready: false, map: {} as Record<string, string> };
   const term = q.trim().toLowerCase();
   const shown = products.filter((p) => (!c || p.category === c) && (!term || p.name.toLowerCase().includes(term)));
   const sold = products.reduce((s, p) => s + p.sold, 0);
@@ -271,6 +271,24 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
         <div key={i}>{go(x.link, 'card hb-link', <>{x.image && <img src={x.image} alt="" loading="lazy" />}<div><b>{x.q}</b>{x.a && <span>{x.a}</span>}</div><i aria-hidden>›</i></>)}</div>))}</div></section> : null;
     }
 
+    if (b.type === 'catrows') {
+      // หมวดหมู่แบบยาว: หมวดละแถบ — หัวหมวด (รูปปก / โลโก้ · ชื่อ · จำนวน · ดูทั้งหมด) + แถวสินค้า
+      const pickCats = (b.cats?.length ? b.cats.filter((x) => cats.includes(x)) : cats);
+      const lim = Math.min(24, Math.max(2, b.limit ?? 8));
+      return pickCats.length ? <div className="hb hb-catrows">{pickCats.map((x) => {
+        const list = products.filter((y) => y.category === x), p = list.find((y) => y.image) ?? list[0], img = catImgs.map[x];
+        const href = `/?c=${encodeURIComponent(x)}#cat`;
+        return (
+          <section key={x} className="hb-catrow">
+            <div className="hb-catrow-head">
+              <span className="hb-catrow-ic">{img ? <img src={img} alt="" loading="lazy" /> : p ? <AppLogo image={p.image} template={p.template} name={p.name} /> : x.slice(0, 1)}</span>
+              <div><h2>{x}</h2><small>{list.length} รายการ</small></div>
+              <Link href={href} className="hb-catrow-all">ดูทั้งหมด →</Link>
+            </div>
+            <div className={b.variant === 'grid' ? 'grid' : 'hb-scroll'}>{list.slice(0, lim).map((y) => <Card key={y.id} p={y} />)}</div>
+          </section>);
+      })}</div> : null;
+    }
     if (b.type === 'cats' && b.variant === 'cover') {
       return cats.length ? <section className="hb">{b.title && <div className="sec-head"><h2>{b.title}</h2></div>}<div className="hb-catcards">{cats.map((x) => {
         const list = products.filter((y) => y.category === x), p = list.find((y) => y.image) ?? list[0];
