@@ -1,4 +1,5 @@
 'use client';
+import { ImgHint } from '@/components/ImgHint';
 import { to } from '@/lib/routes';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -150,6 +151,7 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
                 }} /></label>
               {bn.logo && <button type="button" className="btn ghost sm" onClick={() => setBn({ ...bn, logo: '' })}>ใช้โลโก้ร้าน</button>}
             </div>
+            <ImgHint kind="otpLogo" />
             <input className="input" maxLength={40} value={bn.name} placeholder={`ชื่อเว็บ เช่น ${brand.shopName} OTP`} onChange={(e) => setBn({ ...bn, name: e.target.value })} />
             <div><button type="button" className="btn primary sm" disabled={busy || upBusy || (bn.name.trim() === brand.name && bn.logo === brand.logo)}
               onClick={() => call({ action: 'site_brand', name: bn.name.trim(), logo: bn.logo }, 'บันทึกชื่อเว็บ · โลโก้แล้ว')}>บันทึก</button></div>

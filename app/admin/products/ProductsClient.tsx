@@ -1,4 +1,5 @@
 'use client';
+import { ImgHint } from '@/components/ImgHint';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ask, input, notify } from '@/components/dialog';
@@ -180,9 +181,10 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
               </div>
               <input ref={file} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} />
             </div>
+            <ImgHint kind="productLogo" />
             <div className="field"><span>รูปสินค้าเพิ่มเติม (ลูกค้าเห็นในหน้าสินค้า · ใส่กี่รูปก็ได้)</span>
               {galleryReady
-                ? <ImageList urls={gallery} onChange={setGallery} max={MAX_IMAGES} disabled={busy} upload={uploadMany} addLabel="เพิ่มรูป" />
+                ? <><ImgHint kind="productGallery" /><ImageList urls={gallery} onChange={setGallery} max={MAX_IMAGES} disabled={busy} upload={uploadMany} addLabel="เพิ่มรูป" /></>
                 : <small className="faint" style={{ fontSize: 12 }}>⚠️ ต้องรัน SQL 0029_product_images.sql ก่อน ถึงจะใส่รูปสินค้าได้หลายรูป</small>}
               {galleryReady && <small className="faint" style={{ fontSize: 12 }}>รูปบนสุด (โลโก้) ใช้ในการ์ดสินค้า · รูปเพิ่มเติมแสดงต่อท้ายในหน้าสินค้า · กด ‹ เพื่อเลื่อนลำดับ · 🗜️ ระบบย่อรูปให้อัตโนมัติก่อนอัป</small>}</div>
             <label className="field"><span>ชื่อสินค้า</span><input className="input" value={f.name} maxLength={80} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
@@ -258,6 +260,7 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
                 placeholder={'เช่น\n1. นำลิงก์ไปเปิดผ่าน Google Chrome / Safari\n2. ล็อกอินด้วยเมลของลูกค้า แล้วกด "เข้าร่วมทีม"\n3. ไม่แจ้งเมล = ไม่รับเคลมทุกกรณี'} />
               <small className="faint" style={{ fontSize: 12 }}>{usageReady ? 'ใส่ครั้งเดียว ใช้กับทุกชิ้นของสินค้านี้ · ไม่ต้องพิมพ์ซ้ำในสต็อกทุกชิ้น' : '⚠️ ต้องรัน SQL 0011_product_usage.sql ก่อน'}</small></label>
             <div className="field"><span>รูปวิธีการใช้งาน (ลูกค้าดูและดาวน์โหลดได้หลังซื้อ{galleryReady ? ' · ใส่กี่รูปก็ได้' : ''})</span>
+              <ImgHint kind="usage" />
               <ImageList urls={usageImgs} onChange={setUsageImgs} max={galleryReady ? MAX_IMAGES : 1} disabled={busy || !imgReady} upload={uploadMany} addLabel="รูปวิธีใช้" />
               <small className="faint" style={{ fontSize: 12 }}>{!imgReady ? '⚠️ ต้องรัน SQL 0012_usage_image.sql ก่อน' : galleryReady ? 'เช่น รูปขั้นตอนการเข้าใช้ทีละขั้น / ภาพแคปหน้าจอ · ลูกค้าเห็นเรียงตามลำดับนี้' : '⚠️ ตอนนี้ใส่ได้ 1 รูป · รัน SQL 0029_product_images.sql เพื่อใส่ได้หลายรูป'}</small></div>
             </div>

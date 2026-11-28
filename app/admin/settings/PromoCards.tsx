@@ -1,4 +1,5 @@
 'use client';
+import { ImgHint } from '@/components/ImgHint';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { uploadImage } from '@/components/upload';
@@ -56,6 +57,7 @@ export function PromoCards({ init }: { init: { ready: boolean; cards: Promo[] } 
           </div>
         )}
         <input ref={pick} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => { const fl = [...(e.target.files ?? [])].slice(0, PROMO_MAX - cards.length); e.target.value = ''; if (fl.length) add(fl); }} />
+        <ImgHint kind="promo" />
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {cards.length < PROMO_MAX && <button type="button" className="btn" disabled={busy || !init.ready} onClick={() => pick.current?.click()}>＋ เพิ่มกล่องรูป</button>}
           <button type="button" className="btn primary" disabled={busy || !init.ready} onClick={save}>{busy ? 'กำลังบันทึก…' : 'บันทึกกล่องรูป'}</button>

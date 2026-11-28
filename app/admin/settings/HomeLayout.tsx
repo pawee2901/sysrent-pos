@@ -1,4 +1,5 @@
 'use client';
+import { ImgHint } from '@/components/ImgHint';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { uploadImage } from '@/components/upload';
@@ -390,6 +391,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
               : <textarea className="input" rows={2} value={x.a ?? ''} maxLength={1000} placeholder={spec.a} aria-label={spec.a} onChange={(e) => setItem(b, i, { a: e.target.value })} />)}
             {hasF('link') && <input className="input" value={x.link ?? ''} maxLength={300} placeholder={b.type === 'social' ? 'https://...' : 'ลิงก์ (ไม่บังคับ)'} aria-label="ลิงก์" onChange={(e) => setItem(b, i, { link: e.target.value })} />}
           </div>))}</div>
+        {hasF('image') && <ImgHint kind={b.type === 'slider' ? 'wide' : b.type === 'logos' ? 'logoSmall' : b.type === 'reviews' ? 'avatar' : b.type === 'linkcards' ? 'photo' : 'square'} />}
         {items.length < ITEMS_MAX && (picOnly
           ? <button type="button" className="btn sm" disabled={busy || !init.ready} onClick={() => pickFiles(true, (urls) => patch(b.id, { items: [...itemsOf(b.id), ...urls.map((image) => ({ image, link: '' }))].slice(0, ITEMS_MAX) }))}>＋ เพิ่ม{spec.noun}</button>
           : <button type="button" className="btn sm" onClick={() => patch(b.id, { items: [...items, { ...spec.add }] })}>＋ เพิ่ม{spec.noun}</button>)}
@@ -507,6 +509,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
             const linkField = (label = 'กดแล้วไปที่ (ไม่บังคับ)') => txt('link', label, { max: 300, ph: '/history · /#cat · https://line.me/...' });
             const pic = (label: string) => (
               <div className="field"><span>{label}</span>
+                <ImgHint kind={b.type === 'imgtext' ? 'photo' : 'wide'} />
                 {b.image && <img src={b.image} alt="" className="lb-img" />}
                 <div className="lb-row"><button type="button" className="btn sm" disabled={busy || !init.ready} onClick={() => pickFiles(false, ([u]) => patch(b.id, { image: u }))}>{b.image ? 'เปลี่ยนรูป' : 'อัปโหลดรูป'}</button>
                   {b.image && <button type="button" className="btn ghost sm" onClick={() => patch(b.id, { image: '' })}>เอาออก</button>}</div></div>);
@@ -548,7 +551,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                   <div className="field"><span>รูปแบบ</span><Seg value={b.variant ?? 'grid'} set={(v) => patch(b.id, { variant: v })} opts={[['grid', 'ตาราง'], ['scroll', 'เลื่อนข้าง'], ['list', 'รายการ']]} /></div>
                 </>}
                 {b.type === 'text' && <>{txt('text', 'ข้อความ', { rows: 5 })}<div className="field"><span>จัดข้อความ</span><Seg value={b.align ?? 'left'} set={(v) => patch(b.id, { align: v })} opts={[['left', 'ชิดซ้าย'], ['center', 'กึ่งกลาง']]} /></div></>}
-                {b.type === 'image' && <>{pic('รูป (แนวนอนสวยสุด เช่น 1200×500)')}{linkField()}</>}
+                {b.type === 'image' && <>{pic('รูป')}{linkField()}</>}
                 {b.type === 'gallery' && <div className="field"><span>รูปต่อแถว</span><Seg value={b.cols ?? 3} set={(v) => patch(b.id, { cols: v })} opts={[[1, '1'], [2, '2'], [3, '3'], [4, '4']]} /></div>}
                 {b.type === 'imgtext' && <>{pic('รูป')}{txt('text', 'ข้อความ', { rows: 4 })}{txt('label', 'ข้อความบนปุ่ม (ไม่บังคับ)', { max: 40 })}{linkField('ปุ่มไปที่')}
                   <div className="field"><span>รูปอยู่ด้าน</span><Seg value={!!b.flip} set={(v) => patch(b.id, { flip: v })} opts={[[false, 'ซ้าย'], [true, 'ขวา']]} /></div></>}

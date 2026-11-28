@@ -1,4 +1,5 @@
 'use client';
+import { ImgHint } from '@/components/ImgHint';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { uploadImage } from '@/components/upload';
@@ -162,6 +163,7 @@ export function SettingsClient({ shape: shapeInit, initial, look: lookInit, them
                 <button type="button" className="btn sm" disabled={busy} onClick={() => file.current?.click()}>{f.logo_url ? 'เปลี่ยนโลโก้' : 'อัปโหลดโลโก้'}</button>
                 {f.logo_url && <button type="button" className="btn ghost sm" onClick={() => setLogo('')}>เอาออก</button>}
                 <input ref={file} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} />
+                <ImgHint kind="shopLogo" />
               </div></div>
               <label className="field"><span>ประกาศแถบบน (ไม่บังคับ)</span><input className="input" value={f.announcement} maxLength={120} placeholder="เช่น 🎉 Netflix ลด 20%" onChange={(e) => setF({ ...f, announcement: e.target.value })} /></label>
               <p className="muted" style={{ margin: 0, fontSize: 13 }}>🔗 เวลาแชร์ลิงก์ร้านใน LINE / Facebook จะแสดงรูปหน้าแรก (ไม่มีรูป = ใช้โลโก้)</p>
@@ -211,7 +213,7 @@ export function SettingsClient({ shape: shapeInit, initial, look: lookInit, them
                   </label>
                 </div>}
                 {look.bg_style === 'image' && <div style={{ display: 'flex', gap: 8 }}><button type="button" className="btn sm" disabled={busy} onClick={() => pickImage('bg_image')}>{look.bg_image ? 'เปลี่ยนรูปพื้นหลัง' : 'อัปโหลดรูปพื้นหลัง'}</button>
-                  <span className="faint" style={{ fontSize: 12, alignSelf: 'center' }}>แนะนำรูปแนวนอนกว้าง 1600px ขึ้นไป · ลายที่ขอบรูปจะเห็นชัดบนจอคอม</span></div>}
+                  <span style={{ alignSelf: 'center' }}><ImgHint kind="bg" /></span></div>}
                 {festOf(appearance.effect) && <span style={{ fontSize: 12, color: 'var(--warn)' }}>🎄 ร้านเปิดธีมเทศกาลอยู่ · เลือก "ตามธีม" = เห็นฉากเทศกาล · เลือกแบบอื่น = ใช้พื้นหลังนี้แทนฉาก (เอฟเฟกต์ขยับยังอยู่)</span>}</div>
               <div className="field"><span>สีกล่อง (การ์ดสินค้า / กล่องข้อมูล)</span>
                 <div className="card-picks">{CARDS.map(([k, l]) => (
@@ -232,12 +234,14 @@ export function SettingsClient({ shape: shapeInit, initial, look: lookInit, them
 
           {tab === 'home' && <section className="card"><div className="card-head"><h2>รูปหน้าแรก · ป๊อปอัป</h2></div>
             <div className="form">
-              <div className="field"><span>รูปหน้าแรก — แสดงแทนกล่องข้อความด้านบน (แนะนำกว้าง 1600 px เช่น 1600×600)</span>
+              <div className="field"><span>รูปหน้าแรก — แสดงแทนกล่องข้อความด้านบน</span>
+                <ImgHint kind="banner" />
                 {look.banner_url && <img src={look.banner_url} alt="" style={{ width: '100%', height: 'auto', borderRadius: 14, border: '1px solid var(--line)' }} />}
                 <div style={{ display: 'flex', gap: 8 }}><button type="button" className="btn sm" disabled={busy} onClick={() => pickImage('banner_url')}>{look.banner_url ? 'เปลี่ยนรูป' : 'อัปโหลดรูปหน้าแรก'}</button>
                   {look.banner_url && <button type="button" className="btn ghost sm" onClick={() => setLook({ ...look, banner_url: '' })}>เอาออก</button>}</div></div>
               <label className="field"><span>กดรูปแล้วไปที่ (ไม่บังคับ)</span><input className="input" value={look.banner_link} maxLength={300} placeholder="เช่น /p/รหัสสินค้า หรือ https://..." onChange={(e) => setLook({ ...look, banner_link: e.target.value })} /></label>
               <div className="field"><span>ป๊อปอัปตอนลูกค้าเข้าเว็บ (ใส่รูปหรือข้อความ · ว่างทั้งคู่ = ไม่แสดง)</span>
+                <ImgHint kind="popup" />
                 <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   {look.popup_image && <img src={look.popup_image} alt="" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 12, border: '1px solid var(--line)' }} />}
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button type="button" className="btn sm" disabled={busy} onClick={() => pickImage('popup_image')}>{look.popup_image ? 'เปลี่ยนรูปป๊อปอัป' : 'อัปโหลดรูปป๊อปอัป'}</button>
