@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/components/Cart';
 import { notify } from '@/components/dialog';
 import { Delivered } from '@/components/Delivered';
+import css from './reports.module.css';
 
 export type ReportItem = {
   id: string; name: string; fulfillment: string; status: string; delivered: string;
@@ -24,6 +25,7 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
   // แยกกล่อง: รายการใหม่ (รอตอบ) · แก้เรียบร้อย (ปิดแล้ว)
   const [tab, setTab] = useState<'open' | 'done'>(open || !doneRows.length ? 'open' : 'done');
   const shown = tab === 'open' ? openRows : doneRows;
+  const [exp, setExp] = useState<string | null>(null); // แถวที่กางดูรายละเอียด
 
   async function send(r: AdminReport, resolve: boolean) {
     setBusy(r.id);
@@ -46,13 +48,16 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
       )}
       {ready && !rows.length && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีลูกค้าแจ้งปัญหา</p></div>}
       {ready && rows.length > 0 && !shown.length && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>{tab === 'open' ? 'ไม่มีเรื่องใหม่ เคลียร์หมดแล้ว 👍' : 'ยังไม่มีเรื่องที่แก้เรียบร้อย'}</p></div>}
-      <div className="reports">{shown.map((r) => (
-        <section key={r.id} className={`card report ${r.status}`}>
-          <div className="report-head">
+      <div className={css.list}>{shown.map((r) => { const on = exp === r.id; return (
+        <section key={r.id} className={`card ${css.row}${on ? ` ${css.open}` : ''}`}>
+          {/* แถวสรุป: กดเพื่อกาง / พับรายละเอียด */}
+          <button type="button" className={css.sum} aria-expanded={on} onClick={() => setExp(on ? null : r.id)}>
             <span className={`pill ${r.status === 'open' ? 'warn' : 'ok'}`}>{r.status === 'open' ? 'รอตอบ' : 'แก้เรียบร้อย'}</span>
-            <b>{r.topic}</b>
-            <span className="muted">{r.when}</span>
-          </div>
+            <span className={css.main}><b>{r.topic}</b><small>#{r.code} · @{r.user}{r.items[0] ? ` · ${r.items[0].name}${r.items.length > 1 ? ` +${r.items.length - 1}` : ''}` : ''}</small></span>
+            <span className={css.when}>{r.when}</span>
+            <i className={css.chev} aria-hidden>⌄</i>
+          </button>
+          {on && <div className={`report ${css.detail}`}>
           <div className="report-meta">
             <Link href={to(`/admin/orders?q=${r.code}`)}>ออเดอร์ #{r.code}</Link> · @{r.user}{r.contact && ` · ${r.contact}`}
           </div>
@@ -72,8 +77,9 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
             <button type="button" className="btn sm" disabled={busy === r.id || !(text[r.id] ?? '').trim()} onClick={() => send(r, false)}>ส่งคำตอบ</button>
             {r.status === 'open' && <button type="button" className="btn primary sm" disabled={busy === r.id} onClick={() => send(r, true)}>✓ ตอบ + ปิดเรื่อง</button>}
           </div>
+          </div>}
         </section>
-      ))}</div>
+      ); })}</div>
     </>
   );
 }
