@@ -8,7 +8,8 @@ import { otpAppTiles } from '@/lib/otp-apps';
 import { activeTheme, ownedThemes } from '@/lib/themes';
 import { shopContacts } from '@/lib/contacts-server';
 import { ContactFab } from '@/components/ContactFab';
-import { OtpBox } from '../../(store)/otp/OtpBox';
+import { OtpWebClient } from './OtpWebClient';
+import { db } from '@/lib/db';
 import css from './otpweb.module.css';
 import '../../store.css';
 
@@ -36,25 +37,14 @@ export default async function OtpWeb() {
   if (!(await otpPublic(shop.id))) notFound();
   const [agent, apps, contacts, brand] = await Promise.all([otpAgent(shop.id), otpAppTiles(shop.id), shopContacts(shop), otpSiteBrand(shop.id)]);
   const name = brand.name || shop.name, logo = brand.logo || shop.logo_url;
+  // ระบบตัวแทนใช้รหัส 4 หลักทุกอีเมล → ช่องรหัส 4 ช่อง (มีชื่อยูส / อีเมลตัวแทน = ช่องเดียว)
+  const { data: kinds } = agent ? await db().from('shop_otp_access').select('kind').eq('shop_id', shop.id).neq('kind', 'pin').limit(1) : { data: [] };
+  const pinOnly = agent && !(kinds ?? []).length;
   const theme = activeTheme(shop.theme ?? 'modern', ownedThemes(shop.plan, shop.themes_owned));
   return (
     <div className={`store ${css.page}`} data-style={theme} data-card={shop.card_style ?? 'white'}>
-      <header className={css.head}>
-        {logo ? <img src={logo} alt={name} className={css.logo} /> : <span className={css.mark}>{name.slice(0, 1).toUpperCase()}</span>}
-        <div><b>{name}</b><small>ระบบรับรหัส OTP อัตโนมัติ</small></div>
-      </header>
       <main className={css.main}>
-        <div className={css.hero}>
-          <span className={css.badge}>🔐 OTP</span>
-          <h1>รับรหัส OTP</h1>
-          <p>เลือกแอป กรอกอีเมลบัญชี{agent ? ' และรหัสที่ได้จากร้าน' : 'ที่ได้จากร้าน'} แล้วกดค้นหา · รหัสขึ้นเองภายในไม่กี่วินาที</p>
-        </div>
-        <OtpBox accounts={[]} apps={apps} open agent={agent} />
-        <ol className={css.steps}>
-          <li><b>1</b><span>เข้าแอปที่ต้องการ แล้วกด &quot;ส่งรหัสทางอีเมล&quot;</span></li>
-          <li><b>2</b><span>กลับมาเลือกแอปนี้ กรอกอีเมล แล้วกดค้นหาภายใน 15 นาที</span></li>
-          <li><b>3</b><span>คัดลอกรหัสไปกรอกในแอป ใช้งานได้ทันที</span></li>
-        </ol>
+        <OtpWebClient name={name} logo={logo} apps={apps} agent={agent} pinOnly={pinOnly} />
       </main>
       <footer className={css.foot}>© {new Date().getFullYear()} {name} · <a href="/">ไปหน้าร้าน {shop.name}</a></footer>
       <ContactFab links={contacts} />
