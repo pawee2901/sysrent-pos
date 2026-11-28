@@ -13,7 +13,8 @@ const tint = (a: App) => ({ '--app': templateOf(a.template)?.bg ?? 'var(--accent
 
 /** ค้นหา OTP 3 ขั้น: เลือกแอป → เลือกอีเมลแล้วค้นหา → แสดงรหัส */
 /** open = หน้ารับ OTP แบบไม่ต้องล็อกอิน (พิมพ์อีเมลเอง · ค้นผ่าน /api/otp/public) */
-export function OtpBox({ accounts, apps, open = false }: { accounts: OtpAccount[]; apps: App[]; open?: boolean }) {
+export function OtpBox({ accounts, apps, open = false, agent = false }: { accounts: OtpAccount[]; apps: App[]; open?: boolean; agent?: boolean }) {
+  const [code, setCode] = useState(''); // ระบบตัวแทน: รหัส 4 หลัก / ชื่อยูส / อีเมลตัวแทน
   const [account, setAccount] = useState(accounts[0]?.email ?? '');
   const [app, setApp] = useState<App | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,7 +26,7 @@ export function OtpBox({ accounts, apps, open = false }: { accounts: OtpAccount[
     e?.preventDefault();
     if (!app) return;
     setBusy(true); setErr('');
-    const r = await api<{ hits: Hit[] }>(open ? '/api/otp/public' : '/api/otp', { account: account.trim(), appId: app.id });
+    const r = await api<{ hits: Hit[] }>(open ? '/api/otp/public' : '/api/otp', { account: account.trim(), appId: app.id, ...(agent ? { code: code.trim() } : {}) });
     setBusy(false);
     if (!r.ok) { setErr(r.error); return; }
     if (!r.data.hits.length) { setErr('ไม่พบรหัสใน 15 นาทีล่าสุด กรุณากดขอรหัสจากแอปก่อน แล้วค้นหาอีกครั้ง'); return; }
@@ -66,6 +67,8 @@ export function OtpBox({ accounts, apps, open = false }: { accounts: OtpAccount[
             : <select className="input" value={account} onChange={(e) => setAccount(e.target.value)}>
             {accounts.map((a) => <option key={a.email} value={a.email}>{a.email}{a.product ? ` · ${a.product}` : ''}</option>)}
           </select>}</label>
+        {agent && <label className="field"><span>รหัสยืนยันจากร้าน</span>
+          <input className="input" required autoComplete="off" value={code} maxLength={120} placeholder="รหัส 4 หลัก / ชื่อยูส / อีเมลตัวแทน" onChange={(e) => setCode(e.target.value)} /></label>}
         <button type="submit" className="btn primary lg block" disabled={busy}>{busy ? 'กำลังค้นหา…' : 'ค้นหารหัส'}</button>
         {failed}
       </form>

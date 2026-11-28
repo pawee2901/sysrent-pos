@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { api } from '@/components/Cart';
 import { ask, input, notify } from '@/components/dialog';
 import { GmailGuide, HotmailGuide, MsAppGuide } from '@/components/otp/MailGuides';
+import { AgentTab, type AgentInit } from './AgentTab';
 
 type Box = { id: string; email: string; provider: string; active: boolean; error: string };
 type App = { id: string; name: string; keywords: string; code: string };
@@ -20,10 +21,10 @@ const MS_RESULT: Record<string, string> = {
   sql: 'ต้องรัน SQL 0024, 0025 และ 0026 ใน Supabase ก่อน', save: 'บันทึกไม่สำเร็จ กรุณาลองใหม่',
 };
 const LABEL: Record<string, string> = { gmail: 'Gmail', maily: 'Maily', graph: 'Hotmail / Outlook' };
-const TABS = [['mail', 'บัญชีอีเมล'], ['apps', 'แอปพลิเคชัน'], ['api', 'ตั้งค่า API']] as const;
+const TABS = [['mail', 'บัญชีอีเมล'], ['apps', 'แอปพลิเคชัน'], ['agent', 'ระบบตัวแทน'], ['api', 'ตั้งค่า API']] as const;
 type Tab = (typeof TABS)[number][0];
 
-export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean }) {
+export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit }) {
   const [pageUrl, setPageUrl] = useState('');
   useEffect(() => setPageUrl(`${window.location.origin}${to('/otp')}`), []);
   const router = useRouter();
@@ -207,6 +208,8 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
           </div>
         </section>
       </>}
+
+      {tab === 'agent' && <AgentTab agent={agent} openPage={openPage} busy={busy} call={call} />}
 
       {tab === 'api' && <>
         <section className="card">

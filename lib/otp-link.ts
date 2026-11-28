@@ -9,6 +9,12 @@ export async function otpLink(shopId: string): Promise<string> {
   return /^https:\/\//.test(v) ? v : '';
 }
 
+/** ระบบตัวแทน (ต้องกรอกรหัสยืนยันก่อนขอ OTP) เปิดไหม · ยังไม่รัน 0049 = ปิด */
+export async function otpAgent(shopId: string): Promise<boolean> {
+  const { data, error } = await db().from('shop_otp_config').select('agent_mode').eq('shop_id', shopId).maybeSingle();
+  return !error && data?.agent_mode === true;
+}
+
 /** หน้ารับ OTP แบบไม่ต้องล็อกอิน เปิดอยู่ไหม (ยังไม่รัน 0048 = ปิด) */
 export async function otpPublic(shopId: string): Promise<boolean> {
   const { data, error } = await db().from('shop_otp_config').select('public_page').eq('shop_id', shopId).maybeSingle();

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { ACCESS_KINDS, PERIODS, accessProblem, normalizeAccess } from '@/lib/otp-agent';
 import { db } from '@/lib/db';
 import { can } from '@/lib/plan';
 import { body, fail, requireAdmin } from '@/lib/api';
@@ -23,11 +24,17 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('delete_ms') }),
   // ลูกค้าค้น OTP ที่ไหน: '' = ในเว็บร้าน · https://… = ลิงก์เว็บ OTP อื่น
   z.object({ action: z.literal('public_page'), on: z.boolean() }),
+  // ระบบตัวแทน: เปิด/ปิด · เพิ่ม / แก้ / ลบ รหัสยืนยันของแต่ละอีเมล
+  z.object({ action: z.literal('agent_mode'), on: z.boolean() }),
+  z.object({ action: z.literal('access_add'), email: z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120), label: z.string().trim().max(40).default(''), kind: z.enum(ACCESS_KINDS), secret: z.string().trim().min(1, 'กรอกรหัส').max(120), use_limit: z.number().int().min(0).max(1000).default(0), period: z.enum(PERIODS).default('day') }),
+  z.object({ action: z.literal('access_update'), id, active: z.boolean().optional(), use_limit: z.number().int().min(0).max(1000).optional(), period: z.enum(PERIODS).optional() }),
+  z.object({ action: z.literal('access_delete'), id }),
   z.object({ action: z.literal('save_link'), link: z.string().trim().max(500).refine((v) => !v || /^https:\/\/[^\s]+$/.test(v), 'ลิงก์ต้องขึ้นต้นด้วย https://') }),
   z.object({ action: z.literal('add_api'), name: z.string().trim().min(1, 'ตั้งชื่ออ้างอิง').max(40), type: z.enum(['maily', 'cloud_run']), token: z.string().trim().min(8, 'กรอก Token หรือ URL').max(500) }),
   z.object({ action: z.literal('delete_api'), id }),
 ]);
 
+const AGENT_SQL = 'ต้องรัน SQL 0049_otp_agent.sql ใน Supabase ก่อน';
 const MISSING = 'ต้องรัน SQL 0024, 0025 และ 0026 ใน Supabase ก่อน';
 
 /** ตั้งค่าค้นหา OTP · รหัส / Token / Secret เข้ารหัสก่อนเก็บ และไม่ส่งกลับหน้าเว็บ */
@@ -75,6 +82,25 @@ export async function POST(req: Request) {
   }
   // ลบแค่ Microsoft App (ไม่ลบแถว — เก็บลิงก์เว็บ OTP ไว้)
   if (x.action === 'delete_ms') return done((await d.from('shop_otp_config').update({ ms_client_id: null, ms_secret_enc: null, updated_at: new Date().toISOString() }).eq('shop_id', sid)).error);
+  if (x.action === 'agent_mode') {
+    const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, agent_mode: x.on, updated_at: new Date().toISOString() });
+    return error ? fail(/agent_mode/.test(error.message) ? AGENT_SQL : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
+  if (x.action === 'access_add') {
+    const secret = normalizeAccess(x.kind, x.secret);
+    const bad = accessProblem(x.kind, secret);
+    if (bad) return fail(bad);
+    const { error } = await d.from('shop_otp_access').insert({ shop_id: sid, email: x.email, label: x.label, kind: x.kind, secret, use_limit: x.use_limit, period: x.period });
+    return error ? fail(error.code === '23505' ? 'อีเมลนี้มีรหัสนี้อยู่แล้ว' : /shop_otp_access/.test(error.message) ? AGENT_SQL : 'บันทึกไม่สำเร็จ', error.code === '23505' ? 409 : 500) : NextResponse.json({ ok: true });
+  }
+  if (x.action === 'access_update') {
+    const upd: Record<string, unknown> = {};
+    if (x.active !== undefined) upd.active = x.active;
+    if (x.use_limit !== undefined) upd.use_limit = x.use_limit;
+    if (x.period !== undefined) upd.period = x.period;
+    return done((await d.from('shop_otp_access').update(upd).eq('id', x.id).eq('shop_id', sid)).error);
+  }
+  if (x.action === 'access_delete') return done((await d.from('shop_otp_access').delete().eq('id', x.id).eq('shop_id', sid)).error);
   if (x.action === 'public_page') {
     const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, public_page: x.on, updated_at: new Date().toISOString() });
     return error ? fail(/public_page/.test(error.message) ? 'ต้องรัน SQL 0048_otp_public_page.sql ใน Supabase ก่อน' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });

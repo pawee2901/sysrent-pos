@@ -5,7 +5,8 @@ import { PlanLock } from '@/components/PlanLock';
 import { adminShop, when } from '@/lib/admin-page';
 import { redirectUri } from '@/lib/msgraph';
 import { OtpSettings } from './OtpSettings';
-import { otpLink, otpPublic } from '@/lib/otp-link';
+import { otpAgent, otpLink, otpPublic } from '@/lib/otp-link';
+import { PERIOD_MS, type OtpAccess } from '@/lib/otp-agent';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,14 @@ export default async function AdminOtp({ searchParams }: { searchParams: Promise
     d.from('shop_otp_config').select('ms_client_id, ms_secret_enc').eq('shop_id', shop.id).maybeSingle(),
     d.from('shop_otp_apis').select('id, name, type').eq('shop_id', shop.id).order('created_at'),
   ]);
+  // ระบบตัวแทน: รหัสยืนยันทั้งหมด + ใช้ไปกี่ครั้งในรอบโควตา (ยังไม่รัน 0049 = ไม่พร้อม)
+  const acc = await d.from('shop_otp_access').select('id, email, label, kind, secret, use_limit, period, active').eq('shop_id', shop.id).order('email').order('created_at');
+  const access = (acc.data ?? []) as OtpAccess[];
+  if (access.length) {
+    const since = new Date(Date.now() - PERIOD_MS.month).toISOString();
+    const { data: used } = await d.from('shop_otp_requests').select('access_id, created_at').in('access_id', access.map((a) => a.id)).eq('found', true).gte('created_at', since).limit(5000);
+    for (const a of access) a.used = ((used ?? []) as { access_id: string; created_at: string }[]).filter((u) => u.access_id === a.id && Date.now() - new Date(u.created_at).getTime() < PERIOD_MS[a.period]).length;
+  }
   type Log = { id: string; account: string; app: string; found: boolean; created_at: string; shop_customers: { username: string } | null };
   return (
     <OtpSettings
@@ -34,6 +43,7 @@ export default async function AdminOtp({ searchParams }: { searchParams: Promise
       apis={(apis.data ?? []) as { id: string; name: string; type: string }[]}
       link={await otpLink(shop.id)}
       openPage={await otpPublic(shop.id)}
+      agent={{ ready: !acc.error, on: await otpAgent(shop.id), list: access }}
     />
   );
 }
