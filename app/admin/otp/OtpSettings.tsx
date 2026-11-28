@@ -31,7 +31,7 @@ type Tab = (typeof TABS)[number][0];
 export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent, custLimit, asks }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit; custLimit: { limit: number; period: CustPeriod }; asks: { ready: boolean; list: OtpAsk[]; ack: AckInit } }) {
   const [lim, setLim] = useState({ n: String(custLimit.limit), period: custLimit.period });
   const [pageUrl, setPageUrl] = useState('');
-  useEffect(() => setPageUrl(`${window.location.origin}${to('/otp')}`), []);
+  useEffect(() => setPageUrl(`${window.location.origin}${to('/otp-web')}`), []);
   const router = useRouter();
   const path = usePathname();
   const [tab, setTab] = useState<Tab>('mail');

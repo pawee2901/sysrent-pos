@@ -11,7 +11,8 @@
     "/p": "/item",
     "/terms": "/rules",
     "/otp": "/code",
-    "/page": "/s"
+    "/page": "/s",
+    "/otp-web": "/getotp"
   },
   "admin": {
     "/accounting": "/ledger",
