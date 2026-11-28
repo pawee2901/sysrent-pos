@@ -40,12 +40,15 @@ const Stars = ({ n = 5 }: { n?: number }) => <span className="hb-stars" aria-lab
 export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[]; c?: string; q?: string }) {
   const shop = (await getShop())!;
   const d = db();
-  const [all, { count: members }, { data: recent }, me, { data: pc }] = await Promise.all([
+  // กล่องกิจกรรม: คนสมัครสมาชิกใหม่ (เฉพาะเมื่อมีกล่องที่ต้องแสดงคนสมัคร)
+  const wantJoin = input.some((b) => b.on && b.type === 'live' && (b.events ?? 'all') !== 'buy');
+  const [all, { count: members }, { data: recent }, me, { data: pc }, { data: joined }] = await Promise.all([
     loadProducts(shop.id),
     d.from('shop_customers').select('id', { count: 'exact', head: true }).eq('shop_id', shop.id),
     d.from('shop_orders').select('paid_at, customer_id, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(10),
     getCustomer(),
     d.from('shops').select('promo_cards').eq('id', shop.id).maybeSingle(), // ยังไม่รัน 0031 = ไม่แสดงกล่องรูป
+    wantJoin ? d.from('shop_customers').select('id, username, created_at').eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
   ]);
   const layout = input.filter((b) => b.on);
   const contacts = layout.some((b) => b.type === 'contact') ? await shopContacts(shop) : [];
@@ -66,15 +69,18 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
   const recentRows = (recent ?? []) as unknown as R[];
   // รูปโปรไฟล์ลูกค้า (เฉพาะเมื่อมีการ์ดกิจกรรม · ยังไม่รัน 0043 = error = ใช้ตัวอักษรแรก)
   const pics = new Map<string, string>();
-  const ids = [...new Set(recentRows.map((r) => r.customer_id).filter((x): x is string => !!x))];
+  type J = { id: string; username: string; created_at: string };
+  const joinRows = (joined ?? []) as J[];
+  const ids = [...new Set([...recentRows.map((r) => r.customer_id), ...joinRows.map((j) => j.id)].filter((x): x is string => !!x))];
   if (ids.length && input.some((b) => b.on && b.type === 'live' && b.variant === 'feed')) {
     const { data: av } = await d.from('shop_customers').select('id, avatar_url').in('id', ids).not('avatar_url', 'is', null);
     for (const x of (av ?? []) as { id: string; avatar_url: string }[]) pics.set(x.id, x.avatar_url);
   }
-  const live = recentRows.map((r) => {
+  const buys = recentRows.map((r) => {
     const u = r.shop_customers?.username ?? '';
     const items = r.shop_order_items.map((x) => x.name);
     return {
+      kind: 'buy' as const, at: r.paid_at,
       who: u ? `@${mask(u)}` : 'ลูกค้า', what: (items[0] ?? 'สินค้า').split(' · ')[0], when: ago(r.paid_at),
       // การ์ดกิจกรรม: ตัวแรกของชื่อ + จุดปิดที่เหลือ · ชื่อสินค้าเต็ม (หลายชิ้น = + อีก n)
       avatar: (r.customer_id && pics.get(r.customer_id)) || '',
@@ -82,6 +88,13 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
       full: `${items[0] ?? 'สินค้า'}${items.length > 1 ? ` + อีก ${items.length - 1}` : ''}`,
     };
   });
+  const joins = joinRows.map((j) => ({
+    kind: 'join' as const, at: j.created_at, who: `@${mask(j.username)}`, what: '', when: ago(j.created_at),
+    avatar: pics.get(j.id) ?? '', dots: `${j.username[0] ?? '?'}${'•'.repeat(Math.min(10, Math.max(3, j.username.length - 1)))}`, initial: (j.username[0] ?? '?').toUpperCase(), full: '',
+  }));
+  /** รายการของกล่องกิจกรรม: ซื้อ / สมัคร เรียงใหม่สุดก่อน */
+  const liveOf = (ev: Block['events']) => (ev === 'buy' ? buys : ev === 'join' ? joins : [...buys, ...joins].sort((a, z) => z.at.localeCompare(a.at)));
+  const act = (l: { kind: 'buy' | 'join'; full: string; what: string }, short = false) => (l.kind === 'join' ? 'สมัครสมาชิก 🎉' : `ซื้อ ${short ? l.what : l.full}`);
 
   const builtin: Record<string, React.ReactNode> = {
     hero: (shop.banner_url ? (shop.banner_link
@@ -141,16 +154,16 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
     : <div className={cls}>{inner}</div>;
   function render(b: Block): React.ReactNode {
     if (b.type === 'live') {
-      const list = live.slice(0, Math.min(10, Math.max(3, b.limit ?? (b.variant === 'feed' ? 5 : 4))));
+      const list = liveOf(b.events).slice(0, Math.min(10, Math.max(3, b.limit ?? (b.variant === 'feed' ? 5 : 4))));
       if (!list.length) return null;
       if (b.variant === 'feed') return (
         <section className="hb hb-feed">
           <div className="hb-feed-head"><div>{(b.label ?? 'STORE FEED') && <small>{b.label ?? 'STORE FEED'}</small>}<h2>{b.title || 'กิจกรรมล่าสุด'}</h2>{b.text && <p>{b.text}</p>}</div>{(b.badge ?? 'อัปเดตสด') && <span className="hb-feed-live"><i />{b.badge ?? 'อัปเดตสด'}</span>}</div>
-          <ul>{list.map((l, i) => <li key={i}><span className="hb-feed-av">{l.avatar ? <img src={l.avatar} alt="" loading="lazy" /> : l.initial}</span><span className="hb-feed-txt"><b>{l.dots}</b> ซื้อ {l.full}</span><time>{l.when}</time></li>)}</ul>
+          <ul>{list.map((l, i) => <li key={i}><span className="hb-feed-av">{l.avatar ? <img src={l.avatar} alt="" loading="lazy" /> : l.initial}</span><span className="hb-feed-txt"><b>{l.dots}</b> {act(l)}</span><time>{l.when}</time></li>)}</ul>
         </section>);
       if (b.variant === 'ticker') return (
-        <div className="hb hb-marquee hb-ticker" aria-label="ลูกค้าที่เพิ่งซื้อ"><div aria-hidden>{[0, 1].map((k) => <span key={k}>{list.map((l) => `🟢 ${l.who} ซื้อ ${l.what} · ${l.when}`).join('     ')}</span>)}</div></div>);
-      return <div className="live"><span className="live-dot" />{list.slice(0, 4).map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> ซื้อ {l.what} · {l.when}</span>)}</div>;
+        <div className="hb hb-marquee hb-ticker" aria-label="ลูกค้าที่เพิ่งซื้อ"><div aria-hidden>{[0, 1].map((k) => <span key={k}>{list.map((l) => `${l.kind === 'join' ? '🎉' : '🟢'} ${l.who} ${act(l, true)} · ${l.when}`).join('     ')}</span>)}</div></div>);
+      return <div className="live"><span className="live-dot" />{list.slice(0, 4).map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> {act(l, true)} · {l.when}</span>)}</div>;
     }
     if (b.type in builtin) return builtin[b.type];
     if (b.type === 'featured') {

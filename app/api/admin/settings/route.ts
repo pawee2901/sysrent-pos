@@ -29,7 +29,7 @@ const block = z.object({
   video: z.string().trim().max(300).refine((u) => !u || !!youtubeId(u), 'ลิงก์ YouTube ไม่ถูกต้อง').optional(),
   items: z.array(z.object({ image: https(500).optional(), link: link.optional(), q: z.string().trim().max(200).optional(), a: z.string().trim().max(1000).optional(),
     icon: z.string().trim().max(12).optional(), stars: z.number().int().min(1).max(5).optional(), kind: z.enum(Object.keys(SOCIAL) as [SocialKind, ...SocialKind[]]).optional() })).max(ITEMS_MAX).optional(),
-  variant: z.enum(['grid', 'scroll', 'list', 'bar', 'feed', 'ticker']).optional(), badge: z.string().trim().max(30).optional(), minStars: z.number().int().min(1).max(5).optional(),
+  variant: z.enum(['grid', 'scroll', 'list', 'bar', 'feed', 'ticker']).optional(), badge: z.string().trim().max(30).optional(), minStars: z.number().int().min(1).max(5).optional(), events: z.enum(['all', 'buy', 'join']).optional(),
   style: z.object({
     bg: color, fg: color, accent: color, card: color,
     radius: z.number().int().min(0).max(48).optional(), pad: z.number().int().min(0).max(64).optional(),

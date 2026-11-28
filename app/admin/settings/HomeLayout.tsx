@@ -64,7 +64,7 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
               const demo = !d.recent?.length && i >= 3 ? ['🐼', '🐰'][i - 3] : '';
               return <div key={i} className="cv-feed-row"><span style={r.avatar || demo ? { padding: 0, overflow: 'hidden', fontSize: 15, background: demo ? 'linear-gradient(135deg, #fde2e4, #e0f2fe)' : undefined } : undefined}>
                 {r.avatar ? <img src={r.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : demo || r.initial}</span>
-                <p><b>{r.dots}</b> ซื้อ {r.name}</p><small>{r.when}</small></div>;
+                <p><b>{r.dots}</b> {(b.events ?? 'all') === 'join' || ((b.events ?? 'all') === 'all' && i === 1) ? 'สมัครสมาชิก 🎉' : `ซื้อ ${r.name}`}</p><small>{r.when}</small></div>;
             })}</div>);
       if (b.variant === 'ticker') return <div className="cv-marquee dark"><span>🟢 @s***a ซื้อ {names[0]} · 5 นาทีที่แล้ว     🟢 @k***n ซื้อ {names[1 % names.length]} · 9 นาทีที่แล้ว</span></div>;
       return <div className="cv-live"><i />@s***a ซื้อ {names[0]} · 5 นาทีที่แล้ว</div>;
@@ -516,6 +516,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                   <button type="button" className="btn ghost sm lb-close" aria-label="ปิด" onClick={() => setSel(null)}>✕</button></div>
                 {b.type === 'live' && <>
                   <div className="field"><span>รูปแบบ</span><Seg value={b.variant ?? 'bar'} set={(v) => patch(b.id, { variant: v })} opts={[['bar', 'แถบ'], ['feed', 'การ์ดกิจกรรม'], ['ticker', 'ตัวหนังสือวิ่ง']]} /></div>
+                  <div className="field"><span>แสดงอะไรบ้าง</span><Seg value={b.events ?? 'all'} set={(v) => patch(b.id, { events: v })} opts={[['all', 'คนซื้อ + คนสมัคร'], ['buy', 'คนซื้อ'], ['join', 'คนสมัคร']]} /></div>
                   {b.variant === 'feed' && <>
                     <label className="field"><span>ป้ายเล็กด้านบน (ลบให้ว่าง = ไม่แสดง)</span><input className="input" value={b.label ?? 'STORE FEED'} maxLength={40} onChange={(e) => patch(b.id, { label: e.target.value })} /></label>
                     {txt('title', 'หัวข้อการ์ด', { ph: 'กิจกรรมล่าสุด' })}
@@ -523,7 +524,7 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                     <label className="field"><span>ป้ายมุมขวา (ลบให้ว่าง = ไม่แสดง)</span><input className="input" value={b.badge ?? 'อัปเดตสด'} maxLength={30} onChange={(e) => patch(b.id, { badge: e.target.value })} /></label>
                   </>}
                   {b.variant !== undefined && b.variant !== 'bar' && <label className="field"><span>จำนวนรายการ</span><select className="input" value={b.limit ?? 5} onChange={(e) => patch(b.id, { limit: Number(e.target.value) })}>{[3, 5, 8, 10].map((n) => <option key={n} value={n}>{n} รายการ</option>)}</select></label>}
-                  <p className="muted lb-note">ใช้ออเดอร์จริงของร้าน ชื่อลูกค้าถูกปิดบางส่วนให้อัตโนมัติ · ตัวอย่างในหน้านี้เป็นข้อมูลสมมติ</p>
+                  <p className="muted lb-note">ใช้ออเดอร์และการสมัครสมาชิกจริงของร้าน ชื่อลูกค้าถูกปิดบางส่วนให้อัตโนมัติ · ตัวอย่างในหน้านี้เป็นข้อมูลสมมติ</p>
                 </>}
                 {builtin && b.type !== 'live' && <p className="muted lb-note">{b.type === 'hero' || b.type === 'promos' ? 'รูปของกล่องนี้แก้ได้ที่แท็บ "รูปหน้าแรก · ป๊อปอัป"' : b.type === 'products' ? 'ถ้าซ่อนหรือลบกล่องนี้ ลูกค้าที่ค้นหาจะเห็นผลค้นหาบนสุดแทน' : 'กล่องนี้ใช้ข้อมูลจริงของร้าน ไม่ต้องตั้งค่า'}</p>}
                 {TITLED.includes(b.type) && txt('title', b.type === 'spotlight' ? 'ป้ายเล็กด้านบน (ไม่บังคับ)' : b.type === 'quote' ? 'ผู้พูด / ที่มา (ไม่บังคับ)' : 'หัวข้อ')}
