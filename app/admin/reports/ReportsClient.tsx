@@ -19,7 +19,11 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
   const router = useRouter();
   const [text, setText] = useState<Record<string, string>>(() => Object.fromEntries(rows.map((r) => [r.id, r.reply])));
   const [busy, setBusy] = useState<string | null>(null);
-  const open = rows.filter((r) => r.status === 'open').length;
+  const openRows = rows.filter((r) => r.status === 'open'), doneRows = rows.filter((r) => r.status !== 'open');
+  const open = openRows.length;
+  // แยกกล่อง: รายการใหม่ (รอตอบ) · แก้เรียบร้อย (ปิดแล้ว)
+  const [tab, setTab] = useState<'open' | 'done'>(open || !doneRows.length ? 'open' : 'done');
+  const shown = tab === 'open' ? openRows : doneRows;
 
   async function send(r: AdminReport, resolve: boolean) {
     setBusy(r.id);
@@ -34,11 +38,18 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
       <div className="page-head"><div><h1>แจ้งปัญหา</h1><p>{open ? `รอตอบ ${open} เรื่อง` : 'ไม่มีเรื่องค้าง 👍'} · แก้ไอดีให้ลูกค้าได้ในหน้านี้ · ลูกค้าเห็นคำตอบในหน้าประวัติ</p></div></div>
       {!enabled && <div className="card card-pad" style={{ marginBottom: 16 }}><b>🔒 ปุ่มแจ้งปัญหาเป็นฟีเจอร์ของแพ็กเกจ ฿310</b><p className="muted" style={{ margin: '6px 0 0' }}>อัปเกรดแพ็กเกจที่ sysrent.shop แล้วลูกค้าจะเห็นปุ่ม &quot;⚠️ แจ้งปัญหา&quot; ในหน้าประวัติการซื้อ</p></div>}
       {!ready && <div className="card card-pad" style={{ marginBottom: 16 }}><b>⚠️ ต้องรัน SQL 0013_reports_slip_price.sql ก่อน</b></div>}
+      {ready && rows.length > 0 && (
+        <nav className="set-tabs" role="tablist" aria-label="สถานะเรื่อง">
+          <button type="button" role="tab" aria-selected={tab === 'open'} className={tab === 'open' ? 'on' : ''} onClick={() => setTab('open')}>📥 รายการใหม่ <span className={`pill ${open ? 'warn' : 'plain'}`}>{open}</span></button>
+          <button type="button" role="tab" aria-selected={tab === 'done'} className={tab === 'done' ? 'on' : ''} onClick={() => setTab('done')}>✅ แก้เรียบร้อย <span className="pill plain">{doneRows.length}</span></button>
+        </nav>
+      )}
       {ready && !rows.length && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีลูกค้าแจ้งปัญหา</p></div>}
-      <div className="reports">{rows.map((r) => (
+      {ready && rows.length > 0 && !shown.length && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>{tab === 'open' ? 'ไม่มีเรื่องใหม่ เคลียร์หมดแล้ว 👍' : 'ยังไม่มีเรื่องที่แก้เรียบร้อย'}</p></div>}
+      <div className="reports">{shown.map((r) => (
         <section key={r.id} className={`card report ${r.status}`}>
           <div className="report-head">
-            <span className={`pill ${r.status === 'open' ? 'warn' : 'ok'}`}>{r.status === 'open' ? 'รอตอบ' : 'ปิดแล้ว'}</span>
+            <span className={`pill ${r.status === 'open' ? 'warn' : 'ok'}`}>{r.status === 'open' ? 'รอตอบ' : 'แก้เรียบร้อย'}</span>
             <b>{r.topic}</b>
             <span className="muted">{r.when}</span>
           </div>
