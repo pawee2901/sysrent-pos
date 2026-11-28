@@ -6,7 +6,7 @@ export const PERMS = [
   { key: 'dashboard', label: 'ภาพรวม', desc: 'ยอดขาย · สถิติร้าน', href: '' },
   { key: 'orders', label: 'ออเดอร์', desc: 'ดูออเดอร์ · ส่งของ · คืนเงิน', href: '/orders' },
   { key: 'reports', label: 'แจ้งปัญหา', desc: 'ตอบลูกค้า · แก้ไอดีให้ลูกค้า', href: '/reports' },
-  { key: 'products', label: 'สินค้า', desc: 'เพิ่ม / แก้สินค้า · ราคา · สต็อก', href: '/products' },
+  { key: 'products', label: 'สินค้า', desc: 'เพิ่ม / แก้สินค้า · ราคา · สต็อก · API ร้านส่ง', href: '/products' },
   { key: 'reviews', label: 'รีวิว', desc: 'ดู · ซ่อน · ตอบรีวิวลูกค้า', href: '/reviews' },
   { key: 'renewals', label: 'ต่อเมล', desc: 'ลูกค้าต่อเมล · เตือน + รับเงินทาง LINE', href: '/renewals' },
   { key: 'linebot', label: 'บอท LINE', desc: 'เชื่อม LINE OA · ข้อความ · เมนู · การ์ดสินค้าในแชท', href: '/line-bot' },
@@ -15,7 +15,7 @@ export const PERMS = [
   { key: 'agents', label: 'ตัวแทน', desc: 'ตั้ง / พัก / เอาออกตัวแทน · ดูยอดซื้อ', href: '/agents' },
   { key: 'payments', label: 'การชำระเงิน', desc: 'ประวัติเติมเงิน / สลิป', href: '/payments' },
   { key: 'otp', label: 'ค้นหา OTP', desc: 'เชื่อมกล่องอีเมล · ตั้งแอปที่ค้นได้', href: '/otp' },
-  { key: 'accounting', label: 'บัญชี', desc: 'รายรับ · ต้นทุน · กำไร · จดรายจ่าย', href: '/accounting' },
+  { key: 'accounting', label: 'บัญชี', desc: 'รายรับ · ต้นทุน · กำไร · สมุดบัญชี · บัญชีเงิน', href: '/accounting' },
   { key: 'settings', label: 'ตั้งค่าร้าน', desc: 'หน้าตาร้าน · รับเงิน · แจ้งเตือน', href: '/settings' },
 ] as const;
 

@@ -23,6 +23,7 @@
     "/payments": "/gateway",
     "/products": "/catalog",
     "/stock": "/inventory",
+    "/supplier": "/wholesale",
     "/reports": "/tickets",
     "/settings": "/config",
     "/reviews": "/feedback",

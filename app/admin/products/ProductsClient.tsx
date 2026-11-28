@@ -206,7 +206,7 @@ export function ProductsClient({ catImages = {}, catImgReady = false, products, 
                 {/* ปิดการสร้างแบบแบ่งจอแล้ว · สินค้าแบ่งจอเดิมยังต้องแสดงค่าของมัน */}
                 {f.fulfillment === 'slot' && <option value="slot">แบ่งจอ (ระบบเดิม เลิกใช้แล้ว)</option>}
                 <option value="stock">ส่งอัตโนมัติ — เตรียมบัญชี / รหัสไว้ก่อน ลูกค้าจ่ายแล้วได้ของทันที</option>
-                <option value="manual">สั่งทำ — ลูกค้าจ่ายแล้วรอร้านทำให้ ส่งของที่หน้าออเดอร์ (แท็บ รอส่ง)</option>
+                <option value="manual">สั่งทำ / API ร้านส่ง — ร้านส่งเองที่หน้าออเดอร์ หรือผูก API ให้ระบบซื้อและส่งอัตโนมัติ</option>
               </select>
 </label>
             {f.fulfillment === 'stock' && (

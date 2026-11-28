@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
+import { fulfillSafe } from '@/lib/supplier';
 import { db } from '@/lib/db';
 import { fail, isUuid, requireCustomer } from '@/lib/api';
 
@@ -17,7 +18,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   let order: string | undefined, orderError: string | undefined;
   if (t.pay_order) {
     const { data: o } = await d.from('shop_orders').select('code, status').eq('id', t.pay_order).maybeSingle();
-    if (o && o.status !== 'pending') order = o.code;
+    if (o && o.status !== 'pending') { order = o.code; if (o.status === 'processing') after(() => fulfillSafe(a.shop.id, t.pay_order).then(() => {})); }
     else orderError = 'เงินเข้ากระเป๋าแล้ว แต่ออเดอร์จ่ายไม่สำเร็จ (อาจหมดเวลาหรือของหมด) — สั่งใหม่แล้วจ่ายด้วยกระเป๋าได้เลย';
   }
   return NextResponse.json({ ok: true, status: 'paid', amount: Number(t.amount), order, orderError });

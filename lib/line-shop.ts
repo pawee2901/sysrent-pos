@@ -1,3 +1,4 @@
+import { fulfillSafe } from '@/lib/supplier';
 import 'server-only';
 import { randomBytes } from 'node:crypto';
 import { db } from '@/lib/db';
@@ -365,6 +366,7 @@ async function payByWallet(shop: Shop, s: Sess, code: string, renewals: boolean)
   if (!o) return [text('ไม่พบออเดอร์')];
   const { error } = await db().rpc('shop_pay_order', { p_order: o.id, p_customer: s.customerId, p_paid_by: 'wallet' });
   if (error) return [text(`❌ ${orderErr(error.message)}`)];
+  await fulfillSafe(shop.id, o.id);
   notifyOrderPaid(shop, o.id);
   return orderDetail(shop, s, o.code, renewals, PAID);
 }
