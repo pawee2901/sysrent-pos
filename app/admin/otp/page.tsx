@@ -5,7 +5,7 @@ import { PlanLock } from '@/components/PlanLock';
 import { adminShop, when } from '@/lib/admin-page';
 import { redirectUri } from '@/lib/msgraph';
 import { OtpSettings } from './OtpSettings';
-import { otpAgent, otpLink, otpPublic } from '@/lib/otp-link';
+import { otpAgent, otpCustLimit, otpLink, otpPublic } from '@/lib/otp-link';
 import { PERIOD_MS, type OtpAccess } from '@/lib/otp-agent';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +43,7 @@ export default async function AdminOtp({ searchParams }: { searchParams: Promise
       apis={(apis.data ?? []) as { id: string; name: string; type: string }[]}
       link={await otpLink(shop.id)}
       openPage={await otpPublic(shop.id)}
+      custLimit={await otpCustLimit(shop.id)}
       agent={{ ready: !acc.error, on: await otpAgent(shop.id), list: access }}
     />
   );

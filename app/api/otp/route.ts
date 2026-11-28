@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { can } from '@/lib/plan';
 import { body, fail, requireCustomer } from '@/lib/api';
 import { otpAccounts } from '@/lib/otp-access';
+import { otpCustBlocked } from '@/lib/otp-link';
 import { OtpMailboxError, searchOtp } from '@/lib/otp-search';
 
 export const dynamic = 'force-dynamic';
@@ -30,6 +31,10 @@ export async function POST(req: Request) {
   const { count, error } = await d.from('shop_otp_requests').select('id', { count: 'exact', head: true }).eq('customer_id', c.me.id).gte('created_at', new Date(Date.now() - 60_000).toISOString());
   if (error) return fail('ร้านยังไม่พร้อมใช้งานค้นหา OTP', 503);
   if ((count ?? 0) >= PER_MINUTE) return fail('ค้นหาบ่อยเกินไป กรุณารอสักครู่', 429);
+
+  // ร้านจำกัดการรับรหัสต่ออีเมล
+  const blocked = await otpCustBlocked(shopId, account);
+  if (blocked) return fail(blocked, 429);
 
   const log = (found: boolean) => d.from('shop_otp_requests').insert({ shop_id: shopId, customer_id: c.me.id, account, app: app.name, found });
   try {

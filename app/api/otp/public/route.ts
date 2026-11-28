@@ -5,7 +5,7 @@ import { can } from '@/lib/plan';
 import { body, fail } from '@/lib/api';
 import { getShop } from '@/lib/shop';
 import { otpAccounts } from '@/lib/otp-access';
-import { otpAgent, otpLink, otpPublic } from '@/lib/otp-link';
+import { otpAgent, otpCustBlocked, otpLink, otpPublic } from '@/lib/otp-link';
 import { clientIp as ipOf, loginFailed, loginLocked, loginOk } from '@/lib/auth';
 import { ACCESS_LABEL, PERIOD_MS, normalizeAccess, type OtpAccess } from '@/lib/otp-agent';
 import { OtpMailboxError, searchOtp } from '@/lib/otp-search';
@@ -61,6 +61,8 @@ export async function POST(req: Request) {
   } else {
     const allowed = await otpAccounts(shopId);
     if (!allowed.some((a) => a.email === account)) { await log(false); return fail('ไม่พบอีเมลนี้ในสินค้าของร้านที่ยังไม่หมดอายุ', 403); }
+    const blocked = await otpCustBlocked(shopId, account);
+    if (blocked) return fail(blocked, 429);
   }
 
   try {

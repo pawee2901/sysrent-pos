@@ -26,6 +26,8 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('public_page'), on: z.boolean() }),
   // ระบบตัวแทน: เปิด/ปิด · เพิ่ม / แก้ / ลบ รหัสยืนยันของแต่ละอีเมล
   z.object({ action: z.literal('agent_mode'), on: z.boolean() }),
+  // จำกัดการรับรหัสของลูกค้า (ต่ออีเมล)
+  z.object({ action: z.literal('cust_limit'), limit: z.number().int().min(0).max(1000), period: z.enum(PERIODS) }),
   z.object({ action: z.literal('access_add'), email: z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120), label: z.string().trim().max(40).default(''), kind: z.enum(ACCESS_KINDS), secret: z.string().trim().min(1, 'กรอกรหัส').max(120), use_limit: z.number().int().min(0).max(1000).default(0), period: z.enum(PERIODS).default('day') }),
   z.object({ action: z.literal('access_update'), id, active: z.boolean().optional(), use_limit: z.number().int().min(0).max(1000).optional(), period: z.enum(PERIODS).optional() }),
   z.object({ action: z.literal('access_delete'), id }),
@@ -82,6 +84,10 @@ export async function POST(req: Request) {
   }
   // ลบแค่ Microsoft App (ไม่ลบแถว — เก็บลิงก์เว็บ OTP ไว้)
   if (x.action === 'delete_ms') return done((await d.from('shop_otp_config').update({ ms_client_id: null, ms_secret_enc: null, updated_at: new Date().toISOString() }).eq('shop_id', sid)).error);
+  if (x.action === 'cust_limit') {
+    const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, cust_limit: x.limit, cust_period: x.period, updated_at: new Date().toISOString() });
+    return error ? fail(/cust_/.test(error.message) ? 'ต้องรัน SQL 0050_otp_customer_limit.sql ใน Supabase ก่อน' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
   if (x.action === 'agent_mode') {
     const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, agent_mode: x.on, updated_at: new Date().toISOString() });
     return error ? fail(/agent_mode/.test(error.message) ? AGENT_SQL : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });

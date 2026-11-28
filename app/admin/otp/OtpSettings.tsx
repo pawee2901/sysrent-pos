@@ -6,6 +6,7 @@ import { api } from '@/components/Cart';
 import { ask, input, notify } from '@/components/dialog';
 import { GmailGuide, HotmailGuide, MsAppGuide } from '@/components/otp/MailGuides';
 import { AgentTab, type AgentInit } from './AgentTab';
+import { PERIODS, PERIOD_LABEL, type Period } from '@/lib/otp-agent';
 
 type Box = { id: string; email: string; provider: string; active: boolean; error: string };
 type App = { id: string; name: string; keywords: string; code: string };
@@ -24,7 +25,8 @@ const LABEL: Record<string, string> = { gmail: 'Gmail', maily: 'Maily', graph: '
 const TABS = [['mail', 'บัญชีอีเมล'], ['apps', 'แอปพลิเคชัน'], ['agent', 'ระบบตัวแทน'], ['api', 'ตั้งค่า API']] as const;
 type Tab = (typeof TABS)[number][0];
 
-export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit }) {
+export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent, custLimit }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit; custLimit: { limit: number; period: Period } }) {
+  const [lim, setLim] = useState({ n: String(custLimit.limit), period: custLimit.period });
   const [pageUrl, setPageUrl] = useState('');
   useEffect(() => setPageUrl(`${window.location.origin}${to('/otp')}`), []);
   const router = useRouter();
@@ -115,6 +117,20 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
             <a className="btn sm" href={pageUrl} target="_blank" rel="noopener noreferrer">↗ เปิด</a>
           </div>
         )}
+      </section>
+      {/* จำกัดการรับรหัสของลูกค้า (ต่ออีเมล) */}
+      <section className="card card-pad" style={{ display: 'grid', gap: 10, marginBottom: 14 }}>
+        <div><h2 style={{ margin: 0, fontSize: 16 }}>⏱️ จำกัดการรับรหัสของลูกค้า</h2>
+          <small className="muted">ลูกค้า 1 อีเมล รับรหัสได้กี่ครั้ง · นับเฉพาะครั้งที่ได้รหัส · ใช้กับลูกค้าที่ล็อกอิน และหน้ารับ OTP แบบไม่ใช้รหัสตัวแทน (รหัสตัวแทนตั้งโควตาแยกในแท็บ ระบบตัวแทน)</small></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span>รับได้</span>
+          <input className="input" inputMode="numeric" style={{ width: 80, textAlign: 'center' }} value={lim.n} aria-label="จำนวนครั้ง" onChange={(e) => setLim({ ...lim, n: e.target.value.replace(/\D/g, '').slice(0, 4) })} />
+          <span>ครั้ง ต่อ</span>
+          <select className="input" style={{ width: 'auto' }} value={lim.period} onChange={(e) => setLim({ ...lim, period: e.target.value as Period })}>{PERIODS.map((p) => <option key={p} value={p}>{PERIOD_LABEL[p]}</option>)}</select>
+          <button type="button" className="btn primary sm" disabled={busy || (Number(lim.n || 0) === custLimit.limit && lim.period === custLimit.period)}
+            onClick={() => call({ action: 'cust_limit', limit: Math.min(1000, Number(lim.n || 0)), period: lim.period }, Number(lim.n || 0) ? `จำกัด ${Number(lim.n)} ครั้งต่อ${PERIOD_LABEL[lim.period]}แล้ว` : 'ไม่จำกัดแล้ว')}>บันทึก</button>
+        </div>
+        <small className="faint">{Number(lim.n || 0) ? `ครบ ${Number(lim.n)} ครั้งแล้ว ลูกค้าจะเห็นข้อความให้ติดต่อแอดมินร้าน` : 'ใส่ 0 = ไม่จำกัด'}</small>
       </section>
       <section className="card card-pad" style={{ display: 'grid', gap: 12, marginBottom: 18 }}>
         <div><h2 style={{ margin: 0, fontSize: 16 }}>ลูกค้าค้นหา OTP ที่ไหน</h2><small className="muted">ใช้กับเมนู ค้นหา OTP · แถบล่าง · ปุ่มรับ OTP ในประวัติการซื้อ · เมนู LINE</small></div>
