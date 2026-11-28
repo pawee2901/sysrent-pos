@@ -45,10 +45,10 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
   const [all, { count: members }, { data: recent }, me, { data: pc }, { data: joined }] = await Promise.all([
     loadProducts(shop.id),
     d.from('shop_customers').select('id', { count: 'exact', head: true }).eq('shop_id', shop.id),
-    d.from('shop_orders').select('paid_at, customer_id, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(10),
+    d.from('shop_orders').select('paid_at, customer_id, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(20),
     getCustomer(),
     d.from('shops').select('promo_cards').eq('id', shop.id).maybeSingle(), // ยังไม่รัน 0031 = ไม่แสดงกล่องรูป
-    wantJoin ? d.from('shop_customers').select('id, username, created_at').eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
+    wantJoin ? d.from('shop_customers').select('id, username, created_at').eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
   ]);
   const layout = input.filter((b) => b.on);
   const contacts = layout.some((b) => b.type === 'contact') ? await shopContacts(shop) : [];
@@ -154,7 +154,8 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
     : <div className={cls}>{inner}</div>;
   function render(b: Block): React.ReactNode {
     if (b.type === 'live') {
-      const list = liveOf(b.events).slice(0, Math.min(10, Math.max(3, b.limit ?? (b.variant === 'feed' ? 5 : 4))));
+      // จำนวนแถวที่ร้านเลือกเอง 1–20 (ไม่ตั้ง = การ์ด 5 · แบบอื่น 4)
+      const list = liveOf(b.events).slice(0, Math.min(20, Math.max(1, b.limit ?? (b.variant === 'feed' ? 5 : 4))));
       if (!list.length) return null;
       if (b.variant === 'feed') return (
         <section className="hb hb-feed">
@@ -163,7 +164,7 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
         </section>);
       if (b.variant === 'ticker') return (
         <div className="hb hb-marquee hb-ticker" aria-label="ลูกค้าที่เพิ่งซื้อ"><div aria-hidden>{[0, 1].map((k) => <span key={k}>{list.map((l) => `${l.kind === 'join' ? '🎉' : '🟢'} ${l.who} ${act(l, true)} · ${l.when}`).join('     ')}</span>)}</div></div>);
-      return <div className="live"><span className="live-dot" />{list.slice(0, 4).map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> {act(l, true)} · {l.when}</span>)}</div>;
+      return <div className="live"><span className="live-dot" />{list.map((l, i) => <span key={i}>{i > 0 && <span className="faint">• </span>}<b>{l.who}</b> {act(l, true)} · {l.when}</span>)}</div>;
     }
     if (b.type in builtin) return builtin[b.type];
     if (b.type === 'featured') {

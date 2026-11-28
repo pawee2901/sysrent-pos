@@ -58,8 +58,8 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
       const who = ['p', 'k', 'n', 'm', 's'];
       if (b.variant === 'feed') return (
         <div className="cv-feed"><div className="cv-feed-head"><div>{(b.label ?? 'STORE FEED') && <small>{b.label ?? 'STORE FEED'}</small>}<b>{b.title || 'กิจกรรมล่าสุด'}</b>{b.text && <p>{b.text}</p>}</div>{(b.badge ?? 'อัปเดตสด') && <span><i />{b.badge ?? 'อัปเดตสด'}</span>}</div>
-          {(d.recent?.length ? d.recent : who.map((w, i) => ({ initial: w.toUpperCase(), dots: `${w}•••••`, name: names[i % names.length], avatar: '', when: `${[3, 9, 33, 41, 42][i]} นาทีที่แล้ว` })))
-            .slice(0, Math.min(5, b.limit ?? 5)).map((r, i) => {
+          {(d.recent?.length ? d.recent : Array.from({ length: 20 }, (_, i) => ({ initial: who[i % who.length].toUpperCase(), dots: `${who[i % who.length]}•••••`, name: names[i % names.length], avatar: '', when: `${3 + i * 7} นาทีที่แล้ว` })))
+            .slice(0, Math.min(20, b.limit ?? 5)).map((r, i) => {
               // ร้านยังไม่มีคนซื้อ: แถว 4–5 เป็นตัวอย่างลูกค้าที่ตั้งรูปโปรไฟล์
               const demo = !d.recent?.length && i >= 3 ? ['🐼', '🐰'][i - 3] : '';
               return <div key={i} className="cv-feed-row"><span style={r.avatar || demo ? { padding: 0, overflow: 'hidden', fontSize: 15, background: demo ? 'linear-gradient(135deg, #fde2e4, #e0f2fe)' : undefined } : undefined}>
@@ -523,7 +523,16 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                     {txt('text', 'คำอธิบายใต้หัวข้อ (ไม่บังคับ)', { rows: 2, max: 200, ph: 'เช่น ลูกค้าซื้อจริงทุกวัน ส่งอัตโนมัติ 24 ชม.' })}
                     <label className="field"><span>ป้ายมุมขวา (ลบให้ว่าง = ไม่แสดง)</span><input className="input" value={b.badge ?? 'อัปเดตสด'} maxLength={30} onChange={(e) => patch(b.id, { badge: e.target.value })} /></label>
                   </>}
-                  {b.variant !== undefined && b.variant !== 'bar' && <label className="field"><span>จำนวนรายการ</span><select className="input" value={b.limit ?? 5} onChange={(e) => patch(b.id, { limit: Number(e.target.value) })}>{[3, 5, 8, 10].map((n) => <option key={n} value={n}>{n} รายการ</option>)}</select></label>}
+                  {(() => { const n = b.limit ?? (b.variant === 'feed' ? 5 : 4); const set = (v: number) => patch(b.id, { limit: Math.min(20, Math.max(1, v)) }); return (
+                    <div className="field"><span>แสดงกี่แถว (1–20)</span>
+                      <div className="lb-row" style={{ alignItems: 'center', gap: 6 }}>
+                        <button type="button" className="btn sm" aria-label="ลด" disabled={n <= 1} onClick={() => set(n - 1)}>−</button>
+                        <input className="input" style={{ width: 64, textAlign: 'center' }} inputMode="numeric" value={n} aria-label="จำนวนแถว" onChange={(e) => set(Number(e.target.value.replace(/\D/g, '')) || 1)} />
+                        <button type="button" className="btn sm" aria-label="เพิ่ม" disabled={n >= 20} onClick={() => set(n + 1)}>+</button>
+                        <span className="muted" style={{ fontSize: 13 }}>แถว</span>
+                      </div>
+                      <small className="faint">ถ้ามีกิจกรรมน้อยกว่าที่ตั้ง จะแสดงเท่าที่มี</small>
+                    </div>); })()}
                   <p className="muted lb-note">ใช้ออเดอร์และการสมัครสมาชิกจริงของร้าน ชื่อลูกค้าถูกปิดบางส่วนให้อัตโนมัติ · ตัวอย่างในหน้านี้เป็นข้อมูลสมมติ</p>
                 </>}
                 {builtin && b.type !== 'live' && <p className="muted lb-note">{b.type === 'hero' || b.type === 'promos' ? 'รูปของกล่องนี้แก้ได้ที่แท็บ "รูปหน้าแรก · ป๊อปอัป"' : b.type === 'products' ? 'ถ้าซ่อนหรือลบกล่องนี้ ลูกค้าที่ค้นหาจะเห็นผลค้นหาบนสุดแทน' : 'กล่องนี้ใช้ข้อมูลจริงของร้าน ไม่ต้องตั้งค่า'}</p>}

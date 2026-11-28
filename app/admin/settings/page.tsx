@@ -25,9 +25,9 @@ export default async function AdminSettings() {
   const promoImgs = (Array.isArray(pc.data?.promo_cards) ? (pc.data.promo_cards as { image?: string }[]) : []).map((x) => x.image ?? '').filter(Boolean);
   const pg = await d.from('shop_pages').select('id, slug, title, in_menu, blocks').eq('shop_id', shop.id).order('sort').order('created_at'); // ยังไม่รัน 0035 = error
   const pages = { ready: !pg.error, list: ((pg.data ?? []) as { id: string; slug: string; title: string; in_menu: boolean; blocks: unknown }[]).map((x) => ({ ...x, blocks: Array.isArray(x.blocks) && x.blocks.length ? parseLayout(x.blocks) : [] })) };
-  // คนเพิ่งซื้อจริง 5 คนล่าสุด (+ รูปโปรไฟล์) ให้ตัวอย่างการ์ดกิจกรรมในหน้าจัดร้าน · ยังไม่รัน 0043 = ไม่มีรูป
+  // คนเพิ่งซื้อจริง 20 คนล่าสุด (+ รูปโปรไฟล์) ให้ตัวอย่างการ์ดกิจกรรมในหน้าจัดร้าน · ยังไม่รัน 0043 = ไม่มีรูป
   type RR = { paid_at: string; customer_id: string | null; shop_customers: { username: string } | null; shop_order_items: { name: string }[] };
-  const ro = await d.from('shop_orders').select('paid_at, customer_id, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(5);
+  const ro = await d.from('shop_orders').select('paid_at, customer_id, shop_customers(username), shop_order_items(name)').eq('shop_id', shop.id).not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(20);
   const rr = (ro.data ?? []) as unknown as RR[];
   const cids = [...new Set(rr.map((r) => r.customer_id).filter((x): x is string => !!x))];
   const avq = cids.length ? await d.from('shop_customers').select('id, avatar_url').in('id', cids).not('avatar_url', 'is', null) : { data: [] };
