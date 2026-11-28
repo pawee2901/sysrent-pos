@@ -503,10 +503,11 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
             <div className="cv-topbar"><b>{init.shop.name}</b><span /><span /></div>
             <div ref={canvas} className="cv-flow">
               {blocks.flatMap((b, i) => {
-                const half = !!b.half && HALF_OK.includes(b.type) && view === 'pc';
+                const half = !!b.half && HALF_OK.includes(b.type);
+                const top = i === 0 && (b.type === 'notice' || b.type === 'marquee');
                 return [dropLine(i), (
                   <div key={b.id} id={`cv-${b.id}`} data-idx={i} data-half={half ? '1' : '0'}
-                    className={`cv-block${half ? ' half' : ''}${sel === b.id ? ' sel' : ''}${b.on ? '' : ' off'}${press.current?.d.kind === 'move' && press.current.d.id === b.id && ghost ? ' moving' : ''}`}
+                    className={`cv-block${half ? ' half' : ''}${top ? ' cv-top' : ''}${sel === b.id ? ' sel' : ''}${b.on ? '' : ' off'}${press.current?.d.kind === 'move' && press.current.d.id === b.id && ghost ? ' moving' : ''}`}
                     onPointerDown={(e) => { if ((e.target as HTMLElement).closest('.cv-tools')) return; startPress(e, { kind: 'move', id: b.id }, `${BLOCK_INFO[b.type].icon} ${BLOCK_INFO[b.type].label}`, () => setSel(b.id), e.pointerType === 'mouse'); }}>
                     <span className="cv-tag">{BLOCK_INFO[b.type].icon} {BLOCK_INFO[b.type].label}{!b.on && ' · ซ่อนอยู่'}</span>
                     {sel === b.id && (

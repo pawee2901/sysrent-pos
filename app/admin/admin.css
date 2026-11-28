@@ -864,8 +864,11 @@ body::before { height: 360px; }
 .cv-topbar span { flex: none; width: 22px; height: 8px; border-radius: 4px; background: var(--line); }
 .cv-topbar b { flex: 1; }
 .cv-flow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; padding: 18px 14px; min-height: 300px; align-content: start; }
-.lb-canvas.phone .cv-flow { grid-template-columns: minmax(0, 1fr); }
-.lb-canvas.phone .cv-block, .lb-canvas.phone .cv-drop, .lb-canvas.phone .cv-start { grid-column: span 1; }
+/* มือถือ: ครึ่งแถวยังวางคู่กัน 2 กล่อง */
+.lb-canvas.phone .cv-flow { gap: 12px 8px; }
+/* แถบโปรโมชั่นกล่องแรก = ติดขอบบนเต็มความกว้าง */
+.cv-block.cv-top { margin: -18px -14px 0; border-radius: 0; outline-offset: -2px; }
+.cv-block.cv-top :is(.cv-notice, .cv-marquee) { border-radius: 0 !important; }
 .cv-block { grid-column: span 2; min-width: 0; position: relative; border-radius: 12px; outline: 2px solid transparent; outline-offset: 3px; cursor: pointer; transition: outline-color .12s, opacity .12s; }
 .cv-block.half { grid-column: span 1; }
 .cv-block:hover { outline-color: color-mix(in srgb, var(--accent) 40%, transparent); }
@@ -996,8 +999,6 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
   .lb-pal { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
   .lb-pal-list { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
   .lb-stage { padding: 10px; }
-  .cv-flow { grid-template-columns: minmax(0, 1fr); }
-  .cv-block, .cv-block.half, .cv-drop, .cv-start { grid-column: span 1; }
   .lb-panel { top: auto; left: 0; width: auto; max-height: 70vh; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(105%); }
 }
 /* หลายหน้า */

@@ -343,7 +343,11 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
       const pair = half(n) ? [b, n!] : [b];
       if (pair.length === 2) i++;
       rows.push(<div key={b.id} className={`hb-pair${pair.length === 1 ? ' solo' : ''}`}>{pair.map((x) => <div key={x.id} className="hb-cell">{styled(x)}</div>)}</div>);
-    } else rows.push(<div key={b.id} className="hb-row">{styled(b)}</div>);
+    } else {
+      // แถบประกาศ / ตัวหนังสือวิ่ง เป็นกล่องแรก = ติดขอบบนเต็มความกว้าง (แบบแถบโปรโมชั่น)
+      const top = i === 0 && (b.type === 'notice' || b.type === 'marquee');
+      rows.push(<div key={b.id} className={`hb-row${top ? ' hb-topbar' : ''}`}>{styled(b)}</div>);
+    }
   }
 
   return <>{rows}</>;

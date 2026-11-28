@@ -569,8 +569,9 @@ a.hb-notice:hover { filter: brightness(1.06); }
 .hb-space.s { height: 12px; } .hb-space.m { height: 32px; } .hb-space.l { height: 64px; }
 .hb-pair .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 @media (max-width: 760px) {
-  .hb-pair { grid-template-columns: 1fr; }
-  .hb-pair.solo { max-width: none; }
+  /* ครึ่งแถวในมือถือ = ยังวาง 2 กล่องคู่กัน */
+  .hb-pair { gap: 10px; }
+  .hb-pair.solo { max-width: calc(50% - 5px); }
   .hb { margin-top: 22px; }
 }
 .hb-notice.dark, .hb-count.dark { background: #111827; color: #fff; }
@@ -952,3 +953,10 @@ a.hb-rich-cell:hover { filter: brightness(1.05); transform: scale(.985); }
   .pay-opt { padding: 14px; }
   .co-box .btn.lg { height: 54px; }
 }
+
+/* แถบโปรโมชั่นติดขอบบน: แถบประกาศ / ตัวหนังสือวิ่งที่เป็นกล่องแรก เต็มความกว้าง ไม่มีขอบมน */
+.store { overflow-x: clip; }
+.hb-row.hb-topbar { margin: -28px calc(50% - 50vw) 0; }
+.hb-topbar > *, .hb-topbar .hb { margin-top: 0 !important; border-radius: 0 !important; box-shadow: none !important; border-left: 0 !important; border-right: 0 !important; }
+.hb-topbar .hb-notice { padding: 11px 16px; }
+.hb-topbar .hb-marquee { padding: 10px 0; }
