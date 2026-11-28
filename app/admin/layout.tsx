@@ -4,6 +4,7 @@ import { adminKind, adminPerms, isShopAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { AdminLogin } from './AdminLogin';
 import { AdminNav } from './AdminNav';
+import { SYSRENT_TOPUP, ownerWallet } from '@/lib/sysrent-wallet';
 import './admin.css';
 
 export const dynamic = 'force-dynamic';
@@ -16,13 +17,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const shop = (await getShop())!;
   if (!(await isShopAdmin())) return <AdminLogin shopName={shop.name} />;
   const d = db();
-  const [{ count: queue }, { data: usage }] = await Promise.all([
+  const [{ count: queue }, { data: usage }, wallet] = await Promise.all([
     d.from('shop_order_items').select('id, shop_orders!inner(shop_id)', { count: 'exact', head: true }).eq('status', 'queued').eq('shop_orders.shop_id', shop.id),
     d.from('shop_slip_usage').select('used').eq('shop_id', shop.id).eq('month', month()).maybeSingle(),
+    ownerWallet(shop.owner_id), // กระเป๋า SysRent (จ่ายค่าตรวจสลิป)
   ]);
   return (
     <AdminNav shop={{ name: shop.name, slug: shop.slug, logo: shop.logo_url, expires: shop.expires_at }} counts={{ orders: queue ?? 0 }}
-      slip={{ used: usage?.used ?? 0, quota: shop.slip_quota, overage: shop.slip_overage }} plan={shop.plan} perms={await adminPerms()} staff={(await adminKind()) === 'staff'}>
+      slip={{ used: usage?.used ?? 0, quota: shop.slip_quota, overage: shop.slip_overage, wallet, topup: SYSRENT_TOPUP }} plan={shop.plan} perms={await adminPerms()} staff={(await adminKind()) === 'staff'}>
       {children}
     </AdminNav>
   );

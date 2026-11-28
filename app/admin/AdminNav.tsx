@@ -34,7 +34,7 @@ const groupOf = (h: string) => GROUPS.find((g) => g.items.some(([x]) => x === h)
 /** โครงหลังบ้าน: แถบซ้าย + แถบบน + เมนูล่าง (มือถือ) */
 export function AdminNav({ shop, counts, slip, plan, perms, staff = false, children }: {
   shop: { name: string; slug: string; logo: string; expires: string | null }; counts: { orders: number };
-  slip: { used: number; quota: number; overage: number }; plan: string; perms: string[]; staff?: boolean; children: React.ReactNode;
+  slip: { used: number; quota: number; overage: number; wallet?: number | null; topup?: string }; plan: string; perms: string[]; staff?: boolean; children: React.ReactNode;
 }) {
   const path = fromPublic(usePathname() ?? '/');
   // เมนูที่เข้าได้ (เจ้าของร้าน = ทุกเมนู · แอดมิน = ตามสิทธิ์) — key ของสิทธิ์ = path เมนู ('' = ภาพรวม)
@@ -74,6 +74,14 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><b>ตรวจสลิปเดือนนี้</b><span className="num">{used}{slip.quota > 0 ? ` / ${slip.quota}` : ' ครั้ง'}</span></div>
           {slip.quota > 0 && <div className={`meter${pct >= 80 ? ' warn' : ''}`}><i style={{ width: `${pct}%` }} /></div>}
           <span className="muted" style={{ fontSize: 12 }}>{slip.quota > 0 ? `ฟรี ${slip.quota} ครั้ง/เดือน · เกินคิด ` : 'จ่ายตามจริง '}฿{slip.overage.toFixed(2)}/สลิป ตัดจากกระเป๋า SysRent</span>
+          {/* กระเป๋าเงิน SysRent (เว็บเช่า) ที่ใช้จ่ายค่าตรวจสลิป */}
+          {slip.wallet !== undefined && slip.wallet !== null && (
+            <a href={slip.topup} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 4, padding: '8px 10px', borderRadius: 10, textDecoration: 'none', color: 'inherit',
+              background: slip.wallet < 10 ? 'color-mix(in srgb, var(--bad) 12%, transparent)' : 'var(--surface-2)' }}>
+              <span style={{ display: 'grid' }}><small className="muted" style={{ fontSize: 11.5 }}>กระเป๋า SysRent</small><b className="num" style={{ color: slip.wallet < 10 ? 'var(--bad)' : undefined }}>฿{slip.wallet.toLocaleString('th-TH', { maximumFractionDigits: 2 })}</b></span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--accent)' }}>เติมเงิน ↗</span>
+            </a>
+          )}
         </div>
       </aside>
       <div className="main">
