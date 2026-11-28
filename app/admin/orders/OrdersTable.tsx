@@ -37,6 +37,14 @@ export function OrdersTable({ rows, mailOn }: { rows: AdminOrder[]; mailOn: bool
     setOpen(null); router.refresh();
   }
 
+  /** แก้ข้อมูลที่ส่งไปแล้ว → ลูกค้าเห็นของใหม่ทันที */
+  async function editItem(itemId: string, content: string) {
+    setErr('');
+    const r = await api(`/api/admin/items/${itemId}`, { action: 'edit', content });
+    if (!r.ok) { setErr(r.error); return false; }
+    notify('แก้แล้ว ลูกค้าเห็นข้อมูลใหม่ในหน้าประวัติการซื้อทันที'); router.refresh(); return true;
+  }
+
   if (!rows.length) return <p className="muted card-pad" style={{ margin: 0 }}>ไม่มีออเดอร์</p>;
   return (
     <>
@@ -69,7 +77,9 @@ export function OrdersTable({ rows, mailOn }: { rows: AdminOrder[]; mailOn: bool
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}><b>{i.name} ×{i.qty}</b><span className={`pill ${is.tone}`}>{i.status === 'queued' && i.fulfillment === 'stock' ? '📦 พรีออเดอร์ · รอเติมสต็อก' : is.label}</span></div>
                         {i.status === 'queued' && i.fulfillment === 'stock' && <small className="muted">เติมสต็อกแพ็กเกจนี้ที่หน้าสต็อก ระบบจะส่งให้ลูกค้าเองตามคิว · หรือส่งเอง / คืนเงินด้านล่าง</small>}
                         {i.customer_info && <div className="delivered" style={{ background: 'var(--accent-soft)' }}>📝 ลูกค้ากรอก: {i.customer_info}</div>}
-                        {i.delivered && <div className="delivered">{i.delivered}</div>}
+                        {i.delivered && (i.status === 'delivered' && i.fulfillment !== 'slot'
+                          ? <EditDelivered key={i.id} value={i.delivered} onSave={(c) => editItem(i.id, c)} />
+                          : <div className="delivered">{i.delivered}</div>)}
                         {i.status === 'queued' && <DeliverBox key={i.id} busy={busy} refund={refundOf(o, i)} mailOn={mailOn} onDeliver={(c, mail) => act(i.id, 'deliver', c, mail)} onRefund={(why) => act(i.id, 'refund', why)} />}
                         {mailOn && i.fulfillment === 'manual' && i.status === 'delivered' && <button type="button" className="btn sm" style={{ justifySelf: 'start' }} disabled={busy} onClick={() => resendMail(i.id)}>📧 แจ้งลูกค้าทางอีเมล</button>}
                       </div>
@@ -83,5 +93,27 @@ export function OrdersTable({ rows, mailOn }: { rows: AdminOrder[]; mailOn: bool
         })}
       </div>
     </>
+  );
+}
+
+/** ข้อมูลที่ส่งให้ลูกค้าแล้ว: ดู / กดแก้ไข */
+function EditDelivered({ value, onSave }: { value: string; onSave: (c: string) => Promise<boolean> }) {
+  const [v, setV] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  if (v === null) return (
+    <div className={css.sent}>
+      <div className="delivered">{value}</div>
+      <button type="button" className="btn sm" onClick={() => setV(value)}>✏️ แก้ไขข้อมูลที่ส่ง</button>
+    </div>
+  );
+  return (
+    <div className={css.sent}>
+      <textarea className={`input ${css.sentInput}`} rows={Math.min(12, Math.max(3, v.split('\n').length + 1))} maxLength={4000} value={v} autoFocus onChange={(e) => setV(e.target.value)} />
+      <small className="faint">ลูกค้าเห็นข้อมูลใหม่ในหน้าประวัติการซื้อทันที (ไม่ส่งแจ้งเตือนซ้ำ)</small>
+      <div className={css.sentActs}>
+        <button type="button" className="btn ghost sm" disabled={busy} onClick={() => setV(null)}>ยกเลิก</button>
+        <button type="button" className="btn primary sm" disabled={busy || !v.trim() || v.trim() === value.trim()} onClick={async () => { setBusy(true); const ok = await onSave(v); setBusy(false); if (ok) setV(null); }}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button>
+      </div>
+    </div>
   );
 }

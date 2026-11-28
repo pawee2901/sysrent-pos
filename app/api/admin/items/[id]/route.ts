@@ -10,6 +10,8 @@ import { body, fail, isUuid, requireAdmin } from '@/lib/api';
 const schema = z.discriminatedUnion('action', [
   z.object({ action: z.enum(['deliver', 'refund']), content: z.string().trim().min(1, 'ใส่รายละเอียดก่อน').max(4000), mail: z.boolean().default(true) }),
   z.object({ action: z.literal('notify') }), // ส่งอีเมลแจ้งว่าทำเสร็จแล้วซ้ำ (สินค้าสั่งทำที่ส่งของแล้ว)
+  // แก้ข้อมูลที่ส่งไปแล้ว (พิมพ์ผิด / เปลี่ยนรหัสให้) — ลูกค้าเห็นของใหม่ในหน้าประวัติทันที
+  z.object({ action: z.literal('edit'), content: z.string().trim().min(1, 'ข้อมูลว่างไม่ได้').max(4000) }),
 ]);
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -22,6 +24,15 @@ export async function POST(req: Request, { params }: Ctx) {
   const b = await body(req, schema);
   if ('res' in b) return b.res;
 
+  if (b.data.action === 'edit') {
+    const { data: it } = await db().from('shop_order_items').select('status, fulfillment, shop_orders!inner(shop_id)').eq('id', id).eq('shop_orders.shop_id', a.shop.id).maybeSingle();
+    if (!it) return fail('ไม่พบรายการ', 404);
+    if (it.fulfillment === 'slot') return fail('สินค้าแบบแบ่งจอ แก้รหัสได้ที่หน้าแจ้งปัญหา / สต็อก', 400);
+    if (it.status !== 'delivered') return fail('รายการนี้ยังไม่ได้ส่งของ', 400);
+    // ไม่แตะ updated_at: สินค้าสั่งทำนับประกันจากเวลาส่งของ
+    const { error } = await db().from('shop_order_items').update({ delivered: b.data.content }).eq('id', id);
+    return error ? fail('บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
   if (b.data.action === 'notify') {
     if (!can(a.shop.plan, 'mail')) return fail('อีเมลแจ้งลูกค้าใช้ได้กับแพ็กเกจ Pro ขึ้นไป', 403);
     const { data: it } = await db().from('shop_order_items').select('status, fulfillment, shop_orders!inner(shop_id)').eq('id', id).eq('shop_orders.shop_id', a.shop.id).maybeSingle();
