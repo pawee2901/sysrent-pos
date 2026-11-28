@@ -1,3 +1,4 @@
+import { otpLink } from '@/lib/otp-link';
 import { loginUrl } from '@/lib/routes';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -31,6 +32,7 @@ export default async function Orders() {
   const productIds = [...new Set(items.map((i) => i.product_id))];
 
   // ข้อมูลประกอบ (แต่ละอย่างพังได้โดยไม่ทำให้หน้าล่ม — เช่น ยังไม่รัน SQL ของฟีเจอร์นั้น)
+  const oLink = await otpLink(shop.id);
   const [opts, subs, usage, reports, otp, otpMail, revs] = await Promise.all([
     d.from('shop_options').select('id, duration_days').in('id', [...new Set(items.map((i) => i.option_id))]),
     d.from('shop_subscriptions').select('id, status, starts_at, ends_at, order_item_id, shop_products(id, image, template)').eq('shop_id', shop.id).eq('customer_id', me.id).in('order_item_id', items.map((i) => i.id)),
@@ -69,7 +71,7 @@ export default async function Orders() {
         // ปุ่มรับ OTP: ร้านเปิดที่สินค้านี้ + แอดมินใส่เมลรับ OTP ไว้ที่สต็อกชิ้นที่ลูกค้าได้
         const app = otp.get(i.product_id), emails = otpMail.get(i.id) ?? [];
         return {
-          otp: app && emails.length && i.status === 'delivered' ? { ...app, emails } : null,
+          otp: app && (emails.length || oLink) && i.status === 'delivered' ? { ...app, emails, link: oLink } : null,
           id: i.id, name: i.name, total: Number(i.total), queued: i.status === 'queued', pre: i.status === 'queued' && i.fulfillment === 'stock',
           review: revOf.get(i.id) ?? null, reviewable: !revs.error && i.status === 'delivered', delivered: i.status === 'delivered' ? i.delivered : null,
           warranty: ends[k] ? `${thDate(ends[k]!)}` : null, usage: p?.usage ?? '', usageImages: p?.usageImages ?? [],

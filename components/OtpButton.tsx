@@ -33,6 +33,8 @@ export function OtpButton({ otp, label }: { otp: Btn; label?: string }) {
   const close = () => { if (!busy) { setOpen(false); setHits(null); setErr(''); } };
   const h = hits?.[0];
 
+  // ร้านตั้งให้ค้นที่เว็บ OTP อื่น → ปุ่มเปิดลิงก์นั้น
+  if (otp.link) return <a href={otp.link} target="_blank" rel="noopener noreferrer" className="btn otp-btn">🔐 {label ?? 'รับรหัส OTP'} ↗</a>;
   return (
     <>
       <button type="button" className="btn otp-btn" onClick={() => setOpen(true)}>🔐 {label ?? 'รับรหัส OTP'}</button>

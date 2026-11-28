@@ -22,11 +22,14 @@ const LABEL: Record<string, string> = { gmail: 'Gmail', maily: 'Maily', graph: '
 const TABS = [['mail', 'บัญชีอีเมล'], ['apps', 'แอปพลิเคชัน'], ['api', 'ตั้งค่า API']] as const;
 type Tab = (typeof TABS)[number][0];
 
-export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[] }) {
+export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string }) {
   const router = useRouter();
   const path = usePathname();
   const [tab, setTab] = useState<Tab>('mail');
   const [busy, setBusy] = useState(false);
+  // ลูกค้าค้น OTP ที่ไหน: ในเว็บร้าน / ลิงก์เว็บ OTP อื่น
+  const [where, setWhere] = useState<'site' | 'link'>(link ? 'link' : 'site');
+  const [url, setUrl] = useState(link);
   const [adding, setAdding] = useState<'gmail' | 'maily' | null>(null);
   const [guide, setGuide] = useState<'gmail' | 'hotmail' | 'msapp' | null>(null);
   const [form, setForm] = useState({ email: '', password: '', pin: '' });
@@ -92,6 +95,20 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis }: { rea
     <div className="otp-page">
       <div className="page-head"><div><h1>ค้นหา OTP</h1><p>ลูกค้าที่ล็อกอินค้นรหัสได้เอง เฉพาะอีเมลในสินค้าที่ยังไม่หมดอายุของตัวเอง</p></div></div>
       {!ready && <div className="card card-pad" style={{ color: 'var(--warn)' }}>⚠️ ต้องรัน SQL <code>0024</code>, <code>0025</code> และ <code>0026</code> ใน Supabase ก่อน</div>}
+      <section className="card card-pad" style={{ display: 'grid', gap: 12, marginBottom: 18 }}>
+        <div><h2 style={{ margin: 0, fontSize: 16 }}>ลูกค้าค้นหา OTP ที่ไหน</h2><small className="muted">ใช้กับเมนู ค้นหา OTP · แถบล่าง · ปุ่มรับ OTP ในประวัติการซื้อ · เมนู LINE</small></div>
+        <div className="otp-where" role="radiogroup" aria-label="ลูกค้าค้นหา OTP ที่ไหน" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
+          {([['site', '🔎 ค้นหาในเว็บร้าน', 'แบบปกติ · ลูกค้าล็อกอินแล้วค้นรหัสได้ในเว็บนี้'], ['link', '🔗 ลิงก์ไปเว็บ OTP อื่น', 'เช่น เว็บเช่า OTP ของร้าน · กดแล้วเปิดลิงก์นั้น']] as const).map(([k, l, dsc]) => (
+            <button key={k} type="button" role="radio" aria-checked={where === k} onClick={() => setWhere(k)}
+              style={{ textAlign: 'left', padding: '12px 14px', borderRadius: 14, border: `1.5px solid ${where === k ? 'var(--accent)' : 'var(--line)'}`, background: where === k ? 'var(--accent-soft)' : 'var(--surface)', font: 'inherit', color: 'inherit', cursor: 'pointer', display: 'grid', gap: 2 }}>
+              <b style={{ color: where === k ? 'var(--accent)' : undefined }}>{l}</b><small className="muted">{dsc}</small></button>
+          ))}
+        </div>
+        {where === 'link' && <input className="input" type="url" inputMode="url" value={url} placeholder="https://otp.ร้านของคุณ.com" onChange={(e) => setUrl(e.target.value)} />}
+        <div><button type="button" className="btn primary sm" disabled={busy || (where === 'link' && !/^https:\/\/\S+$/.test(url.trim())) || (where === 'site' ? !link : url.trim() === link)}
+          onClick={() => call({ action: 'save_link', link: where === 'link' ? url.trim() : '' }, where === 'link' ? 'ลูกค้าจะถูกพาไปลิงก์นี้แล้ว' : 'กลับมาค้นหาในเว็บร้านแล้ว')}>บันทึก</button>
+          {where === 'link' && url && !/^https:\/\//.test(url.trim()) && <small style={{ color: 'var(--bad)', marginLeft: 8 }}>ลิงก์ต้องขึ้นต้นด้วย https://</small>}</div>
+      </section>
       <div className="set-tabs" role="tablist">{TABS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
 
       {tab === 'mail' && <>

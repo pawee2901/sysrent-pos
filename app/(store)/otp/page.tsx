@@ -1,3 +1,4 @@
+import { otpLink } from '@/lib/otp-link';
 import { notFound, redirect } from 'next/navigation';
 import { loginUrl } from '@/lib/routes';
 import { getShop } from '@/lib/shop';
@@ -20,6 +21,9 @@ function sameApp(x: string, y: string) {
 export default async function OtpPage() {
   const shop = await getShop();
   if (!shop || !can(shop.plan, 'otp')) notFound();
+  // ร้านเลือกให้ค้นที่เว็บ OTP อื่น → ส่งไปลิงก์นั้นเลย
+  const link = await otpLink(shop.id);
+  if (link) redirect(link);
   const me = await getCustomer();
   if (!me) redirect(loginUrl('/otp'));
   const [accounts, { data: apps }, { data: products }] = await Promise.all([

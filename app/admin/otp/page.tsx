@@ -5,6 +5,7 @@ import { PlanLock } from '@/components/PlanLock';
 import { adminShop, when } from '@/lib/admin-page';
 import { redirectUri } from '@/lib/msgraph';
 import { OtpSettings } from './OtpSettings';
+import { otpLink } from '@/lib/otp-link';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,7 @@ export default async function AdminOtp({ searchParams }: { searchParams: Promise
       logs={((logs.data ?? []) as unknown as Log[]).map((l) => ({ id: l.id, user: l.shop_customers?.username ?? '', account: l.account, app: l.app, found: l.found, when: when(l.created_at) }))}
       msApp={{ clientId: (config.data?.ms_client_id as string | undefined) ?? '', hasSecret: !!config.data?.ms_secret_enc, redirect: redirectUri(h.get('x-forwarded-host') ?? h.get('host') ?? '') }}
       apis={(apis.data ?? []) as { id: string; name: string; type: string }[]}
+      link={await otpLink(shop.id)}
     />
   );
 }
