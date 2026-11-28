@@ -8,7 +8,7 @@ import { getShop, baht } from '@/lib/shop';
 import { loadProducts, type Product } from '@/lib/catalog';
 import { db } from '@/lib/db';
 import { AppLogo } from '@/components/AppLogo';
-import { HALF_OK, SOCIAL, blockStyle, youtubeId, type Block } from '@/lib/home-layout';
+import { HALF_OK, SOCIAL, blockStyle, youtubeId, type Block, richStyle } from '@/lib/home-layout';
 import { CouponBox, Countdown, Slider } from '@/components/HomeBits';
 import { shopContacts } from '@/lib/contacts-server';
 import { latestReviews } from '@/lib/reviews';
@@ -176,6 +176,16 @@ export async function Blocks({ blocks: input, c = '', q = '' }: { blocks: Block[
       return <section className="hb">{b.title && <div className="sec-head"><h2>{b.title}</h2></div>}{body}</section>;
     }
     if (b.type === 'text') return b.title || b.text ? <section className={`card hb hb-text${b.align === 'center' ? ' center' : ''}`}>{b.title && <h2>{b.title}</h2>}{b.text && <p>{b.text}</p>}</section> : null;
+    if (b.type === 'richmenu') {
+      const rs = richStyle(b.grid);
+      const cells = Array.from({ length: rs.cells }, (_, i) => b.items?.[i] ?? {});
+      if (!cells.some((x) => x.image || x.q)) return null;
+      return (
+        <section className="hb hb-rich" style={rs.grid} aria-label={b.title || 'เมนูร้าน'}>
+          {cells.map((x, i) => go(x.link || undefined, 'hb-rich-cell', x.image ? <img src={x.image} alt={x.q ?? ''} loading="lazy" /> : <span>{x.q}</span>))
+            .map((el, i) => <div key={i} style={{ display: 'contents' }}>{i === 0 ? <div className="hb-rich-wrap" style={rs.first}>{el}</div> : <div className="hb-rich-wrap">{el}</div>}</div>)}
+        </section>);
+    }
     if (b.type === 'image') return b.image ? go(b.link, 'hb hb-image', <img src={b.image} alt={b.title ?? ''} loading="lazy" />) : null;
     if (b.type === 'notice') return b.text ? go(b.link, `hb hb-notice ${b.tone ?? 'accent'}`, <span>{b.text}</span>) : null;
     if (b.type === 'button') return b.label ? <div className="hb hb-btn">{go(b.link, 'btn primary lg', b.label)}</div> : null;

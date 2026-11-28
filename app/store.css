@@ -855,3 +855,10 @@ a.hb-link:hover { transform: translateY(-2px); border-color: var(--accent); }
 .umenu-pic img { border-radius: 50%; }
 .umenu-pic i { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-style: normal; background: var(--surface); box-shadow: 0 1px 4px rgba(0, 0, 0, .25); }
 .umenu-pop button[role="menuitem"]:disabled { opacity: .6; cursor: wait; }
+
+/* ป้ายเมนู (แบบ Rich menu): รูปหลายช่อง กดแต่ละช่องไปคนละหน้า */
+.hb-rich { gap: 6px; border-radius: var(--hb-r, 22px); overflow: hidden; }
+.hb-rich-wrap { min-width: 0; min-height: 0; display: grid; }
+.hb-rich-cell { position: relative; display: grid; place-items: center; overflow: hidden; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: clamp(12px, 2.6vw, 16px); text-align: center; padding: 6px; transition: transform .2s, filter .2s; }
+.hb-rich-cell img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+a.hb-rich-cell:hover { filter: brightness(1.05); transform: scale(.985); }

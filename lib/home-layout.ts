@@ -7,7 +7,7 @@ export type BlockType =
   | 'hero' | 'promos' | 'live' | 'stats' | 'products' | 'how'
   | 'featured' | 'cats' | 'text' | 'image' | 'gallery' | 'imgtext' | 'notice' | 'button' | 'contact' | 'faq'
   | 'coupon' | 'countdown' | 'video' | 'divider' | 'space'
-  | 'heading' | 'slider' | 'cta' | 'features' | 'steps' | 'reviews' | 'pricelist' | 'numbers' | 'marquee' | 'logos' | 'social' | 'spotlight' | 'quote' | 'linkcards' | 'badges' | 'realreviews';
+  | 'heading' | 'slider' | 'cta' | 'features' | 'steps' | 'reviews' | 'pricelist' | 'numbers' | 'marquee' | 'logos' | 'social' | 'spotlight' | 'quote' | 'linkcards' | 'badges' | 'realreviews' | 'richmenu';
 /** รายการย่อยในกล่อง (รูปในแกลเลอรี · คำถามในถาม-ตอบ) */
 export type BlockItem = { image?: string; link?: string; q?: string; a?: string; icon?: string; stars?: number; kind?: SocialKind };
 export type SocialKind = 'line' | 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'x' | 'discord' | 'telegram' | 'web';
@@ -33,6 +33,8 @@ export type Block = {
   events?: 'all' | 'buy' | 'join';
   /** รีวิวจริง: แสดงเฉพาะรีวิวที่ได้ดาวตั้งแต่เท่านี้ */
   minStars?: number;
+  /** ป้ายเมนู: แบบช่อง (2 ช่อง · 2×2 · ใหญ่บน + 3 ฯลฯ) */
+  grid?: RichGrid;
   /** สไตล์ที่ร้านปรับเอง (ไม่ใส่ = ตามธีม) */
   style?: BlockStyle;
 };
@@ -45,6 +47,32 @@ export type BlockStyle = {
   border?: 'none' | 'line' | 'accent'; shadow?: 'none' | 'soft' | 'strong';
 };
 export const HEX6 = /^#[0-9a-f]{6}$/i;
+
+/**
+ * ป้ายเมนู (แบบ Rich menu LINE): รูปหลายช่อง กดแต่ละช่องไปคนละหน้า
+ * cols × rows = ตาราง · big = ช่องแรกกินพื้นที่ (span) · ทั้งป้ายสัดส่วนเดียวกับ Rich menu (2500 × 1686 / 2500 × 843)
+ */
+export type RichGrid = '2' | '3' | '4' | '2x2' | '3x2' | 'left2' | 'top3' | 'top4';
+export const RICH_GRIDS: Record<RichGrid, { label: string; cols: number; rows: number; cells: number; big?: { col?: number; row?: number } }> = {
+  '2': { label: '2 ช่อง', cols: 2, rows: 1, cells: 2 },
+  '3': { label: '3 ช่อง', cols: 3, rows: 1, cells: 3 },
+  '4': { label: '4 ช่อง', cols: 4, rows: 1, cells: 4 },
+  '2x2': { label: '2×2', cols: 2, rows: 2, cells: 4 },
+  '3x2': { label: '3×2', cols: 3, rows: 2, cells: 6 },
+  left2: { label: 'ใหญ่ซ้าย + 2', cols: 2, rows: 2, cells: 3, big: { row: 2 } },
+  top3: { label: 'ใหญ่บน + 3', cols: 3, rows: 2, cells: 4, big: { col: 3 } },
+  top4: { label: 'ใหญ่บน + 4', cols: 4, rows: 2, cells: 5, big: { col: 4 } },
+};
+export const RICH_KEYS = Object.keys(RICH_GRIDS) as RichGrid[];
+/** สไตล์ตาราง + ช่องแรก (ใช้ทั้งหน้าร้านและตัวอย่างในหน้าจัดร้าน) */
+export function richStyle(g: RichGrid | undefined) {
+  const r = RICH_GRIDS[g ?? '2x2'] ?? RICH_GRIDS['2x2'];
+  return {
+    grid: { display: 'grid', gridTemplateColumns: `repeat(${r.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${r.rows}, minmax(0, 1fr))`, aspectRatio: r.rows === 1 ? '2500 / 843' : '2500 / 1686' } as Record<string, string>,
+    first: { ...(r.big?.col ? { gridColumn: `span ${r.big.col}` } : {}), ...(r.big?.row ? { gridRow: `span ${r.big.row}` } : {}) } as Record<string, string>,
+    cells: r.cells,
+  };
+}
 /** มีการปรับสไตล์อย่างน้อย 1 อย่าง */
 export const hasStyle = (s?: BlockStyle) => !!s && Object.values(s).some((v) => v !== undefined && v !== '');
 
@@ -68,7 +96,7 @@ export function blockStyle(s?: BlockStyle): { className: string; style: Record<s
 /** กล่องของระบบ (มีได้อย่างละ 1) */
 export const BUILTIN: BlockType[] = ['hero', 'promos', 'live', 'stats', 'products', 'how'];
 /** กล่องที่ตั้งเป็นครึ่งแถวได้ */
-export const HALF_OK: BlockType[] = ['live', 'featured', 'cats', 'text', 'image', 'gallery', 'notice', 'button', 'contact', 'faq', 'coupon', 'countdown', 'video',
+export const HALF_OK: BlockType[] = ['richmenu', 'live', 'featured', 'cats', 'text', 'image', 'gallery', 'notice', 'button', 'contact', 'faq', 'coupon', 'countdown', 'video',
   'heading', 'slider', 'cta', 'features', 'steps', 'reviews', 'pricelist', 'numbers', 'logos', 'social', 'spotlight', 'quote', 'linkcards', 'badges', 'realreviews'];
 export const LAYOUT_MAX = 60;
 export const PAGES_MAX = 50;
@@ -114,6 +142,7 @@ export const BLOCK_INFO: Record<BlockType, { icon: string; label: string; desc: 
   linkcards: { icon: '🗃️', label: 'การ์ดลิงก์', desc: 'รูป + หัวข้อ กดไปหน้าอื่น' },
   badges: { icon: '✅', label: 'แถบความมั่นใจ', desc: 'ส่งไว · ปลอดภัย · มีประกัน' },
   realreviews: { icon: '🌟', label: 'รีวิวจากผู้ซื้อจริง', desc: 'ดึงรีวิว + คะแนนจริงของลูกค้าอัตโนมัติ' },
+  richmenu: { icon: '🔲', label: 'ป้ายเมนู', desc: 'รูปหลายช่อง กดแต่ละช่องไปคนละหน้า (แบบ Rich menu LINE)' },
 };
 
 /** ช่องของรายการย่อยแต่ละแบบ (ป้ายชื่อ q / a ในหน้าแก้ไข) */
@@ -139,7 +168,7 @@ export const PALETTE: [string, BlockType[]][] = [
   ['รูป · วิดีโอ', ['image', 'slider', 'gallery', 'imgtext', 'cta', 'video', 'logos', 'hero', 'promos']],
   ['ข้อความ', ['heading', 'text', 'notice', 'marquee', 'quote', 'faq', 'steps']],
   ['ความน่าเชื่อถือ', ['realreviews', 'reviews', 'features', 'numbers', 'badges']],
-  ['ลิงก์ · ติดต่อ', ['button', 'linkcards', 'contact', 'social']],
+  ['ลิงก์ · ติดต่อ', ['richmenu', 'button', 'linkcards', 'contact', 'social']],
   ['โปรโมชัน', ['coupon', 'countdown']],
   ['ตกแต่ง · อื่น ๆ', ['divider', 'space', 'live', 'stats', 'how']],
 ];
@@ -180,6 +209,7 @@ export function newBlock(type: BlockType): Block {
     case 'quote': return { ...base, text: 'ซื้อง่าย ได้ไว ใช้ได้จริง', title: 'ร้านของเรา', align: 'center' };
     case 'linkcards': return { ...base, title: 'ลิงก์ที่น่าสนใจ', cols: 3, items: [{ q: 'ประวัติการซื้อ', a: 'ดูไอดีที่ซื้อไว้', link: '/history' }, { q: 'เติมเงิน', a: 'เติมเข้ากระเป๋า', link: '/balance' }] };
     case 'realreviews': return { ...base, title: 'รีวิวจากผู้ซื้อจริง', limit: 6, minStars: 4 };
+    case 'richmenu': return { ...base, grid: '2x2', items: [{ q: '💰 เติมเงิน', link: '/balance' }, { q: '🛍️ สินค้าทั้งหมด', link: '/#cat' }, { q: '🧾 ประวัติการซื้อ', link: '/history' }, { q: '💬 ติดต่อร้าน', link: '' }] };
     case 'badges': return { ...base, items: [{ icon: '⚡', q: 'ส่งอัตโนมัติ' }, { icon: '🔒', q: 'จ่ายปลอดภัย' }, { icon: '🛡️', q: 'มีประกัน' }, { icon: '💬', q: 'ทักได้ทุกวัน' }] };
     default: return base;
   }

@@ -8,7 +8,7 @@ import { ask, notify } from '@/components/dialog';
 import { AppLogo } from '@/components/AppLogo';
 import { splitLeft, untilMs } from '@/components/HomeBits';
 import { LAYOUT_TEMPLATES, type LayoutTemplate } from '@/lib/layout-templates';
-import { blockStyle, hasStyle, type BlockStyle, BLOCK_INFO, BUILTIN, DEFAULT_LAYOUT, HALF_OK, ITEMS_MAX, ITEM_SPEC, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, PALETTE, SOCIAL, newBlock, newBlockId, youtubeId, type Block, type BlockItem, type BlockType, type SocialKind } from '@/lib/home-layout';
+import { blockStyle, hasStyle, type BlockStyle, BLOCK_INFO, BUILTIN, DEFAULT_LAYOUT, HALF_OK, ITEMS_MAX, ITEM_SPEC, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, PALETTE, SOCIAL, newBlock, newBlockId, youtubeId, type Block, type BlockItem, type BlockType, type SocialKind, RICH_GRIDS, RICH_KEYS, richStyle } from '@/lib/home-layout';
 
 type P = { id: string; name: string; category: string; image: string; template: string; from: number | null; sold: number };
 export type LayoutInit = {
@@ -82,6 +82,12 @@ function Preview({ b, d }: { b: Block; d: LayoutInit }) {
     case 'cats': return <>{head(b.title)}{d.categories.length ? <div className="cv-cats">{d.categories.map((c) => { const p = d.products.find((x) => x.category === c); return <div key={c}>{p && <AppLogo image={p.image} template={p.template} name={p.name} />}<span>{c}</span></div>; })}</div> : <Ph>ยังไม่มีหมวดสินค้า</Ph>}</>;
     case 'text': return b.title || b.text ? <div className={`cv-card${b.align === 'center' ? ' center' : ''}`}>{b.title && <b>{b.title}</b>}{b.text && <p>{b.text}</p>}</div> : <Ph>📝 พิมพ์ข้อความทางขวา</Ph>;
     case 'image': return b.image ? <img src={b.image} alt="" className="cv-img round" /> : <Ph>🖼️ อัปโหลดรูปทางขวา</Ph>;
+    case 'richmenu': {
+      const rs = richStyle(b.grid);
+      return <div style={{ ...rs.grid, gap: 4, borderRadius: 14, overflow: 'hidden' }}>{Array.from({ length: rs.cells }, (_, i) => b.items?.[i] ?? {}).map((x, i) => (
+        <div key={i} style={{ ...(i === 0 ? rs.first : {}), position: 'relative', display: 'grid', placeItems: 'center', minWidth: 0, minHeight: 0, overflow: 'hidden', borderRadius: 8, background: 'var(--accent-soft)', color: 'var(--accent)', fontWeight: 700, fontSize: 11, textAlign: 'center', padding: 4 }}>
+          {x.image ? <img src={x.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : x.q || `ช่อง ${i + 1}`}</div>))}</div>;
+    }
     case 'gallery': {
       const pics = (b.items ?? []).filter((x) => x.image);
       return pics.length ? <div className="cv-cols" style={{ ['--c' as string]: b.cols ?? 3 } as React.CSSProperties}>{pics.map((x, i) => <img key={i} src={x.image} alt="" className="cv-img" />)}</div> : <Ph>🧩 เพิ่มรูปทางขวา</Ph>;
@@ -552,6 +558,29 @@ export function HomeLayout({ init }: { init: LayoutInit }) {
                 </>}
                 {b.type === 'text' && <>{txt('text', 'ข้อความ', { rows: 5 })}<div className="field"><span>จัดข้อความ</span><Seg value={b.align ?? 'left'} set={(v) => patch(b.id, { align: v })} opts={[['left', 'ชิดซ้าย'], ['center', 'กึ่งกลาง']]} /></div></>}
                 {b.type === 'image' && <>{pic('รูป')}{linkField()}</>}
+                {b.type === 'richmenu' && (() => {
+                  const rs = richStyle(b.grid), cells = Array.from({ length: rs.cells }, (_, i) => b.items?.[i] ?? {});
+                  const setCell = (i: number, p: Partial<BlockItem>) => patch(b.id, { items: cells.map((x, k) => (k === i ? { ...x, ...p } : x)) });
+                  return <>
+                    <div className="field"><span>แบบช่อง</span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))', gap: 6 }}>{RICH_KEYS.map((g) => { const r = richStyle(g), on = (b.grid ?? '2x2') === g; return (
+                        <button key={g} type="button" aria-pressed={on} onClick={() => patch(b.id, { grid: g, items: Array.from({ length: r.cells }, (_, i) => b.items?.[i] ?? {}) })}
+                          style={{ display: 'grid', gap: 6, padding: 8, borderRadius: 12, border: `1.5px solid ${on ? 'var(--accent)' : 'var(--line)'}`, background: on ? 'var(--accent-soft)' : 'var(--surface)', cursor: 'pointer', font: 'inherit', color: 'inherit' }}>
+                          <div style={{ ...r.grid, gap: 2 }}>{Array.from({ length: r.cells }, (_, i) => <i key={i} style={{ ...(i === 0 ? r.first : {}), borderRadius: 3, background: on ? 'var(--accent)' : 'var(--faint)', opacity: on ? 0.8 : 0.45 }} />)}</div>
+                          <small style={{ fontSize: 11.5, fontWeight: 600 }}>{RICH_GRIDS[g].label}</small></button>); })}</div></div>
+                    <ImgHint kind={rs.grid.aspectRatio === '2500 / 843' ? 'wide' : 'square'} />
+                    <small className="faint" style={{ fontSize: 12 }}>💡 อัปรูปทีละช่องได้เลย ไม่ต้องทำรูปเดียวแล้วตัดแบ่ง · ช่องที่ไม่มีรูป = แสดงข้อความแทน</small>
+                    {cells.map((x, i) => (
+                      <div key={i} className="lb-item" style={{ display: 'grid', gap: 6 }}>
+                        <div className="lb-item-head"><b>ช่อง {i + 1}{i === 0 && RICH_GRIDS[b.grid ?? '2x2'].big ? ' (ช่องใหญ่)' : ''}</b></div>
+                        <div className="lb-row">{x.image && <img src={x.image} alt="" className="lb-thumb" />}
+                          <button type="button" className="btn sm" disabled={busy || !init.ready} onClick={() => pickFiles(false, ([u]) => setCell(i, { image: u }))}>{x.image ? 'เปลี่ยนรูป' : 'อัปโหลดรูป'}</button>
+                          {x.image && <button type="button" className="btn ghost sm" onClick={() => setCell(i, { image: '' })}>เอาออก</button>}</div>
+                        <input className="input" value={x.q ?? ''} maxLength={60} placeholder="ข้อความ (แสดงเมื่อไม่มีรูป) เช่น 💰 เติมเงิน" onChange={(e) => setCell(i, { q: e.target.value })} />
+                        <input className="input" value={x.link ?? ''} maxLength={300} placeholder="กดแล้วไปที่ เช่น /balance · /history · /#cat · https://line.me/..." onChange={(e) => setCell(i, { link: e.target.value })} />
+                      </div>))}
+                  </>;
+                })()}
                 {b.type === 'gallery' && <div className="field"><span>รูปต่อแถว</span><Seg value={b.cols ?? 3} set={(v) => patch(b.id, { cols: v })} opts={[[1, '1'], [2, '2'], [3, '3'], [4, '4']]} /></div>}
                 {b.type === 'imgtext' && <>{pic('รูป')}{txt('text', 'ข้อความ', { rows: 4 })}{txt('label', 'ข้อความบนปุ่ม (ไม่บังคับ)', { max: 40 })}{linkField('ปุ่มไปที่')}
                   <div className="field"><span>รูปอยู่ด้าน</span><Seg value={!!b.flip} set={(v) => patch(b.id, { flip: v })} opts={[[false, 'ซ้าย'], [true, 'ขวา']]} /></div></>}

@@ -14,7 +14,7 @@ import { parseMusic } from '@/lib/music';
 import { CONTACTS_MAX, contactError, isContactKind } from '@/lib/contacts';
 import { pushShop } from '@/lib/push';
 import { PUSH_EVENT_KEYS, type PushEvent } from '@/lib/push-events';
-import { BLOCK_INFO, BUILTIN, HEX6, ITEMS_MAX, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, SOCIAL, youtubeId, type BlockType, type SocialKind } from '@/lib/home-layout';
+import { BLOCK_INFO, BUILTIN, HEX6, RICH_KEYS, type RichGrid, ITEMS_MAX, LAYOUT_MAX, PAGES_MAX, PAGE_SLUG, SOCIAL, youtubeId, type BlockType, type SocialKind } from '@/lib/home-layout';
 
 const https = (max: number) => z.string().trim().max(max).refine((u) => !u || /^https:\/\//.test(u), 'ลิงก์ต้องขึ้นต้นด้วย https://');
 /** ลิงก์ในร้าน (/p/...) หรือ https:// */
@@ -35,7 +35,7 @@ const block = z.object({
     radius: z.number().int().min(0).max(48).optional(), pad: z.number().int().min(0).max(64).optional(),
     border: z.enum(['none', 'line', 'accent']).optional(), shadow: z.enum(['none', 'soft', 'strong']).optional(),
   }).optional(),
-  cols: z.number().int().min(1).max(4).optional(), flip: z.boolean().optional(),
+  cols: z.number().int().min(1).max(4).optional(), flip: z.boolean().optional(), grid: z.enum(RICH_KEYS as [RichGrid, ...RichGrid[]]).optional(),
   code: z.string().trim().max(40).optional(), until: z.string().regex(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})?$/, 'วันเวลาไม่ถูกต้อง').optional(),
 });
 const pageTitle = z.string().trim().min(1, 'ใส่ชื่อหน้า').max(60);
