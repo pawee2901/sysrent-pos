@@ -15,7 +15,18 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 // code = รหัสยืนยันของระบบตัวแทน (รหัส 4 หลัก / ชื่อยูส / อีเมลตัวแทน)
-const schema = z.object({ account: z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120), appId: z.string().uuid(), code: z.string().trim().max(120).optional(), ack: z.boolean().optional() });
+const schema = z.object({ account: z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120), appId: z.string().uuid(), code: z.string().trim().max(120).optional(), ack: z.boolean().optional(), poll: z.boolean().optional() });
+
+/** ดึงเมลอัตโนมัติระหว่างรอ (ทุก 5 วินาที): จำกัดแยกในหน่วยความจำ ไม่นับรวมกับการกดค้นหาเอง · ไม่เจอ = ไม่บันทึก */
+const POLL_PER_MINUTE = 16;
+const polls = new Map<string, number[]>();
+function pollOk(key: string) {
+  const now = Date.now(), list = (polls.get(key) ?? []).filter((t) => now - t < 60_000);
+  if (list.length >= POLL_PER_MINUTE) { polls.set(key, list); return false; }
+  list.push(now); polls.set(key, list);
+  if (polls.size > 5000) for (const [k, v] of polls) if (!v.some((t) => now - t < 60_000)) polls.delete(k);
+  return true;
+}
 const PER_MINUTE = 6;
 const PER_HOUR = 40;
 
@@ -29,12 +40,13 @@ export async function POST(req: Request) {
   if (!(await otpPublic(shop.id)) || (await otpLink(shop.id))) return fail('ร้านปิดหน้ารับ OTP อยู่', 403);
   const b = await body(req, schema);
   if ('res' in b) return b.res;
-  const { account, appId, code = '', ack } = b.data, d = db(), shopId = shop.id, ip = await ipOf();
+  const { account, appId, code = '', ack, poll } = b.data, d = db(), shopId = shop.id, ip = await ipOf();
 
+  if (poll && !pollOk(`${shopId}:${ip}`)) return fail('ค้นหาบ่อยเกินไป กรุณารอสักครู่', 429);
   const recent = (ms: number) => d.from('shop_otp_requests').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).eq('ip', ip).gte('created_at', new Date(Date.now() - ms).toISOString());
   const [m, h] = await Promise.all([recent(60_000), recent(3_600_000)]);
   if (m.error) return fail('ร้านยังไม่พร้อมใช้งานหน้ารับ OTP', 503);
-  if ((m.count ?? 0) >= PER_MINUTE || (h.count ?? 0) >= PER_HOUR) return fail('ค้นหาบ่อยเกินไป กรุณารอสักครู่', 429);
+  if (!poll && ((m.count ?? 0) >= PER_MINUTE || (h.count ?? 0) >= PER_HOUR)) return fail('ค้นหาบ่อยเกินไป กรุณารอสักครู่', 429);
 
   const { data: app } = await d.from('shop_otp_apps').select('name, keywords, code').eq('id', appId).eq('shop_id', shopId).maybeSingle();
   if (!app) return fail('ไม่พบแอปนี้', 404);
@@ -74,7 +86,7 @@ export async function POST(req: Request) {
 
   try {
     const hits = await searchOtp({ shopId, account, appName: app.name, keywords: app.keywords, appCode: app.code ?? '' });
-    await log(hits.length > 0);
+    if (hits.length || !poll) await log(hits.length > 0);
     return NextResponse.json({ ok: true, hits });
   } catch (e) {
     await log(false);

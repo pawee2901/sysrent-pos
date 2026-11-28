@@ -10,7 +10,7 @@ import css from './otpweb.module.css';
 type App = { id: string; name: string; image: string; template: string };
 type Hit = { code: string | null; link: string | null; subject: string; from?: string; date: string };
 const time = (s: string) => new Date(s).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' });
-const POLL_MS = 12_000, POLL_MAX = 15; // รอเมล: ดึงเองทุก 12 วินาที นานสุด 3 นาที (ไม่ชนตัวกันกดรัว 6 ครั้ง/นาที)
+const POLL_MS = 5_000, POLL_MAX = 36; // รอเมล: ดึงเองทุก 5 วินาที นานสุด 3 นาที (แบบเว็บเช่า OTP)
 
 /**
  * หน้าลูกค้าของเว็บรับ OTP (แบบเว็บเช่า OTP): เลือกแอป → อีเมล (+ รหัสตัวแทน) → รอเมลอัตโนมัติ → รหัสใหญ่ + คัดลอก
@@ -40,7 +40,7 @@ export function OtpWebClient({ name, logo, apps, agent, pinOnly }: { name: strin
   async function search(ack = acked, attempt = 0) {
     if (!app) return;
     stop(); setBusy(true); setErr(''); setNeed(null); setCanAsk(null);
-    const r = await api<{ hits: Hit[] }>('/api/otp/public', { account: email.trim().toLowerCase(), appId: app.id, ...(agent ? { code } : {}), ...(ack ? { ack: true } : {}) });
+    const r = await api<{ hits: Hit[] }>('/api/otp/public', { account: email.trim().toLowerCase(), appId: app.id, ...(agent ? { code } : {}), ...(ack ? { ack: true } : {}), ...(attempt > 0 ? { poll: true } : {}) });
     setBusy(false);
     const d = r.data as { need_ack?: NeedAck; can_ask?: CanAsk };
     if (r.status === 409 && d.need_ack) { setNeed(d.need_ack); setStage('form'); return; }
@@ -111,7 +111,7 @@ export function OtpWebClient({ name, logo, apps, agent, pinOnly }: { name: strin
             <div className={css.wait}>
               <span className={css.spin} aria-hidden />
               <p className={css.t1}>⏳ กำลังรอรับข้อความ OTP ล่าสุด…</p>
-              <p className={css.t2}>{tries < POLL_MAX ? <>ระบบดึงอีเมลให้อัตโนมัติ (ครั้งที่ {tries} / {POLL_MAX})<br />กรุณากด &quot;ส่งรหัส&quot; ในแอป {app.name} ก่อน</> : 'ยังไม่พบรหัสใน 15 นาทีล่าสุด'}</p>
+              <p className={css.t2}>{tries < POLL_MAX ? <>ระบบดึงอีเมลให้อัตโนมัติทุก 5 วินาที (ครั้งที่ {tries} / {POLL_MAX})<br />กรุณากด &quot;ส่งรหัส&quot; ในแอป {app.name} ก่อน</> : 'ยังไม่พบรหัสใน 15 นาทีล่าสุด'}</p>
               <button type="button" className={css.again} disabled={busy} onClick={() => search(acked, 0)}>{busy ? 'กำลังค้นหา…' : '🔄 ค้นหาอีกครั้ง'}</button>
             </div>
           ) : h && (
