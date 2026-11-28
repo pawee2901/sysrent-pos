@@ -245,22 +245,22 @@ function LineCard({ line }: { line: { botName: string; basicId: string } | null 
 function SettingsCard({ settings, call }: { settings: Settings; call: (b: object) => Promise<unknown> }) {
   const [s, setS] = useState({ remind: String(settings.remindDays), grace: String(settings.graceDays), late: String(settings.lateFee), removed: String(settings.removedFee), fam: String(settings.famSize) });
   const n = (v: string) => Number(v.replace(/[^\d.]/g, '') || 0);
-  const box = (label: string, key: keyof typeof s, unit: string) => (
-    <label className="field"><span>{label}</span><div className="rn-unit"><input className="input" inputMode="decimal" value={s[key]} onChange={(e) => setS({ ...s, [key]: e.target.value })} /><i>{unit}</i></div></label>
+  const box = (label: string, hint: string, key: keyof typeof s, unit: string, wide = false) => (
+    <label className={`field${wide ? ' rn-wide' : ''}`}><span>{label}<small>{hint}</small></span><div className="rn-unit"><input className="input" inputMode="decimal" value={s[key]} onChange={(e) => setS({ ...s, [key]: e.target.value })} /><i>{unit}</i></div></label>
   );
   return (
     <section className="card">
       <div className="card-head"><h2>ตั้งค่าการต่อ</h2></div>
       <div className="rn-body">
         <div className="rn-fields">
-          {box('เตือนก่อนหมดอายุ', 'remind', 'วัน')}
-          {box('ต่อราคาปกติได้ถึง วันหมด +', 'grace', 'วัน')}
-          {box('ต่อหลังจากนั้น บวกเพิ่ม', 'late', 'บาท')}
-          {box('ต่อหลังลบเมลแล้ว บวกเพิ่ม', 'removed', 'บาท')}
-          {box('1 เมลร้าน (fam) ใส่ลูกค้าได้', 'fam', 'เมล')}
+          {box('🔔 เตือนก่อนหมด', 'ส่ง LINE ล่วงหน้า', 'remind', 'วัน')}
+          {box('⏳ ต่อราคาปกติได้อีก', 'นับจากวันหมด', 'grace', 'วัน')}
+          {box('💸 ต่อช้า บวกเพิ่ม', 'หลังเลยช่วงราคาปกติ', 'late', 'บาท')}
+          {box('🗑️ ลบเมลแล้ว บวกเพิ่ม', 'ต้องใส่เมลให้ใหม่', 'removed', 'บาท')}
+          {box('👥 1 เมลร้าน (fam) ใส่ได้', 'จำนวนลูกค้าต่อ 1 เมล', 'fam', 'คน', true)}
         </div>
         <p className="rn-note">💡 ตัวอย่าง: หมดอายุวันที่ 17 · ต่อราคาปกติได้ถึงวันที่ {17 + n(s.grace)} · หลังจากนั้น +{n(s.late)} บาท · กด &quot;ลบเมลแล้ว&quot; +{n(s.removed)} บาท (ขึ้นในการ์ดเตือนลูกค้าด้วย)</p>
-        <div className="rn-acts"><button type="button" className="btn primary" onClick={() => call({ action: 'settings', remind_days: Math.max(1, Math.round(n(s.remind))), grace_days: Math.round(n(s.grace)), late_fee: n(s.late), removed_fee: n(s.removed), fam_size: Math.max(1, Math.round(n(s.fam))) })}>บันทึกการตั้งค่า</button></div>
+        <div className="rn-acts rn-save"><button type="button" className="btn primary" onClick={() => call({ action: 'settings', remind_days: Math.max(1, Math.round(n(s.remind))), grace_days: Math.round(n(s.grace)), late_fee: n(s.late), removed_fee: n(s.removed), fam_size: Math.max(1, Math.round(n(s.fam))) })}>บันทึกการตั้งค่า</button></div>
       </div>
     </section>
   );
