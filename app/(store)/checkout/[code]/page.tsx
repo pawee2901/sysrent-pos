@@ -24,8 +24,8 @@ export default async function Checkout({ params }: { params: Promise<{ code: str
   return (
     <>
       <h1 style={{ fontSize: 26, marginBottom: 16 }}>ชำระเงิน</h1>
-      <div className="co">
-        <div className="card">
+      <div className="co co-pay">
+        <div className="card co-order">
           <div className="card-head"><h3>ออเดอร์ #{o.code}</h3></div>
           {items.map((i) => <div key={i.id} className="line-item"><div className="grow"><b>{i.name}</b><small>จำนวน {i.qty}{i.customer_info ? ` · ${i.customer_info}` : ''}</small></div><b className="num">{baht(Number(i.total))}</b></div>)}
           <div className="card-pad" style={{ paddingTop: 8 }}>
@@ -33,7 +33,7 @@ export default async function Checkout({ params }: { params: Promise<{ code: str
               <div className="sum-row" style={{ color: 'var(--ok)' }}><span>ส่วนลด{coupon ? ` (${coupon})` : ''}</span><span className="num">−{baht(discount)}</span></div></>}
             <div className="sum-row total"><span>ยอดชำระ</span><b className="num">{baht(Number(o.total))}</b></div></div>
         </div>
-        <div className="card card-pad"><PayBox code={o.code} total={Number(o.total)} balance={me.balance} expiresAt={o.expires_at} /></div>
+        <div className="card card-pad co-box"><PayBox code={o.code} total={Number(o.total)} balance={me.balance} expiresAt={o.expires_at} /></div>
       </div>
     </>
   );

@@ -38,9 +38,9 @@ export default function CartPage() {
         <div className="card">
           <div className="card-head"><h3>รายการ ({cart.count})</h3><button type="button" className="btn ghost sm" onClick={cart.clear}>ล้างตะกร้า</button></div>
           {cart.lines.map((l) => (
-            <div key={l.optionId} className="line-item">
+            <div key={l.optionId} className="line-item cart-line">
               <AppLogo image={l.image} template={l.template} name={l.name} />
-              <div className="grow"><b>{l.name}</b><small>{l.option}</small></div>
+              <div className="grow"><b>{l.name}</b><small>{l.option} · {baht(l.price)}</small></div>
               {l.maxQty > 1 && (
                 <span className="qty">
                   <button type="button" onClick={() => cart.setQty(l.optionId, l.qty - 1)} aria-label="ลดจำนวน">−</button>
@@ -57,17 +57,20 @@ export default function CartPage() {
             </div>
           ))}
         </div>
-        <div className="card card-pad">
+        <div className="card card-pad cart-sum">
           <h3 style={{ fontSize: 16, marginBottom: 10 }}>สรุปยอด</h3>
           <div className="sum-row"><span>ราคาสินค้า</span><span className="num">{baht(cart.total)}</span></div>
           <label className="field" style={{ marginTop: 10 }}><span>โค้ดส่วนลด</span>
             <input className="input" value={coupon} maxLength={20} placeholder="ถ้ามี เช่น NEW10" style={{ textTransform: 'uppercase', letterSpacing: '.05em' }} onChange={(e) => setCoupon(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} /></label>
           <div className="sum-row total"><span>ยอดชำระ</span><b className="num">{baht(cart.total)}</b></div>
-          <button type="button" className="btn primary lg block" style={{ marginTop: 14 }} disabled={busy} onClick={checkout}>{busy ? 'กำลังสร้างออเดอร์…' : 'ไปชำระเงิน'}</button>
+          <button type="button" className="btn primary lg block cart-go" style={{ marginTop: 14 }} disabled={busy} onClick={checkout}>{busy ? 'กำลังสร้างออเดอร์…' : 'ไปชำระเงิน'}</button>
           {err && <p style={{ color: 'var(--bad)', marginTop: 10 }} role="alert">{err}</p>}
           <p className="faint" style={{ fontSize: 13, marginTop: 10 }}>{coupon ? 'ส่วนลดจากโค้ดจะแสดงในหน้าชำระเงิน' : 'ราคาสุดท้ายยืนยันอีกครั้งในหน้าชำระเงิน'}</p>
         </div>
       </div>
+      {/* มือถือ: ยอดรวม + ปุ่มจ่ายติดล่างจอ */}
+      <div className="cart-bar"><div><small>ยอดชำระ · {cart.count} ชิ้น</small><b className="num">{baht(cart.total)}</b></div>
+        <button type="button" className="btn primary lg" disabled={busy} onClick={checkout}>{busy ? 'กำลังสร้าง…' : 'ไปชำระเงิน →'}</button></div>
     </>
   );
 }

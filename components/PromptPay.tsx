@@ -52,6 +52,7 @@ export function PromptPayPanel({ qr, onPaid, onRenew }: { qr: Qr; onPaid: (p: Pa
       <div className="qr"><div className="qr-head">พร้อมเพย์ · PromptPay</div>
         <div className="qr-box" style={{ opacity: qLeft ? 1 : .2 }} dangerouslySetInnerHTML={{ __html: qr.qrSvg }} />
         <div className="qr-amt">{baht(qr.amount)}</div></div>
+      {qLeft > 0 && <SaveQr svg={qr.qrSvg} amount={qr.amount} />}
       {qr.auto && <p className="qr-exact">โอน <b className="num">฿{qr.amount.toFixed(2)}</b> ให้ตรงทุกสตางค์<br /><span className="muted">เศษสตางค์คือรหัสของคุณ ระบบใช้จับคู่เงินเข้า · เศษเข้ากระเป๋าคุณ ไม่หาย</span></p>}
       {qLeft > 0
         ? <p className="timer">โอนภายใน <b className="num">{mm}:{String(ss).padStart(2, '0')}</b> นาที · ยอดต้องตรงตาม QR</p>
@@ -69,5 +70,41 @@ export function PromptPayPanel({ qr, onPaid, onRenew }: { qr: Qr; onPaid: (p: Pa
       {note && <p className="auto-wait" style={{ marginTop: 10 }} role="status">{note}</p>}
       {err && <p style={{ color: 'var(--bad)', marginTop: 10 }} role="alert">{err}</p>}
     </>
+  );
+}
+
+/** มือถือ: สแกน QR บนจอตัวเองไม่ได้ → บันทึกรูป QR ไปเปิดในแอปธนาคาร (แชร์ลงคลังรูป / ดาวน์โหลด) */
+function SaveQr({ svg, amount }: { svg: string; amount: number }) {
+  const [busy, setBusy] = useState(false);
+  async function save() {
+    setBusy(true);
+    try {
+      const img = new Image();
+      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.includes('xmlns=') ? svg : svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'))}`;
+      await img.decode();
+      const W = 720, pad = 60, cv = document.createElement('canvas');
+      cv.width = W; cv.height = W + 130;
+      const g = cv.getContext('2d')!;
+      g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+      g.drawImage(img, pad, pad, W - pad * 2, W - pad * 2);
+      g.fillStyle = '#111'; g.textAlign = 'center'; g.font = 'bold 48px sans-serif';
+      g.fillText(`฿${amount.toFixed(2)}`, W / 2, W + 40);
+      g.font = '26px sans-serif'; g.fillStyle = '#555';
+      g.fillText('PromptPay · โอนให้ตรงยอด', W / 2, W + 90);
+      const blob = await new Promise<Blob | null>((r) => cv.toBlob(r, 'image/png'));
+      if (!blob) throw new Error('no blob');
+      const file = new File([blob], `promptpay-${amount.toFixed(2)}.png`, { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file] }).catch(() => {}); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } catch { /* เปิดรูปไม่ได้ = ให้แคปหน้าจอแทน */ alert('บันทึกรูปไม่ได้ ลองแคปหน้าจอ QR แทนได้เลย'); }
+    finally { setBusy(false); }
+  }
+  return (
+    <div className="qr-save">
+      <button type="button" className="btn soft block" disabled={busy} onClick={save}>{busy ? 'กำลังเตรียมรูป…' : '💾 บันทึกรูป QR'}</button>
+      <small className="muted">จ่ายในมือถือเครื่องนี้: บันทึกรูป → เปิดแอปธนาคาร → สแกนจากรูปในเครื่อง</small>
+    </div>
   );
 }

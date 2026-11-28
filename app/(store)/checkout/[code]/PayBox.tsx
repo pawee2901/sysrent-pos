@@ -30,6 +30,7 @@ export function PayBox({ code, total, balance, expiresAt }: { code: string; tota
   return (
     <>
       <div className="steps"><span className="step on" /><span className="step on" /><span className="step" /></div>
+      <div className="pay-total"><span>ยอดชำระ</span><b className="num">{baht(total)}</b></div>
       <h3 style={{ fontSize: 16, marginBottom: 10 }}>วิธีชำระเงิน</h3>
       <button type="button" className={`pay-opt${method === 'promptpay' ? ' on' : ''}`} onClick={() => setMethod('promptpay')} style={{ width: '100%', font: 'inherit', background: 'none' }}>
         <span className="pay-ic">📱</span><span className="grow" style={{ textAlign: 'left' }}><b>พร้อมเพย์ (QR)</b><small>สแกนจ่าย ตรวจสลิปอัตโนมัติ</small></span>

@@ -3,6 +3,7 @@ import { loginUrl } from '@/lib/routes';
 import { to } from '@/lib/routes';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useCart, baht, api } from '@/components/Cart';
 import { input } from '@/components/dialog';
 
@@ -18,6 +19,7 @@ export function BuyBox({ product, options, open, preorder = null, children }: { 
   const isPre = (x?: Opt) => !!preorder && !!x && product.fulfillment === 'stock' && (x.stock ?? 0) < 1;
   const [pick, setPick] = useState(first);
   const [msg, setMsg] = useState('');
+  const [added, setAdded] = useState(false);
   const [buying, setBuying] = useState(false);
   const [coupon, setCoupon] = useState('');
   const [couponOpen, setCouponOpen] = useState(false);
@@ -53,7 +55,9 @@ export function BuyBox({ product, options, open, preorder = null, children }: { 
         {options.map((x, i) => {
           const out = x.stock !== null && x.stock < 1 && !isPre(x);
           return (
-            <button key={x.id} type="button" role="radio" aria-checked={i === pick} disabled={out} className={`plan${i === pick ? ' on' : ''}`} onClick={() => { setPick(i); setMsg(''); }} style={out ? { opacity: .5 } : undefined}>
+            <button key={x.id} type="button" role="radio" aria-checked={i === pick} disabled={out} className={`plan${i === pick ? ' on' : ''}`} onClick={() => { setPick(i); setMsg(''); setAdded(false); }} style={out ? { opacity: .5 } : undefined}>
+              {i === pick && <i className="plan-check" aria-hidden>✓</i>}
+              {x.compareAt && x.compareAt > x.price && <em className="plan-off">-{Math.round((1 - x.price / x.compareAt) * 100)}%</em>}
               <span className="muted" style={{ fontSize: 14 }}>{x.name}{out ? ' · หมด' : isPre(x) ? ' · พรีออเดอร์' : ''}</span><b>{baht(x.price)}</b>{x.compareAt && x.compareAt > x.price ? <s>{baht(x.compareAt)}</s> : <s>&nbsp;</s>}
             </button>
           );
@@ -72,14 +76,16 @@ export function BuyBox({ product, options, open, preorder = null, children }: { 
           </div>
         )}
         {coupon.trim() && <small className="faint coupon-hint">โค้ดใช้กับปุ่ม &quot;ซื้อเลย&quot; · ถ้าใส่ตะกร้า ให้กรอกอีกครั้งที่หน้าตะกร้า</small>}
+        {/* มือถือ: แถบนี้ติดล่างจอระหว่างอ่านรายละเอียด (ไม่ต้องเลื่อนหาปุ่มซื้อ) */}
         <div className="buy-bar">
-          <button type="button" className="btn lg cart-btn" disabled={max < 1} onClick={() => { if (put()) setMsg('ใส่ตะกร้าแล้ว 🛒'); }}>🛒 ใส่ตะกร้า</button>
+          <button type="button" className="btn lg cart-btn" disabled={max < 1} aria-label="ใส่ตะกร้า" onClick={() => { if (put()) { setMsg(''); setAdded(true); } }}>🛒<span className="cart-lbl"> ใส่ตะกร้า</span></button>
           <button type="button" className="btn primary lg buy-btn" disabled={max < 1 || buying} onClick={buyNow}>
-            {buying ? 'กำลังสร้างออเดอร์…' : <><span>{isPre(o) ? 'จองเลย' : 'ซื้อเลย'}</span>{o && <b>{baht(o.price)}</b>}</>}
+            {buying ? 'กำลังสร้างออเดอร์…' : <><span>{isPre(o) ? 'จองเลย' : 'ซื้อเลย'}{o && options.length > 1 && <small className="buy-opt">{o.name}</small>}</span>{o && <b>{baht(o.price)}</b>}</>}
           </button>
         </div>
       </div>
       {product.askInfo && <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>📝 ร้านจะขอ <b>{product.askInfo}</b> ก่อนจ่ายเงิน</p>}
+      {added && <div className="added-note" role="status"><span>✅ ใส่ตะกร้าแล้ว</span><Link href={to('/cart')} className="btn sm primary">ดูตะกร้า · จ่ายเงิน</Link></div>}
       {msg && <p className="muted" role="status" style={{ marginTop: 10 }}>{msg}</p>}
     </>
   );
