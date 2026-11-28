@@ -16,14 +16,16 @@
   .search.open .sinput { display: block; }
 }
 
-/* ---------- แท็บย่อยของหมวด (ใต้แถบบน) ---------- */
-.subtabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 0 16px; padding-bottom: 2px; }
+/* ---------- แท็บย่อยของหมวด: แถบใต้แถบบน ---------- */
+.subbar { border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent); background: color-mix(in srgb, var(--surface) 70%, transparent); backdrop-filter: blur(10px); }
+.subtabs { max-width: 1400px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 0 28px; }
 .subtabs::-webkit-scrollbar { display: none; }
-.subtabs a { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 99px; font-size: 14px; color: var(--muted); border: 1px solid var(--line); background: var(--surface); white-space: nowrap; }
+.subtabs a { position: relative; flex: none; display: inline-flex; align-items: center; gap: 6px; height: 46px; padding: 0 14px; font-size: 14.5px; font-weight: 500; color: var(--muted); white-space: nowrap; transition: color .15s; }
 .subtabs a:hover { color: var(--text); }
-.subtabs a.on { background: var(--grad); border-color: transparent; color: #fff; font-weight: 600; box-shadow: var(--glow); }
-.subtabs a.on .n { background: rgba(255,255,255,.28); }
+.subtabs a.on { color: var(--accent); font-weight: 700; }
+.subtabs a.on::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--grad); }
 .subtabs .n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: inline-grid; place-items: center; }
+@media (max-width: 860px) { .subtabs { padding: 0 8px; } .subtabs a { padding: 0 12px; height: 44px; } }
 
 /* เมนูล่างมือถือ 6 หมวด */
 .six.six { grid-template-columns: repeat(6, 1fr); }

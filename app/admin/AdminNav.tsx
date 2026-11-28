@@ -91,14 +91,15 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
             <button type="button" className="btn ghost sm" onClick={logout} aria-label="ออกจากระบบ" title="ออกจากระบบ"><span className={css.full}>ออกจากระบบ</span><span className={css.short} aria-hidden>⎋</span></button>
           </div>
         </header>
-        <div className="content">
-          {tabs.length > 1 && (
-            <nav className={css.subtabs} aria-label={`เมนู${group.l}`}>
+        {/* แท็บย่อยของหมวด: แถบใต้แถบบน (เป็นเมนู ไม่ปนกับเนื้อหาหน้า) */}
+        {tabs.length > 1 && (
+          <nav className={css.subbar} aria-label={`เมนู${group.l}`}>
+            <div className={css.subtabs}>
               {tabs.map(([h, l]) => <Link key={h} href={to(`/admin${h}`)} className={cur === h ? css.on : ''} aria-current={cur === h ? 'page' : undefined}>{l}{badge(h) > 0 && <span className={css.n}>{badge(h)}</span>}</Link>)}
-            </nav>
-          )}
-          {children}
-        </div>
+            </div>
+          </nav>
+        )}
+        <div className="content">{children}</div>
       </div>
       <nav className={`mnav${groups.length >= 6 ? ` ${css.six}` : ''}`} aria-label="เมนูหลังบ้าน" style={groups.length < 5 ? { gridTemplateColumns: `repeat(${groups.length}, 1fr)` } : undefined}>
         {groups.map((g) => gLink(g, 22))}
