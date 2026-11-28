@@ -219,23 +219,43 @@ export function RenewalsClient({ rows, groups, contacts, pending, settings, fams
       </div>
 
       <div className={`drawer-bg${f ? ' open' : ''}`} onClick={() => setF(null)} />
-      <aside className={`drawer${f ? ' open' : ''}`} aria-hidden={!f}>
+      <aside className={`drawer rn-drawer${f ? ' open' : ''}`} aria-hidden={!f}>
         {f && <>
-          <div className="drawer-head"><b style={{ flex: 1, fontSize: 17 }}>{f.id ? 'แก้ไขลูกค้าต่อเมล' : 'เพิ่มลูกค้าต่อเมล'}</b><button type="button" className="icon-btn" onClick={() => setF(null)} aria-label="ปิด">✕</button></div>
+          <div className="drawer-head"><b style={{ flex: 1, fontSize: 17 }}>{f.id ? '✏️ แก้ไขลูกค้าต่อเมล' : '➕ เพิ่มลูกค้าต่อเมล'}</b><button type="button" className="icon-btn" onClick={() => setF(null)} aria-label="ปิด">✕</button></div>
           <div className="drawer-body">
-            <label className="field"><span>เมลลูกค้า (เมลที่ต่อ)</span><input className="input" value={f.customer_email} maxLength={120} placeholder="customer@gmail.com" onChange={(e) => setF({ ...f, customer_email: e.target.value })} /></label>
-            <div className="field"><span>เมลร้านที่ลูกค้าอยู่ (fam)</span><FamSelect value={f.fam_email} onChange={(v) => setF({ ...f, fam_email: v })} fams={fams} size={settings.famSize} current={editing && !editing.removed ? editing.famEmail : ''} /></div>
-            <label className="field"><span>แพ็กเกจต่อ (ราคาที่ลูกค้าจ่าย)</span>
-              <select className="input" value={f.option_id} onChange={(e) => setF({ ...f, option_id: e.target.value })}>
-                <option value="">— เลือกแพ็กเกจ —</option>
-                {groups.map((g) => <optgroup key={g.product} label={g.product}>{g.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</optgroup>)}
-              </select></label>
-            <div className="field"><span>หมดอายุวันที่</span><ThaiDateInput value={f.expires_on} onChange={(v) => setF({ ...f, expires_on: v })} clearable={false} label="หมดอายุวันที่" /></div>
-            <div className="field"><span>แชท LINE ของลูกค้า</span><ChatSelect value={f.line_user_id} onChange={(v) => setF({ ...f, line_user_id: v })} contacts={contacts} /></div>
-            <label className="field"><span>หมายเหตุ (ไม่บังคับ)</span><input className="input" value={f.note} maxLength={300} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
+            {/* 1 ลูกค้า · 2 แพ็กเกจ + วันหมด · 3 แชท LINE · 4 เมลร้าน — ช่องที่ต้องกรอกมีดอกจัน */}
+            <section className="rn-step">
+              <h3><i>1</i>ลูกค้า</h3>
+              <label className="field"><span>เมลลูกค้า (เมลที่ต่อ) <em>*</em></span><input className="input" type="email" inputMode="email" autoCapitalize="off" value={f.customer_email} maxLength={120} placeholder="customer@gmail.com" onChange={(e) => setF({ ...f, customer_email: e.target.value })} /></label>
+            </section>
+            <section className="rn-step">
+              <h3><i>2</i>แพ็กเกจ · วันหมดอายุ</h3>
+              <label className="field"><span>แพ็กเกจต่อ (ราคาที่ลูกค้าจ่าย) <em>*</em></span>
+                <select className="input" value={f.option_id} onChange={(e) => setF({ ...f, option_id: e.target.value })}>
+                  <option value="">— เลือกแพ็กเกจ —</option>
+                  {groups.map((g) => <optgroup key={g.product} label={g.product}>{g.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</optgroup>)}
+                </select></label>
+              <div className="field"><span>หมดอายุวันที่ <em>*</em></span><ThaiDateInput value={f.expires_on} onChange={(v) => setF({ ...f, expires_on: v })} clearable={false} label="หมดอายุวันที่" />
+                <div className="rn-quick">{([[30, '+30 วัน'], [90, '+3 เดือน'], [180, '+6 เดือน'], [365, '+1 ปี']] as const).map(([d, l]) => (
+                  <button key={d} type="button" className={f.expires_on === plusDays(d) ? 'on' : ''} onClick={() => setF({ ...f, expires_on: plusDays(d) })}>{l}</button>))}</div>
+                <small className="rn-hint">นับจากวันนี้ · {f.expires_on ? `หมด ${dateTh(f.expires_on)}` : 'ยังไม่ได้เลือกวัน'}</small></div>
+            </section>
+            <section className="rn-step">
+              <h3><i>3</i>แชท LINE ของลูกค้า</h3>
+              <ChatSelect value={f.line_user_id} onChange={(v) => setF({ ...f, line_user_id: v })} contacts={contacts} />
+              <small className="rn-hint">ยังไม่มีในรายการ? บันทึกไปก่อน แล้วส่งรหัสให้ลูกค้าพิมพ์ใน LINE ร้าน</small>
+            </section>
+            <section className="rn-step">
+              <h3><i>4</i>เมลร้าน (fam) · หมายเหตุ</h3>
+              <div className="field"><span>ลูกค้าอยู่ในเมลร้านไหน</span><FamSelect value={f.fam_email} onChange={(v) => setF({ ...f, fam_email: v })} fams={fams} size={settings.famSize} current={editing && !editing.removed ? editing.famEmail : ''} /></div>
+              <label className="field"><span>หมายเหตุ (ไม่บังคับ)</span><input className="input" value={f.note} maxLength={300} placeholder="เช่น โอนทุกต้นเดือน" onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
+            </section>
             {msg && <p style={{ color: 'var(--bad)', margin: 0 }} role="alert">{msg}</p>}
           </div>
-          <div className="drawer-foot"><button type="button" className="btn primary" disabled={busy || f.customer_email.trim().length < 3 || !f.option_id || !f.expires_on} onClick={save}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button></div>
+          <div className="drawer-foot rn-foot">
+            <button type="button" className="btn ghost" onClick={() => setF(null)}>ยกเลิก</button>
+            <button type="button" className="btn primary" disabled={busy || f.customer_email.trim().length < 3 || !f.option_id || !f.expires_on} onClick={save}>{busy ? 'กำลังบันทึก…' : f.id ? 'บันทึกการแก้ไข' : 'เพิ่มลูกค้า'}</button>
+          </div>
         </>}
       </aside>
     </div>

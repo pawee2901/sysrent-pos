@@ -753,6 +753,30 @@ body::before { height: 360px; }
 .rn-unlinked { color: var(--warn); }
 .rn-codebox { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 8px 10px 8px 12px; border: 1px dashed color-mix(in srgb, var(--warn) 45%, var(--line)); border-radius: 12px; font-size: 13px; }
 
+/* ฟอร์มเพิ่ม/แก้ลูกค้าต่อเมล: แบ่งเป็นขั้น 1–4 · ปุ่มวันหมดลัด · ปุ่มล่างเต็มกว้าง */
+.rn-drawer .drawer-body { gap: 12px; background: var(--surface-2, var(--bg)); }
+.rn-step { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.rn-step h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14.5px; }
+.rn-step h3 i { width: 22px; height: 22px; flex: none; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 800; color: var(--accent-ink, #fff); background: var(--grad, var(--accent)); }
+.rn-step .field > span em { color: var(--bad); font-style: normal; }
+.rn-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.rn-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.rn-quick button { padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.rn-quick button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.rn-foot .btn { flex: 1; }
+.rn-foot .btn.primary { flex: 2; }
+
+/* แท็บสถานะแบบชิป (เลื่อนข้างได้ ไม่ตัดคำ) — หน้าออเดอร์ ฯลฯ */
+.chip-tabs { display: flex; gap: 6px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.chip-tabs::-webkit-scrollbar { display: none; }
+.chip-tabs > a, .chip-tabs > button { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 14px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); font-size: 13.5px; font-weight: 600; color: var(--muted); white-space: nowrap; text-decoration: none; }
+.chip-tabs > a b, .chip-tabs > button b { font-size: 12px; padding: 0 6px; border-radius: 99px; background: var(--surface-2); color: var(--text); }
+.chip-tabs > .on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.chip-tabs > .on b { background: var(--accent); color: var(--accent-ink, #fff); }
+/* แท็บแบบกลุ่มปุ่ม (.seg) ทุกหน้า: ห้ามตัดคำเป็น 2 บรรทัด */
+.seg > * { white-space: nowrap; flex: none; }
+.seg { scrollbar-width: none; }
+
 /* ตั้งค่าการต่อ: ป้ายชื่อ + คำอธิบายสั้น · ช่องสุดท้ายเต็มแถว */
 .rn-fields .field > span { display: grid; gap: 1px; }
 .rn-fields .field > span small { font-size: 11.5px; font-weight: 400; color: var(--muted); }
@@ -773,6 +797,9 @@ body::before { height: 360px; }
   .rn-unit { gap: 6px; }
   .rn-unit .input { height: 42px; padding: 0 10px; text-align: center; font-weight: 700; }
   .rn-save .btn { width: 100%; }
+  .rn-drawer .drawer-body { padding: 12px; }
+  .rn-drawer .input { font-size: 16px; } /* iPhone ไม่ซูมเข้าเองตอนแตะช่อง */
+  .rn-foot { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
   .rn-views { padding: 0 16px 10px; }
   .rn-card .rn-acts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rn-card .rn-acts .btn { width: 100%; padding: 0 8px; }

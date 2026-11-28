@@ -44,7 +44,7 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
         <form className="toolbar" action={to('/admin/orders')}>
           {s && <input type="hidden" name="s" value={s} />}
           <input className="input" name="q" defaultValue={q} placeholder="🔍 เลขออเดอร์ / ชื่อผู้ใช้" />
-          <div className="seg">{TABS.map(([k, l], i) => <Link key={k} href={to('/admin/orders') + (k ? `?s=${k}` : '')} className={s === k ? 'on' : ''} style={{ display: 'inline-flex', alignItems: 'center', height: 30, padding: '0 12px', borderRadius: 8, fontSize: 13 }}>{l}<span style={{ color: 'var(--faint)', marginLeft: 4 }}>{counts[i].count ?? 0}</span></Link>)}</div>
+          <div className="chip-tabs">{TABS.map(([k, l], i) => <Link key={k} href={to('/admin/orders') + (k ? `?s=${k}` : '')} className={s === k ? 'on' : ''}>{l}<b>{counts[i].count ?? 0}</b></Link>)}</div>
         </form>
         <OrdersTable rows={rows} mailOn={can(shop.plan, 'mail')} />
         <div className="tbl-foot"><span>แสดง {rows.length} รายการล่าสุด</span></div>
