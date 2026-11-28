@@ -1,4 +1,6 @@
 import { otpLink } from '@/lib/otp-link';
+import { latestAsks } from '@/lib/otp-quota';
+import { OtpAskStatus } from '@/components/OtpAskStatus';
 import { loginUrl } from '@/lib/routes';
 import { to } from '@/lib/routes';
 import Link from 'next/link';
@@ -32,6 +34,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
   // วิธีการใช้งานของสินค้า (ยังไม่รัน 0011 = ไม่แสดง)
   const ids = [...new Set(items.map((i) => i.product_id))];
   const oLink = await otpLink(shop.id);
+  const asks = await latestAsks(items.map((i) => i.id));
   const [media, otp, otpMail] = await Promise.all([productMedia({ ids }).then((m) => m.map), otpApps(shop, ids), otpEmails(items.filter((i) => i.status === 'delivered').map((i) => i.id))]);
   const usage: Record<string, string> = Object.fromEntries([...media].map(([id, m]) => [id, m.usage]));
   const usageImg: Record<string, string[]> = Object.fromEntries([...media].map(([id, m]) => [id, m.usageImages]));
@@ -69,6 +72,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
                 const app = otp.get(i.product_id), emails = otpMail.get(i.id) ?? [];
                 return app && (emails.length || oLink) && i.status === 'delivered' ? <div style={{ width: '100%' }}><OtpButton otp={{ ...app, emails, link: oLink, itemId: i.id }} /></div> : null;
               })()}
+              {asks.get(i.id) && <div style={{ width: '100%' }}><OtpAskStatus ask={asks.get(i.id)!} /></div>}
               {i.status === 'delivered' && (usage[i.product_id] || usageImg[i.product_id]?.length) && (
                 <details className="usage-box" open><summary>📖 วิธีการใช้งาน</summary>
                   {usage[i.product_id] && <p>{usage[i.product_id]}</p>}

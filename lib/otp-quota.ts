@@ -58,3 +58,16 @@ export async function ackConfig(shopId: string): Promise<{ on: boolean; text: st
 export const needAck = (x: { limit: number; used: number; name?: string; per?: string }, text: string) =>
   Response.json({ error: 'กรุณายอมรับเงื่อนไขก่อนค้นหา', need_ack: { ...x, text } }, { status: 409 });
 export const fullRes = (q: ItemQuota) => Response.json({ error: fullMsg(q), can_ask: { itemId: q.itemId, name: q.name } }, { status: 429 });
+
+/** คำขอ OTP เพิ่มล่าสุดของแต่ละรายการ (ให้ลูกค้าเห็นสถานะ + คำตอบแอดมินในหน้าประวัติ) · ยังไม่รัน 0052 = ว่าง */
+export type AskStatus = { status: string; reply: string; extra: number };
+export async function latestAsks(itemIds: string[]): Promise<Map<string, AskStatus>> {
+  const out = new Map<string, AskStatus>();
+  if (!itemIds.length) return out;
+  const { data, error } = await db().from('shop_otp_asks').select('order_item_id, status, reply, extra, created_at').in('order_item_id', itemIds).order('created_at', { ascending: false }).limit(500);
+  if (error) return out;
+  for (const r of (data ?? []) as { order_item_id: string; status: string; reply: string; extra: number }[]) {
+    if (!out.has(r.order_item_id)) out.set(r.order_item_id, { status: r.status, reply: r.reply ?? '', extra: Number(r.extra ?? 0) });
+  }
+  return out;
+}

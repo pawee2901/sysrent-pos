@@ -14,6 +14,7 @@ import { SubCard } from '../my/SubCard';
 import { OtpButton } from '@/components/OtpButton';
 import { ReviewDialog } from './ReviewDialog';
 import type { OtpButton as OtpInfo } from '@/lib/otp-button';
+import { OtpAskStatus } from '@/components/OtpAskStatus';
 
 export type HItem = {
   id: string; name: string; total: number; queued: boolean;
@@ -24,6 +25,8 @@ export type HItem = {
   usage: string; usageImages: string[];
   /** ปุ่มรับ OTP (ร้านเปิดไว้ที่สินค้านี้) */
   otp: OtpInfo | null;
+  /** คำขอ OTP เพิ่มล่าสุด (สถานะ + คำตอบแอดมิน) */
+  otpAsk?: { status: string; reply: string; extra: number } | null;
   sub: { id: string; active: boolean; startsAt: string; endsAt: string; productId: string; image: string; template: string } | null;
 };
 export type HOrder = {
@@ -103,6 +106,8 @@ export function HistoryCard({ o, canReport }: { o: HOrder; canReport: boolean })
           {o.report.reply && <p>💬 ร้านตอบ: {o.report.reply}</p>}
         </div>
       )}
+
+      {o.items.filter((i) => i.otpAsk).map((i) => <OtpAskStatus key={`ask${i.id}`} ask={i.otpAsk!} name={o.items.length > 1 ? i.name : undefined} />)}
 
       <div className="hcard-acts">
         {pending ? <Link href={to(`/checkout/${o.code}`)} className="btn primary">ไปจ่ายเงิน</Link>
