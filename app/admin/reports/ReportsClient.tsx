@@ -49,19 +49,22 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
       {ready && !rows.length && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีลูกค้าแจ้งปัญหา</p></div>}
       {ready && rows.length > 0 && !shown.length && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>{tab === 'open' ? 'ไม่มีเรื่องใหม่ เคลียร์หมดแล้ว 👍' : 'ยังไม่มีเรื่องที่แก้เรียบร้อย'}</p></div>}
       <div className={css.list}>{shown.map((r) => { const on = exp === r.id; return (
-        <section key={r.id} className={`card ${css.row}${on ? ` ${css.open}` : ''}`}>
-          {/* แถวสรุป: กดเพื่อกาง / พับรายละเอียด */}
+        <section key={r.id} className={`card ${css.row} ${r.status === 'open' ? css.isOpen : css.isDone}${on ? ` ${css.open}` : ''}`}>
+          {/* แถวสรุป: กดเพื่อกาง / พับรายละเอียด · แถบสีซ้าย = สถานะ */}
           <button type="button" className={css.sum} aria-expanded={on} onClick={() => setExp(on ? null : r.id)}>
-            <span className={`pill ${r.status === 'open' ? 'warn' : 'ok'}`}>{r.status === 'open' ? 'รอตอบ' : 'แก้เรียบร้อย'}</span>
-            <span className={css.main}><b>{r.topic}</b><small>#{r.code} · @{r.user}{r.items[0] ? ` · ${r.items[0].name}${r.items.length > 1 ? ` +${r.items.length - 1}` : ''}` : ''}</small></span>
-            <span className={css.when}>{r.when}</span>
+            <span className={css.main}><b>{r.topic}</b>
+              <small>{r.items[0] ? `📦 ${r.items[0].name}${r.items.length > 1 ? ` +${r.items.length - 1}` : ''}` : `#${r.code}`}</small>
+              <small>👤 @{r.user} · #{r.code}</small></span>
+            <span className={css.side}><span className={`pill ${r.status === 'open' ? 'warn' : 'ok'}`}>{r.status === 'open' ? 'รอตอบ' : 'แก้แล้ว'}</span><span className={css.when}>{r.when}</span></span>
             <i className={css.chev} aria-hidden>⌄</i>
           </button>
           {on && <div className={`report ${css.detail}`}>
-          <div className="report-meta">
-            <Link href={to(`/admin/orders?q=${r.code}`)}>ออเดอร์ #{r.code}</Link> · @{r.user}{r.contact && ` · ${r.contact}`}
-          </div>
-          {r.message && <p className="report-msg">{r.message}</p>}
+          <dl className={css.info}>
+            <div><dt>ออเดอร์</dt><dd><Link href={to(`/admin/orders?q=${r.code}`)}>#{r.code} ↗</Link></dd></div>
+            <div><dt>ลูกค้า</dt><dd>@{r.user}</dd></div>
+            {r.contact && <div className={css.full}><dt>ติดต่อ</dt><dd>{r.contact}</dd></div>}
+          </dl>
+          {r.message && <div className={css.bubble}><small>ลูกค้าแจ้งว่า</small><p>{r.message}</p></div>}
           {r.image && <a href={r.image} target="_blank" rel="noopener noreferrer" className="report-img"><img src={r.image} alt="รูปที่ลูกค้าแนบ" /></a>}
 
           {r.items.length > 0 && (
@@ -72,8 +75,9 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
           )}
 
           <span className="report-sub">💬 ตอบลูกค้า</span>
-          <textarea className="input" rows={2} maxLength={1000} placeholder="เช่น เปลี่ยนรหัสใหม่ให้แล้ว ลองเข้าใหม่อีกครั้งนะคะ" value={text[r.id] ?? ''} onChange={(e) => setText({ ...text, [r.id]: e.target.value })} />
-          <div className="report-acts">
+          <div className={css.quick}>{QUICK.map((t) => <button key={t} type="button" onClick={() => setText({ ...text, [r.id]: t })}>{t}</button>)}</div>
+          <textarea className={`input ${css.reply}`} rows={3} maxLength={1000} placeholder="เช่น เปลี่ยนรหัสใหม่ให้แล้ว ลองเข้าใหม่อีกครั้งนะคะ" value={text[r.id] ?? ''} onChange={(e) => setText({ ...text, [r.id]: e.target.value })} />
+          <div className={`report-acts ${css.acts}`}>
             <button type="button" className="btn sm" disabled={busy === r.id || !(text[r.id] ?? '').trim()} onClick={() => send(r, false)}>ส่งคำตอบ</button>
             {r.status === 'open' && <button type="button" className="btn primary sm" disabled={busy === r.id} onClick={() => send(r, true)}>✓ ตอบ + ปิดเรื่อง</button>}
           </div>
@@ -83,6 +87,9 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
     </>
   );
 }
+
+/** คำตอบสำเร็จรูป (กดแล้วใส่ในช่องตอบ แก้ต่อได้) */
+const QUICK = ['แก้ให้แล้วค่ะ ลองเข้าใหม่อีกครั้งนะคะ 🙏', 'เปลี่ยนรหัสใหม่ให้แล้วค่ะ ดูได้ที่หน้าประวัติการซื้อนะคะ', 'กำลังตรวจสอบให้ค่ะ รอสักครู่นะคะ', 'รบกวนส่งรูปหน้าจอที่เข้าไม่ได้มาให้หน่อยนะคะ'];
 
 /** แบ่งจอ: ดู / แก้อีเมล รหัส โปรไฟล์ PIN ของจอที่ลูกค้าเช่าอยู่ */
 function SlotBox({ item, slot: s, onSaved }: { item: ReportItem; slot: SlotInfo; onSaved: () => void }) {
