@@ -79,7 +79,7 @@ export const ITEMS_MAX = 12;
 export const BLOCK_INFO: Record<BlockType, { icon: string; label: string; desc: string }> = {
   hero: { icon: '🏠', label: 'หัวเว็บ', desc: 'ข้อความต้อนรับ / รูปหน้าแรกที่อัปไว้' },
   promos: { icon: '🎁', label: 'กล่องรูปโปร', desc: 'รูปจากแท็บ "รูปหน้าแรก · ป๊อปอัป"' },
-  live: { icon: '🟢', label: 'คนเพิ่งซื้อ', desc: 'ลูกค้าที่เพิ่งซื้อ · แถบ / การ์ดกิจกรรม / ตัวหนังสือวิ่ง' },
+  live: { icon: '🟢', label: 'กิจกรรมล่าสุด', desc: 'คนเพิ่งซื้อ · คนเพิ่งสมัคร · แถบ / การ์ดกิจกรรม / ตัวหนังสือวิ่ง' },
   stats: { icon: '📊', label: 'ตัวเลขร้าน', desc: 'สมาชิก · ขายแล้ว · พร้อมส่ง' },
   products: { icon: '🛍️', label: 'สินค้าทั้งหมด', desc: 'สินค้าทุกชิ้น + ปุ่มหมวด' },
   how: { icon: '🧭', label: 'ซื้อง่าย 3 ขั้นตอน', desc: 'อธิบายวิธีซื้อ' },
