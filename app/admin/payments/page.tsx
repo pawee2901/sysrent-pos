@@ -1,4 +1,5 @@
-import { SYSRENT_TOPUP, WALLET_LOW, ownerWallet } from '@/lib/sysrent-wallet';
+import { WALLET_LOW, ownerWallet } from '@/lib/sysrent-wallet';
+import { WalletTopup } from '@/components/WalletTopup';
 import { db } from '@/lib/db';
 import { baht } from '@/lib/shop';
 import { adminShop, bkkMidnight, thMonth, when } from '@/lib/admin-page';
@@ -25,7 +26,7 @@ export default async function AdminPayments() {
         <div className="card kpi"><span className="lbl">รับเงินวันนี้</span><span className="val num">{baht((today ?? []).reduce((s, r) => s + Number(r.amount), 0))}</span><span className="delta mute">{today?.length ?? 0} รายการ</span></div>
         <div className="card kpi"><span className="lbl">ตรวจสลิปเดือนนี้</span><span className="val num">{used}{shop.slip_quota > 0 ? ` / ${shop.slip_quota}` : ' ครั้ง'}</span><span className={`delta${shop.slip_quota > 0 && used >= shop.slip_quota ? ' down' : ' mute'}`}>{shop.slip_quota <= 0 ? 'จ่ายตามจริงทุกสลิป' : used >= shop.slip_quota ? 'ใช้ฟรีครบแล้ว' : `เหลือฟรี ${shop.slip_quota - used} ครั้ง`}</span></div>
         <div className="card kpi"><span className="lbl">กระเป๋าเงิน SysRent</span><span className="val num" style={{ color: wallet !== null && wallet < WALLET_LOW ? 'var(--bad)' : undefined }}>{wallet === null ? '—' : baht(wallet)}</span>
-          <a className={`delta${wallet !== null && wallet < WALLET_LOW ? ' down' : ''}`} href={SYSRENT_TOPUP} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700 }}>{wallet !== null && wallet < WALLET_LOW ? 'ใกล้หมด · เติมเงินที่เว็บเช่า ↗' : 'เติมเงินที่เว็บเช่า ↗'}</a></div>
+          <span className={`delta${wallet !== null && wallet < WALLET_LOW ? ' down' : ' mute'}`} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{wallet !== null && wallet < WALLET_LOW ? 'ใกล้หมด' : 'จ่ายค่าตรวจสลิป'} <WalletTopup label="💳 เติมเงิน" className="btn primary sm" /></span></div>
         <div className="card kpi"><span className="lbl">ค่าตรวจสลิปเดือนนี้</span><span className="val num">{baht(Number(usage?.charged ?? 0))}</span><span className="delta mute">฿{shop.slip_overage.toFixed(2)}/สลิป · ตัดจากกระเป๋า SysRent</span></div>
         <div className="card kpi"><span className="lbl">พร้อมเพย์ของร้าน</span><span className="val" style={{ fontSize: 18 }}>{shop.promptpay_id ? `•••${shop.promptpay_id.replace(/\D/g, '').slice(-4)}` : 'ยังไม่ตั้ง'}</span><span className={`delta${shop.promptpay_id ? ' mute' : ' down'}`}>{shop.promptpay_id ? shop.receiver_name || 'ตั้งชื่อบัญชีด้วย' : 'ตั้งในหน้าตั้งค่าร้าน'}</span></div>
       </div>

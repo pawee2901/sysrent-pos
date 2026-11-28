@@ -9,6 +9,7 @@ import { PLAN_LABEL, can, isPlan, type Feature } from '@/lib/plan';
 import { PERMS } from '@/lib/perms';
 import { TutorialButton } from './TutorialButton';
 import { NavSearch } from './NavSearch';
+import { WalletTopup } from '@/components/WalletTopup';
 import css from './nav.module.css';
 import { LATEST_NEWS } from '@/lib/whats-new';
 
@@ -76,11 +77,11 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
           <span className="muted" style={{ fontSize: 12 }}>{slip.quota > 0 ? `ฟรี ${slip.quota} ครั้ง/เดือน · เกินคิด ` : 'จ่ายตามจริง '}฿{slip.overage.toFixed(2)}/สลิป ตัดจากกระเป๋า SysRent</span>
           {/* กระเป๋าเงิน SysRent (เว็บเช่า) ที่ใช้จ่ายค่าตรวจสลิป */}
           {slip.wallet !== undefined && slip.wallet !== null && (
-            <a href={slip.topup} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 4, padding: '8px 10px', borderRadius: 10, textDecoration: 'none', color: 'inherit',
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 4, padding: '8px 10px', borderRadius: 10,
               background: slip.wallet < 10 ? 'color-mix(in srgb, var(--bad) 12%, transparent)' : 'var(--surface-2)' }}>
               <span style={{ display: 'grid' }}><small className="muted" style={{ fontSize: 11.5 }}>กระเป๋า SysRent</small><b className="num" style={{ color: slip.wallet < 10 ? 'var(--bad)' : undefined }}>฿{slip.wallet.toLocaleString('th-TH', { maximumFractionDigits: 2 })}</b></span>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--accent)' }}>เติมเงิน ↗</span>
-            </a>
+              <WalletTopup label="เติมเงิน" className="btn sm" />
+            </div>
           )}
         </div>
       </aside>
