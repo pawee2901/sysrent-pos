@@ -83,7 +83,7 @@ export function StockPanel({ productId, option, left, form, onForm, otp, otpApp,
       </div>
 
       {tab === 'list' ? <StockList optionId={option.id} targets={targets} onChanged={() => onAdded('')} /> : <>
-        {/* ปุ่มรับ OTP ไว้บนสุด (ตั้งครั้งเดียวใช้กับทั้งสินค้า) */}
+        {/* ตั้งค่าไว้บนสุด: ปุ่มรับ OTP · แบบฟอร์มร้าน */}
         {otp && (
           <div className={css.extra}>
             <button type="button" className={css.exHead} aria-expanded={more === 'otp'} onClick={() => setMore(more === 'otp' ? '' : 'otp')}>
@@ -96,6 +96,21 @@ export function StockPanel({ productId, option, left, form, onForm, otp, otpApp,
                 </select>
                 {otpApp && <input className="input" type="email" value={otpAll} onChange={(e) => setOtpAll(e.target.value)} placeholder="เมลรับ OTP (เว้นว่าง = ใช้อีเมลในแต่ละชิ้น)" />}
                 <small className="faint">{!otp.ready ? '⚠️ ต้องรัน SQL 0032_product_otp_button.sql ก่อน' : !otp.apps.length ? 'เพิ่มแอปในหน้า "ค้นหา OTP" ก่อน' : 'ลูกค้าที่ได้ชิ้นนั้นจะเห็นปุ่มรับรหัสในหน้าประวัติการซื้อ'}</small>
+              </div>
+            )}
+          </div>
+        )}
+        {!shared && (
+          <div className={css.extra}>
+            <button type="button" className={css.exHead} aria-expanded={more === 'form'} onClick={() => setMore(more === 'form' ? '' : 'form')}>
+              <span>🎨</span><span><b>แบบฟอร์มร้าน</b><small>{form ? `ใช้อยู่ · ${form.fields.length} ช่อง` : 'ให้ลูกค้าได้ข้อความสวย ๆ ตามแบบของร้าน'}</small></span><i>{more === 'form' ? '−' : '+'}</i></button>
+            {more === 'form' && (
+              <div className={css.exBody}>
+                <small className="muted">วางข้อความที่เคยส่งลูกค้า 1 ใบ แล้วแตะคำที่เปลี่ยนทุกชิ้น ตอนเติมสต็อกใส่แค่ค่าที่เปลี่ยน</small>
+                <div className={css.row}>
+                  {form && <button type="button" className="btn ghost sm" disabled={busy} onClick={() => saveForm(null)}>เลิกใช้แบบฟอร์ม</button>}
+                  <button type="button" className="btn sm" onClick={() => setBuilding(true)}>{form ? '✏️ แก้แบบฟอร์ม' : '+ สร้างแบบฟอร์ม'}</button>
+                </div>
               </div>
             )}
           </div>
@@ -134,25 +149,6 @@ export function StockPanel({ productId, option, left, form, onForm, otp, otpApp,
           <details className={css.pv}><summary>👀 ลูกค้าจะเห็นแบบนี้</summary>
             <Delivered content={preview} warranty={option.days ? `${option.days} วันหลังซื้อ` : null} /></details>
         )}
-
-        {/* ตัวเลือกเสริม (พับไว้) */}
-        <div className={css.extras}>
-          {!shared && (
-            <div className={css.extra}>
-              <button type="button" className={css.exHead} aria-expanded={more === 'form'} onClick={() => setMore(more === 'form' ? '' : 'form')}>
-                <span>🎨</span><span><b>แบบฟอร์มร้าน</b><small>{form ? `ใช้อยู่ · ${form.fields.length} ช่อง` : 'ให้ลูกค้าได้ข้อความสวย ๆ ตามแบบของร้าน'}</small></span><i>{more === 'form' ? '−' : '+'}</i></button>
-              {more === 'form' && (
-                <div className={css.exBody}>
-                  <small className="muted">วางข้อความที่เคยส่งลูกค้า 1 ใบ แล้วแตะคำที่เปลี่ยนทุกชิ้น ตอนเติมสต็อกใส่แค่ค่าที่เปลี่ยน</small>
-                  <div className={css.row}>
-                    {form && <button type="button" className="btn ghost sm" disabled={busy} onClick={() => saveForm(null)}>เลิกใช้แบบฟอร์ม</button>}
-                    <button type="button" className="btn sm" onClick={() => setBuilding(true)}>{form ? '✏️ แก้แบบฟอร์ม' : '+ สร้างแบบฟอร์ม'}</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
 
         <div className={css.foot}>
           <span>{items.length ? (shared ? `ลูกค้า ${n} คนได้ข้อมูลนี้` : `${items.length} ชิ้น${n > 1 ? ` × ${n} คน` : ''}`) : 'ยังไม่ได้วางข้อมูล'}</span>
