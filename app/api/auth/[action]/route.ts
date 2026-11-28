@@ -13,6 +13,12 @@ const schema = z.object({
   email: z.union([z.literal(''), z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120)]).optional().default(''),
   turnstile: z.string().max(2048).optional(),
 });
+// เข้าสู่ระบบ: ชื่อผู้ใช้หลวม ๆ (ชื่อบัญชีหลังบ้านของร้านอาจมีตัวอักษรนอก a-z0-9_)
+const loginSchema = z.object({
+  username: z.string().trim().toLowerCase().min(1, 'กรอกชื่อผู้ใช้').max(40),
+  password: z.string().min(1, 'กรอกรหัสผ่าน').max(72),
+  turnstile: z.string().max(2048).optional(),
+});
 const emailSchema = z.object({ email: z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120) });
 
 const pwSchema = z.object({
@@ -54,9 +60,11 @@ export async function POST(req: Request, { params }: Ctx) {
   }
   if (action !== 'login' && action !== 'register') return fail('ไม่พบ', 404);
 
-  const b = await body(req, schema);
+  const b = action === 'register' ? await body(req, schema) : await body(req, loginSchema);
   if ('res' in b) return b.res;
-  const { username, password, contact, email } = b.data;
+  const { username, password } = b.data;
+  const reg = action === 'register' ? (b.data as z.infer<typeof schema>) : null;
+  const contact = reg?.contact ?? '', email = reg?.email ?? '';
   const d = db();
   const ip = await clientIp();
   const keys = [`${shop.id}:ip:${ip}`, `${shop.id}:u:${username}`];
@@ -76,6 +84,13 @@ export async function POST(req: Request, { params }: Ctx) {
 
   const { data: c } = await d.from('shop_customers').select('id, pass_hash, blocked').eq('shop_id', shop.id).eq('username', username).maybeSingle();
   if (!c || !(await verifyPassword(password, c.pass_hash))) {
+    // ไม่ใช่ลูกค้า → ลองบัญชีหลังบ้านของร้าน (ชื่อ + รหัสเดียวกับหน้าเข้าหลังบ้าน) = เข้าหลังบ้านเลย
+    const { data: s } = await d.from('shops').select('admin_username, admin_pass_hash').eq('id', shop.id).single();
+    if (s?.admin_pass_hash && s.admin_username.toLowerCase() === username && await verifyPassword(password, s.admin_pass_hash)) {
+      await loginOk([...keys, `${shop.id}:admin:${ip}`, `${shop.id}:admin`]);
+      await startSession(shop.id, null, 7);
+      return NextResponse.json({ ok: true, admin: true });
+    }
     await loginFailed(keys);
     return fail('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 401);
   }

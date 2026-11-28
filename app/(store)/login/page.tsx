@@ -2,6 +2,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/components/Cart';
+import { to } from '@/lib/routes';
 import { HumanCheck, humanCheckOn } from '@/components/HumanCheck';
 
 /** เข้าสู่ระบบ / สมัครสมาชิกของร้าน (ชื่อผู้ใช้ + รหัสผ่าน · ไม่ต้องยืนยันอีเมล) */
@@ -20,9 +21,11 @@ function LoginInner() {
     e.preventDefault();
     if (mode === 'register' && f.password !== f.password2) { setErr('รหัสผ่านสองช่องไม่ตรงกัน'); return; }
     setBusy(true); setErr('');
-    const r = await api(`/api/auth/${mode}`, { username: f.username.trim().toLowerCase(), password: f.password, contact: f.contact.trim(), email: f.email.trim(), turnstile: human });
+    const r = await api<{ admin?: boolean }>(`/api/auth/${mode}`, { username: f.username.trim().toLowerCase(), password: f.password, contact: f.contact.trim(), email: f.email.trim(), turnstile: human });
     setBusy(false);
     if (!r.ok) { setErr(r.error); setRetry((n) => n + 1); return; }
+    // บัญชีหลังบ้านของร้าน → ไปหลังบ้านเลย
+    if (r.data.admin) { window.location.href = to('/admin'); return; }
     router.replace(next); router.refresh();
   }
 
@@ -35,7 +38,7 @@ function LoginInner() {
           ))}
         </div>
         <form onSubmit={submit} style={{ display: 'grid', gap: 12 }}>
-          <label className="field"><span>ชื่อผู้ใช้</span><input className="input" autoComplete="username" value={f.username} maxLength={20} placeholder="a-z, 0-9, _ (3–20 ตัว)" onChange={(e) => setF({ ...f, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })} required /></label>
+          <label className="field"><span>ชื่อผู้ใช้</span><input className="input" autoComplete="username" value={f.username} maxLength={mode === 'register' ? 20 : 40} placeholder={mode === 'register' ? 'a-z, 0-9, _ (3–20 ตัว)' : 'ชื่อผู้ใช้ หรือชื่อบัญชีหลังบ้านของร้าน'} onChange={(e) => setF({ ...f, username: mode === 'register' ? e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') : e.target.value })} required /></label>
           <label className="field"><span>รหัสผ่าน</span><input className="input" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={f.password} maxLength={72} onChange={(e) => setF({ ...f, password: e.target.value })} required /></label>
           {mode === 'register' && <>
             <label className="field"><span>ยืนยันรหัสผ่าน</span><input className="input" type="password" autoComplete="new-password" value={f.password2} maxLength={72} onChange={(e) => setF({ ...f, password2: e.target.value })} required /></label>
