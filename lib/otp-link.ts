@@ -41,3 +41,10 @@ export async function otpPublic(shopId: string): Promise<boolean> {
   const { data, error } = await db().from('shop_otp_config').select('public_page').eq('shop_id', shopId).maybeSingle();
   return !error && data?.public_page === true;
 }
+
+/** ชื่อ + โลโก้ของเว็บรับ OTP ('' = ใช้ของร้าน · ยังไม่รัน 0054 = ว่าง) */
+export async function otpSiteBrand(shopId: string): Promise<{ name: string; logo: string }> {
+  const { data, error } = await db().from('shop_otp_config').select('site_name, site_logo').eq('shop_id', shopId).maybeSingle();
+  if (error || !data) return { name: '', logo: '' };
+  return { name: String(data.site_name ?? ''), logo: /^https:\/\//.test(String(data.site_logo ?? '')) ? String(data.site_logo) : '' };
+}

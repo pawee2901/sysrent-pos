@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { otpSiteBrand } from '@/lib/otp-link';
 import { notFound, redirect } from 'next/navigation';
 import { getShop } from '@/lib/shop';
 import { can } from '@/lib/plan';
@@ -12,7 +13,15 @@ import css from './otpweb.module.css';
 import '../../store.css';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'รับรหัส OTP' };
+/** ชื่อแท็บ / ไอคอน / รูปตอนแชร์ลิงก์ = ของเว็บรับ OTP (ไม่ตั้ง = ของร้าน) */
+export async function generateMetadata(): Promise<Metadata> {
+  const shop = await getShop();
+  if (!shop) return { title: 'รับรหัส OTP' };
+  const b = await otpSiteBrand(shop.id);
+  const name = b.name || shop.name, logo = b.logo || shop.logo_url;
+  return { title: { absolute: `${name} — รับรหัส OTP` }, description: 'เลือกแอป กรอกอีเมล รับรหัส OTP อัตโนมัติ',
+    ...(logo ? { icons: { icon: logo, apple: logo } } : {}), openGraph: { title: `${name} — รับรหัส OTP`, siteName: name, ...(logo ? { images: [logo] } : {}) } };
+}
 
 /**
  * เว็บรับ OTP (แยกจากหน้าร้าน): ลิงก์เดียวให้ลูกค้าทุกคน ไม่ต้องล็อกอิน
@@ -25,13 +34,14 @@ export default async function OtpWeb() {
   const link = await otpLink(shop.id);
   if (link) redirect(link);
   if (!(await otpPublic(shop.id))) notFound();
-  const [agent, apps, contacts] = await Promise.all([otpAgent(shop.id), otpAppTiles(shop.id), shopContacts(shop)]);
+  const [agent, apps, contacts, brand] = await Promise.all([otpAgent(shop.id), otpAppTiles(shop.id), shopContacts(shop), otpSiteBrand(shop.id)]);
+  const name = brand.name || shop.name, logo = brand.logo || shop.logo_url;
   const theme = activeTheme(shop.theme ?? 'modern', ownedThemes(shop.plan, shop.themes_owned));
   return (
     <div className={`store ${css.page}`} data-style={theme} data-card={shop.card_style ?? 'white'}>
       <header className={css.head}>
-        {shop.logo_url ? <img src={shop.logo_url} alt={shop.name} className={css.logo} /> : <span className={css.mark}>{shop.name.slice(0, 1).toUpperCase()}</span>}
-        <div><b>{shop.name}</b><small>ระบบรับรหัส OTP อัตโนมัติ</small></div>
+        {logo ? <img src={logo} alt={name} className={css.logo} /> : <span className={css.mark}>{name.slice(0, 1).toUpperCase()}</span>}
+        <div><b>{name}</b><small>ระบบรับรหัส OTP อัตโนมัติ</small></div>
       </header>
       <main className={css.main}>
         <div className={css.hero}>
@@ -46,7 +56,7 @@ export default async function OtpWeb() {
           <li><b>3</b><span>คัดลอกรหัสไปกรอกในแอป ใช้งานได้ทันที</span></li>
         </ol>
       </main>
-      <footer className={css.foot}>© {new Date().getFullYear()} {shop.name} · <a href="/">ไปหน้าร้าน</a></footer>
+      <footer className={css.foot}>© {new Date().getFullYear()} {name} · <a href="/">ไปหน้าร้าน {shop.name}</a></footer>
       <ContactFab links={contacts} />
     </div>
   );

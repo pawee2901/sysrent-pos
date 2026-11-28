@@ -3,6 +3,7 @@ import { to } from '@/lib/routes';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { api } from '@/components/Cart';
+import { uploadImage } from '@/components/upload';
 import { ask, input, notify } from '@/components/dialog';
 import { GmailGuide, HotmailGuide, MsAppGuide } from '@/components/otp/MailGuides';
 import { AgentTab, type AgentInit } from './AgentTab';
@@ -28,7 +29,9 @@ const LABEL: Record<string, string> = { gmail: 'Gmail', maily: 'Maily', graph: '
 const TABS = [['mail', 'บัญชีอีเมล'], ['apps', 'แอปพลิเคชัน'], ['asks', 'คำขอ · ป๊อปอัป'], ['agent', 'ระบบตัวแทน'], ['api', 'ตั้งค่า API']] as const;
 type Tab = (typeof TABS)[number][0];
 
-export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent, custLimit, asks }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit; custLimit: { limit: number; period: CustPeriod }; asks: { ready: boolean; list: OtpAsk[]; ack: AckInit } }) {
+export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent, custLimit, asks, brand }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit; custLimit: { limit: number; period: CustPeriod }; asks: { ready: boolean; list: OtpAsk[]; ack: AckInit }; brand: { name: string; logo: string; shopName: string; shopLogo: string } }) {
+  const [bn, setBn] = useState({ name: brand.name, logo: brand.logo });
+  const [upBusy, setUpBusy] = useState(false);
   const [lim, setLim] = useState({ n: String(custLimit.limit), period: custLimit.period });
   const [pageUrl, setPageUrl] = useState('');
   useEffect(() => setPageUrl(`${window.location.origin}${to('/otp-web')}`), []);
@@ -131,6 +134,25 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
             <code style={{ flex: '1 1 220px', minWidth: 0, overflowWrap: 'anywhere', fontSize: 13.5 }}>🌐 {pageUrl}</code>
             <button type="button" className="btn sm" onClick={() => navigator.clipboard?.writeText(pageUrl).then(() => notify('คัดลอกลิงก์แล้ว'), () => {})}>⧉ คัดลอกลิงก์</button>
             <a className="btn sm" href={pageUrl} target="_blank" rel="noopener noreferrer">↗ เปิด</a>
+          </div>
+        )}
+        {mode === 'page' && (
+          <div style={{ display: 'grid', gap: 10, padding: '14px 18px', borderTop: '1px solid var(--line)' }}>
+            <b style={{ fontSize: 14.5 }}>🏷️ ชื่อเว็บ · โลโก้ของเว็บรับ OTP <small className="muted" style={{ fontWeight: 400 }}>(เว้นว่าง = ใช้ของร้าน)</small></b>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+              {(bn.logo || brand.shopLogo) ? <img src={bn.logo || brand.shopLogo} alt="" style={{ width: 52, height: 52, objectFit: 'contain', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }} />
+                : <span style={{ width: 52, height: 52, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'var(--accent)', color: '#fff', fontWeight: 800 }}>{(bn.name || brand.shopName).slice(0, 1).toUpperCase()}</span>}
+              <label className="btn sm" style={{ cursor: 'pointer' }}>{upBusy ? 'กำลังอัป…' : bn.logo ? 'เปลี่ยนโลโก้' : 'อัปโลโก้'}
+                <input type="file" accept="image/jpeg,image/png,image/webp" hidden disabled={upBusy} onChange={async (e) => {
+                  const fl = e.target.files?.[0]; e.target.value = ''; if (!fl) return;
+                  setUpBusy(true); const r = await uploadImage(fl, 512); setUpBusy(false);
+                  if (r.ok) setBn({ ...bn, logo: r.data.url }); else notify(r.error, 'error');
+                }} /></label>
+              {bn.logo && <button type="button" className="btn ghost sm" onClick={() => setBn({ ...bn, logo: '' })}>ใช้โลโก้ร้าน</button>}
+            </div>
+            <input className="input" maxLength={40} value={bn.name} placeholder={`ชื่อเว็บ เช่น ${brand.shopName} OTP`} onChange={(e) => setBn({ ...bn, name: e.target.value })} />
+            <div><button type="button" className="btn primary sm" disabled={busy || upBusy || (bn.name.trim() === brand.name && bn.logo === brand.logo)}
+              onClick={() => call({ action: 'site_brand', name: bn.name.trim(), logo: bn.logo }, 'บันทึกชื่อเว็บ · โลโก้แล้ว')}>บันทึก</button></div>
           </div>
         )}
       </section>

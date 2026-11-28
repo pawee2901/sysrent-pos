@@ -5,7 +5,7 @@ import { PlanLock } from '@/components/PlanLock';
 import { adminShop, when } from '@/lib/admin-page';
 import { redirectUri } from '@/lib/msgraph';
 import { OtpSettings } from './OtpSettings';
-import { otpAgent, otpCustLimit, otpLink, otpPublic } from '@/lib/otp-link';
+import { otpAgent, otpCustLimit, otpLink, otpPublic, otpSiteBrand } from '@/lib/otp-link';
 import { PERIOD_MS, type OtpAccess } from '@/lib/otp-agent';
 import { ackConfig, itemQuotas, orderFallback } from '@/lib/otp-quota';
 import type { OtpAsk } from './AsksTab';
@@ -53,6 +53,7 @@ export default async function AdminOtp({ searchParams }: { searchParams: Promise
       apis={(apis.data ?? []) as { id: string; name: string; type: string }[]}
       link={await otpLink(shop.id)}
       openPage={await otpPublic(shop.id)}
+      brand={{ ...(await otpSiteBrand(shop.id)), shopName: shop.name, shopLogo: shop.logo_url }}
       custLimit={await otpCustLimit(shop.id)}
       asks={{ ready: !ak.error, list: asks, ack: await ackConfig(shop.id) }}
       agent={{ ready: !acc.error, on: await otpAgent(shop.id), list: access }}

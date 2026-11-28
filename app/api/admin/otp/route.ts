@@ -24,6 +24,8 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('delete_ms') }),
   // ลูกค้าค้น OTP ที่ไหน: '' = ในเว็บร้าน · https://… = ลิงก์เว็บ OTP อื่น
   z.object({ action: z.literal('public_page'), on: z.boolean() }),
+  // เว็บรับ OTP: ชื่อเว็บ + โลโก้ ('' = ใช้ของร้าน)
+  z.object({ action: z.literal('site_brand'), name: z.string().trim().max(40), logo: z.string().trim().max(500).refine((v) => !v || /^https:\/\//.test(v), 'ลิงก์รูปต้องเป็น https') }),
   // ระบบตัวแทน: เปิด/ปิด · เพิ่ม / แก้ / ลบ รหัสยืนยันของแต่ละอีเมล
   z.object({ action: z.literal('agent_mode'), on: z.boolean() }),
   // ป๊อปอัปก่อนขอ OTP · คำขอ OTP เพิ่ม
@@ -121,6 +123,10 @@ export async function POST(req: Request) {
     return done((await d.from('shop_otp_access').update(upd).eq('id', x.id).eq('shop_id', sid)).error);
   }
   if (x.action === 'access_delete') return done((await d.from('shop_otp_access').delete().eq('id', x.id).eq('shop_id', sid)).error);
+  if (x.action === 'site_brand') {
+    const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, site_name: x.name, site_logo: x.logo, updated_at: new Date().toISOString() });
+    return error ? fail(/site_/.test(error.message) ? 'ต้องรัน SQL 0054_otp_site_brand.sql ใน Supabase ก่อน' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+  }
   if (x.action === 'public_page') {
     const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, public_page: x.on, updated_at: new Date().toISOString() });
     return error ? fail(/public_page/.test(error.message) ? 'ต้องรัน SQL 0048_otp_public_page.sql ใน Supabase ก่อน' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
