@@ -30,7 +30,7 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('ack_config'), on: z.boolean(), text: z.string().trim().max(1000) }),
   z.object({ action: z.literal('ask_decide'), id, approve: z.boolean(), extra: z.number().int().min(1).max(20).default(1), reply: z.string().trim().max(500).default('') }),
   // จำกัดการรับรหัสของลูกค้า (ต่ออีเมล)
-  z.object({ action: z.literal('cust_limit'), limit: z.number().int().min(0).max(1000), period: z.enum(PERIODS) }),
+  z.object({ action: z.literal('cust_limit'), limit: z.number().int().min(0).max(1000), period: z.enum(['order', ...PERIODS]) }),
   z.object({ action: z.literal('access_add'), email: z.string().trim().toLowerCase().email('อีเมลไม่ถูกต้อง').max(120), label: z.string().trim().max(40).default(''), kind: z.enum(ACCESS_KINDS), secret: z.string().trim().min(1, 'กรอกรหัส').max(120), use_limit: z.number().int().min(0).max(1000).default(0), period: z.enum(PERIODS).default('day') }),
   z.object({ action: z.literal('access_update'), id, active: z.boolean().optional(), use_limit: z.number().int().min(0).max(1000).optional(), period: z.enum(PERIODS).optional() }),
   z.object({ action: z.literal('access_delete'), id }),
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
   if (x.action === 'delete_ms') return done((await d.from('shop_otp_config').update({ ms_client_id: null, ms_secret_enc: null, updated_at: new Date().toISOString() }).eq('shop_id', sid)).error);
   if (x.action === 'cust_limit') {
     const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, cust_limit: x.limit, cust_period: x.period, updated_at: new Date().toISOString() });
-    return error ? fail(/cust_/.test(error.message) ? 'ต้องรัน SQL 0050_otp_customer_limit.sql ใน Supabase ก่อน' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
+    return error ? fail(/cust_|check constraint/.test(error.message) ? 'ต้องรัน SQL 0050_otp_customer_limit.sql และ 0053_otp_limit_per_order.sql ใน Supabase ก่อน' : 'บันทึกไม่สำเร็จ', 500) : NextResponse.json({ ok: true });
   }
   if (x.action === 'ack_config') {
     const { error } = await d.from('shop_otp_config').upsert({ shop_id: sid, ack_on: x.on, ack_text: x.text, updated_at: new Date().toISOString() });

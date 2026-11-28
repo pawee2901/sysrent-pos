@@ -7,7 +7,9 @@ import { ask, input, notify } from '@/components/dialog';
 import { GmailGuide, HotmailGuide, MsAppGuide } from '@/components/otp/MailGuides';
 import { AgentTab, type AgentInit } from './AgentTab';
 import { AsksTab, type AckInit, type OtpAsk } from './AsksTab';
-import { PERIODS, PERIOD_LABEL, type Period } from '@/lib/otp-agent';
+import { PERIODS, PERIOD_LABEL } from '@/lib/otp-agent';
+import type { CustPeriod } from '@/lib/otp-link';
+const CUST_LABEL = (p: CustPeriod) => (p === 'order' ? 'ออเดอร์' : PERIOD_LABEL[p]);
 
 type Box = { id: string; email: string; provider: string; active: boolean; error: string };
 type App = { id: string; name: string; keywords: string; code: string };
@@ -26,7 +28,7 @@ const LABEL: Record<string, string> = { gmail: 'Gmail', maily: 'Maily', graph: '
 const TABS = [['mail', 'บัญชีอีเมล'], ['apps', 'แอปพลิเคชัน'], ['asks', 'คำขอ · ป๊อปอัป'], ['agent', 'ระบบตัวแทน'], ['api', 'ตั้งค่า API']] as const;
 type Tab = (typeof TABS)[number][0];
 
-export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent, custLimit, asks }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit; custLimit: { limit: number; period: Period }; asks: { ready: boolean; list: OtpAsk[]; ack: AckInit } }) {
+export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, openPage, agent, custLimit, asks }: { ready: boolean; ms: string; boxes: Box[]; apps: App[]; logs: Log[]; msApp: MsApp; apis: Api[]; link: string; openPage: boolean; agent: AgentInit; custLimit: { limit: number; period: CustPeriod }; asks: { ready: boolean; list: OtpAsk[]; ack: AckInit } }) {
   const [lim, setLim] = useState({ n: String(custLimit.limit), period: custLimit.period });
   const [pageUrl, setPageUrl] = useState('');
   useEffect(() => setPageUrl(`${window.location.origin}${to('/otp')}`), []);
@@ -135,16 +137,16 @@ export function OtpSettings({ ready, ms, boxes, apps, logs, msApp, apis, link, o
       {/* จำกัดการรับรหัสของลูกค้า (ต่ออีเมล) */}
       <section className="card card-pad" style={{ display: 'grid', gap: 10, marginBottom: 14 }}>
         <div><h2 style={{ margin: 0, fontSize: 16 }}>⏱️ จำกัดการรับรหัสของลูกค้า</h2>
-          <small className="muted">ลูกค้า 1 อีเมล รับรหัสได้กี่ครั้ง · นับเฉพาะครั้งที่ได้รหัส · ใช้กับลูกค้าที่ล็อกอิน และหน้ารับ OTP แบบไม่ใช้รหัสตัวแทน (รหัสตัวแทนตั้งโควตาแยกในแท็บ ระบบตัวแทน)</small></div>
+          <small className="muted">{lim.period === 'order' ? '1 ออเดอร์ขอรหัสได้กี่ครั้ง (ใช้กับทุกแพ็กเกจ · แพ็กเกจที่ตั้งเองในหน้าสต็อกใช้ค่าของแพ็กเกจแทน)' : 'ลูกค้า 1 อีเมล รับรหัสได้กี่ครั้งในช่วงเวลานี้'} · นับเฉพาะครั้งที่ได้รหัส · รหัสตัวแทนตั้งโควตาแยกในแท็บ ระบบตัวแทน</small></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span>รับได้</span>
           <input className="input" inputMode="numeric" style={{ width: 80, textAlign: 'center' }} value={lim.n} aria-label="จำนวนครั้ง" onChange={(e) => setLim({ ...lim, n: e.target.value.replace(/\D/g, '').slice(0, 4) })} />
           <span>ครั้ง ต่อ</span>
-          <select className="input" style={{ width: 'auto' }} value={lim.period} onChange={(e) => setLim({ ...lim, period: e.target.value as Period })}>{PERIODS.map((p) => <option key={p} value={p}>{PERIOD_LABEL[p]}</option>)}</select>
+          <select className="input" style={{ width: 'auto' }} value={lim.period} onChange={(e) => setLim({ ...lim, period: e.target.value as CustPeriod })}>{(['order', ...PERIODS] as CustPeriod[]).map((p) => <option key={p} value={p}>{CUST_LABEL(p)}</option>)}</select>
           <button type="button" className="btn primary sm" disabled={busy || (Number(lim.n || 0) === custLimit.limit && lim.period === custLimit.period)}
-            onClick={() => call({ action: 'cust_limit', limit: Math.min(1000, Number(lim.n || 0)), period: lim.period }, Number(lim.n || 0) ? `จำกัด ${Number(lim.n)} ครั้งต่อ${PERIOD_LABEL[lim.period]}แล้ว` : 'ไม่จำกัดแล้ว')}>บันทึก</button>
+            onClick={() => call({ action: 'cust_limit', limit: Math.min(1000, Number(lim.n || 0)), period: lim.period }, Number(lim.n || 0) ? `จำกัด ${Number(lim.n)} ครั้งต่อ${CUST_LABEL(lim.period)}แล้ว` : 'ไม่จำกัดแล้ว')}>บันทึก</button>
         </div>
-        <small className="faint">{Number(lim.n || 0) ? `ครบ ${Number(lim.n)} ครั้งแล้ว ลูกค้าจะเห็นข้อความให้ติดต่อแอดมินร้าน` : 'ใส่ 0 = ไม่จำกัด'}</small>
+        <small className="faint">{Number(lim.n || 0) ? (lim.period === 'order' ? `ลูกค้าต้องติ๊กยอมรับก่อนค้นหา · ครบ ${Number(lim.n)} ครั้งแล้วกด "ขอรหัส OTP เพิ่ม" ให้แอดมินอนุมัติได้` : `ครบ ${Number(lim.n)} ครั้งแล้ว ลูกค้าจะเห็นข้อความให้ติดต่อแอดมินร้าน`) : 'ใส่ 0 = ไม่จำกัด'}</small>
       </section>
       <div className="set-tabs" role="tablist">{TABS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}{k === 'asks' && asks.list.some((a) => a.status === 'open') && <span className="pill warn">{asks.list.filter((a) => a.status === 'open').length}</span>}</button>)}</div>
 

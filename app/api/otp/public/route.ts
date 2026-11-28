@@ -8,7 +8,7 @@ import { otpAccounts } from '@/lib/otp-access';
 import { otpAgent, otpCustBlocked, otpLink, otpPublic } from '@/lib/otp-link';
 import { clientIp as ipOf, loginFailed, loginLocked, loginOk } from '@/lib/auth';
 import { ACCESS_LABEL, PERIOD_LABEL, PERIOD_MS, normalizeAccess, type OtpAccess } from '@/lib/otp-agent';
-import { ackConfig, fullRes, needAck, pickItem } from '@/lib/otp-quota';
+import { ackConfig, fullRes, needAck, orderFallback, pickItem } from '@/lib/otp-quota';
 import { OtpMailboxError, searchOtp } from '@/lib/otp-search';
 
 export const dynamic = 'force-dynamic';
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     const allowed = await otpAccounts(shopId);
     const mine = allowed.find((a) => a.email === account);
     if (!mine) { await log(false); return fail('ไม่พบอีเมลนี้ในสินค้าของร้านที่ยังไม่หมดอายุ', 403); }
-    const { pick, full } = await pickItem(mine.items);
+    const { pick, full } = await pickItem(mine.items, undefined, await orderFallback(shopId));
     if (full) return fullRes(full);
     if (pick?.limit && !ack) { const a = await ackConfig(shopId); if (a.on) return needAck({ limit: pick.limit, used: pick.used, name: pick.name }, a.text); }
     if (pick?.limit) itemId = pick.itemId;

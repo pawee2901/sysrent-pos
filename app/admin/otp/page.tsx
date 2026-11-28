@@ -7,7 +7,7 @@ import { redirectUri } from '@/lib/msgraph';
 import { OtpSettings } from './OtpSettings';
 import { otpAgent, otpCustLimit, otpLink, otpPublic } from '@/lib/otp-link';
 import { PERIOD_MS, type OtpAccess } from '@/lib/otp-agent';
-import { ackConfig, itemQuotas } from '@/lib/otp-quota';
+import { ackConfig, itemQuotas, orderFallback } from '@/lib/otp-quota';
 import type { OtpAsk } from './AsksTab';
 
 export const dynamic = 'force-dynamic';
@@ -38,7 +38,7 @@ export default async function AdminOtp({ searchParams }: { searchParams: Promise
     .eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(200);
   type AR = { id: string; order_item_id: string; account: string; note: string; status: string; extra: number; reply: string; created_at: string; shop_customers: { username: string } | null; shop_order_items: { name: string; shop_orders: { code: string } | null } | null };
   const akRows = (ak.data ?? []) as unknown as AR[];
-  const quotas = await itemQuotas([...new Set(akRows.filter((a) => a.status === 'open').map((a) => a.order_item_id))]);
+  const quotas = await itemQuotas([...new Set(akRows.filter((a) => a.status === 'open').map((a) => a.order_item_id))], await orderFallback(shop.id));
   const asks: OtpAsk[] = akRows.map((a) => ({ id: a.id, account: a.account, note: a.note, status: a.status, extra: a.extra, reply: a.reply, user: a.shop_customers?.username ?? '',
     item: (a.shop_order_items?.name ?? '').split(' · ')[0], code: a.shop_order_items?.shop_orders?.code ?? '', used: quotas.get(a.order_item_id)?.used ?? 0, limit: quotas.get(a.order_item_id)?.limit ?? 0, when: when(a.created_at) }));
   type Log = { id: string; account: string; app: string; found: boolean; created_at: string; shop_customers: { username: string } | null };

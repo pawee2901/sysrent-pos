@@ -17,17 +17,19 @@ export async function otpAgent(shopId: string): Promise<boolean> {
 }
 
 /** จำกัดการรับรหัสของลูกค้า: กี่ครั้งต่ออีเมล ต่อ วัน / สัปดาห์ / เดือน (0 = ไม่จำกัด · ยังไม่รัน 0050 = ไม่จำกัด) */
-export async function otpCustLimit(shopId: string): Promise<{ limit: number; period: Period }> {
+/** order = ต่อออเดอร์ (ค่าเริ่มต้นของทุกแพ็กเกจ) · วัน / สัปดาห์ / เดือน = ต่ออีเมล */
+export type CustPeriod = 'order' | Period;
+export async function otpCustLimit(shopId: string): Promise<{ limit: number; period: CustPeriod }> {
   const { data, error } = await db().from('shop_otp_config').select('cust_limit, cust_period').eq('shop_id', shopId).maybeSingle();
-  if (error || !data) return { limit: 0, period: 'day' };
-  const period = (PERIODS as readonly string[]).includes(data.cust_period as string) ? data.cust_period as Period : 'day';
+  if (error || !data) return { limit: 0, period: 'order' };
+  const period: CustPeriod = data.cust_period === 'order' ? 'order' : (PERIODS as readonly string[]).includes(data.cust_period as string) ? data.cust_period as Period : 'order';
   return { limit: Number(data.cust_limit ?? 0), period };
 }
 
 /** อีเมลนี้รับรหัสครบโควตาแล้วไหม → ข้อความแจ้งลูกค้า หรือ null (ยังรับได้) */
 export async function otpCustBlocked(shopId: string, account: string): Promise<string | null> {
   const { limit, period } = await otpCustLimit(shopId);
-  if (!limit) return null;
+  if (!limit || period === 'order') return null; // ต่อออเดอร์ = นับที่ pickItem
   const { count, error } = await db().from('shop_otp_requests').select('id', { count: 'exact', head: true })
     .eq('shop_id', shopId).eq('account', account).eq('found', true).gte('created_at', new Date(Date.now() - PERIOD_MS[period]).toISOString());
   if (error || (count ?? 0) < limit) return null;
