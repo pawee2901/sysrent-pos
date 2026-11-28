@@ -26,6 +26,7 @@ type S = { name: string; tagline: string; logo_url: string; accent: string; line
 type Look = { facebook_url: string; banner_url: string; banner_link: string; popup_text: string; popup_image: string; popup_link: string; bg_style: string; bg_image: string; bg_color: string; card_style: string };
 type Pic = 'banner_url' | 'popup_image' | 'bg_image';
 type Tab = 'shop' | 'look' | 'layout' | 'home' | 'pay' | 'notify' | 'admin';
+const TAB_ICON: Record<Tab, string> = { shop: '🏪', look: '🎨', layout: '🧩', home: '🖼️', pay: '💳', notify: '🔔', admin: '🔐' };
 const TABS: [Tab, string][] = [['shop', 'ข้อมูลร้าน'], ['look', 'หน้าตาร้าน'], ['layout', 'จัดหน้าร้าน'], ['home', 'รูปหน้าแรก · ป๊อปอัป'], ['pay', 'รับเงิน'], ['notify', 'แจ้งเตือน'], ['admin', 'บัญชีหลังบ้าน']];
 export type DiscordInit = { ready: boolean; set: boolean; hint: string; events: string[] };
 const BGS: [string, string][] = [['default', 'ตามธีม'], ['plain', 'เรียบ'], ['aurora', 'ออโรร่า'], ['dots', 'จุด'], ['color', 'สีที่เลือก'], ['image', 'รูปของร้าน']];
@@ -74,7 +75,21 @@ export function SettingsClient({ shape: shapeInit, initial, look: lookInit, them
     window.addEventListener('hashchange', read); // ช่องค้นหาที่แถบบน → สลับแท็บได้ทั้งที่อยู่หน้าเดิม
     return () => window.removeEventListener('hashchange', read);
   }, []);
-  const pickTab = (k: Tab) => { setTab(k); history.replaceState(null, '', `#${k}`); };
+  const [menu, setMenu] = useState(false);
+  const tabsBox = useRef<HTMLDivElement>(null);
+  const pickTab = (k: Tab) => {
+    setTab(k); setMenu(false); history.replaceState(null, '', `#${k}`);
+    // เลื่อนแท็บที่เลือกให้อยู่ในจอ (มือถือ)
+    requestAnimationFrame(() => tabsBox.current?.querySelector<HTMLElement>(`[data-tab="${k}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }));
+  };
+  // เมนู ☰: ปิดเมื่อแตะข้างนอก / กด Esc
+  useEffect(() => {
+    if (!menu) return;
+    const out = (e: MouseEvent) => { if (!tabsBox.current?.contains(e.target as Node)) setMenu(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(false); };
+    document.addEventListener('mousedown', out); window.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', out); window.removeEventListener('keydown', esc); };
+  }, [menu]);
 
   useEffect(() => { if (!msg) return; const t = setTimeout(() => setMsg(''), 3500); return () => clearTimeout(t); }, [msg]);
   async function save(next: S = f, done = 'บันทึกแล้ว ✓') {
@@ -146,10 +161,18 @@ export function SettingsClient({ shape: shapeInit, initial, look: lookInit, them
       <div className="page-head"><div><h1>ตั้งค่าร้าน</h1><p>เปลี่ยนแล้วกดบันทึก หน้าร้านอัปเดตทันที</p></div>
         {tab !== 'notify' && tab !== 'admin' && tab !== 'layout' && <div className="acts"><button type="button" className="btn primary" disabled={busy} onClick={saveAll}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button></div>}</div>
       {msg && <p role="status" className={`save-toast ${msg.includes('✓') ? 'ok' : 'bad'}`} onClick={() => setMsg('')}>{msg}</p>}
-      <nav className="set-tabs" role="tablist">{TABS.map(([k, l]) => (
-        <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => pickTab(k)}>
-          {l}{k === 'pay' && !payReady && <i className="dot-warn" title="ยังตั้งไม่ครบ" />}
-        </button>))}</nav>
+      <div className="tabs-wrap" ref={tabsBox}>
+        <nav className="set-tabs" role="tablist">{TABS.map(([k, l]) => (
+          <button key={k} type="button" role="tab" data-tab={k} aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => pickTab(k)}>
+            {l}{k === 'pay' && !payReady && <i className="dot-warn" title="ยังตั้งไม่ครบ" />}
+          </button>))}</nav>
+        {/* ☰ ดูทุกแท็บในครั้งเดียว ไม่ต้องเลื่อนข้าง */}
+        <button type="button" className={`tabs-burger${menu ? ' on' : ''}`} aria-label="ดูเมนูตั้งค่าทั้งหมด" aria-expanded={menu} onClick={() => setMenu(!menu)}><i /><i /><i /></button>
+        {menu && <div className="tabs-menu" role="menu">{TABS.map(([k, l]) => (
+          <button key={k} type="button" role="menuitem" className={tab === k ? 'on' : ''} onClick={() => pickTab(k)}>
+            <span aria-hidden>{TAB_ICON[k]}</span>{l}{k === 'pay' && !payReady && <i className="dot-warn" />}{tab === k && <b aria-hidden>✓</b>}
+          </button>))}</div>}
+      </div>
       <input ref={lookFile} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { uploadLook(e.target.files?.[0]); e.target.value = ''; }} />
       <div className={withPreview ? 'set-grid' : ''}>
         <div className="stack">
