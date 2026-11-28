@@ -1269,3 +1269,19 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
   .tm-acts { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
   .tm-acts .btn { width: 100%; }
 }
+
+/* สินค้าในมือถือ: แถวกระชับ — [โลโก้ ชื่อ · แพ็กเกจ | สวิตช์] / ราคา · สต็อก (ต่อกันบรรทัดเดียว) / ปุ่ม ชิดซ้ายใต้ชื่อ */
+@media (max-width: 860px) {
+  .tbl.ptbl tr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 14px 16px; }
+  .tbl.ptbl td.m-full { flex: 1 1 0; min-width: 0; order: 1; }
+  .tbl.ptbl td.m-tog { flex: none; order: 2; }
+  .tbl.ptbl td.m-price { order: 3; flex: none; margin-left: 52px; padding: 0; text-align: left; font-weight: 700; font-size: 15px; }
+  .tbl.ptbl td.m-stock { order: 4; flex: 1 1 0; min-width: 0; padding: 0; }
+  .tbl.ptbl td.m-stock .stockbar { width: auto; display: flex; align-items: center; gap: 8px; }
+  .tbl.ptbl td.m-stock .stockbar .meter { flex: 1; max-width: 90px; margin: 0; }
+  .tbl.ptbl td.m-acts { order: 5; flex: 1 1 100%; padding: 2px 0 0 52px; }
+  .tbl.ptbl td.m-acts .row-acts, .tbl tr > td.m-acts:last-child .row-acts { justify-content: flex-start; flex-wrap: nowrap; }
+  .tbl.ptbl td.m-acts .btn { flex: 1 1 0; max-width: 160px; }
+  .tbl.ptbl .prod > div { min-width: 0; }
+  .tbl.ptbl .prod b, .tbl.ptbl .prod small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+}

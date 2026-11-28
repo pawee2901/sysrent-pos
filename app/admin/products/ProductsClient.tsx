@@ -129,8 +129,8 @@ export function ProductsClient({ products, categories, usages, usageReady, usage
               <tr key={p.id} onClick={() => openProduct(p)} style={{ opacity: p.active ? 1 : .55 }}>
                 <td className="m-full"><div className="prod"><AppLogo image={p.image} template={p.template} name={p.name} /><div><b>{p.name}</b><small>{p.options.filter((o) => o.active).map((o) => o.name).join(' · ') || 'ยังไม่มีแพ็กเกจ'}</small></div></div></td>
                 <td className="m-hide"><span className="pill plain">{FULFILL_LABEL[p.fulfillment]}</span></td>
-                <td className="r num">{p.from !== null ? baht(p.from) : '—'}</td>
-                <td><div className="stockbar"><span className={`num${p.inStock ? '' : ' faint'}`}>{p.left === null ? 'ไม่จำกัด' : p.left ? `${p.left} ${p.fulfillment === 'slot' ? 'จอ' : 'ชิ้น'}` : 'หมด'}</span>{p.left !== null && <div className={`meter${p.left <= 3 ? ' warn' : ''}`}><i style={{ width: `${Math.min(100, p.left * 5)}%` }} /></div>}</div></td>
+                <td className="r num m-price">{p.from !== null ? baht(p.from) : '—'}</td>
+                <td className="m-stock"><div className="stockbar"><span className={`num${p.inStock ? '' : ' faint'}`}>{p.left === null ? 'ไม่จำกัด' : p.left ? `${p.left} ${p.fulfillment === 'slot' ? 'จอ' : 'ชิ้น'}` : 'หมด'}</span>{p.left !== null && <div className={`meter${p.left <= 3 ? ' warn' : ''}`}><i style={{ width: `${Math.min(100, p.left * 5)}%` }} /></div>}</div></td>
                 <td className="r num m-hide">{p.sold.toLocaleString('th-TH')}</td>
                 <td className="m-tog"><button type="button" className={`toggle${p.active ? ' on' : ''}`} aria-label="เปิด/ปิดขาย" onClick={(e) => { e.stopPropagation(); simple({ action: 'toggle', id: p.id, active: !p.active }); }} /></td>
                 <td className="m-acts" onClick={(e) => e.stopPropagation()}><div className="row-acts">
