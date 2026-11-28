@@ -81,8 +81,8 @@ export function FormBuilder({ initial, onSave, onCancel, busy }: { initial: DFor
   if (step === 'paste') return (
     <div className={css.box}>
       <b className={css.h}>1 · วางฟอร์มที่เคยส่งลูกค้า 1 ใบ (แบบกรอกข้อมูลแล้ว)</b>
-      <textarea className="input" rows={9} value={text} autoFocus onChange={(e) => setText(e.target.value)}
-        placeholder={'เช่น\n♡ Netflix 7 วัน ♡\nmail : someone@hotmail.com\npass : abc123\nจอที่ 02 | PIN : 2222\nหมดอายุ 27/11'} />
+      <textarea className="input" rows={13} value={text} autoFocus onChange={(e) => setText(e.target.value)}
+        placeholder={'เช่น\n🎀 𓂃 𝑴𝒖𝒂𝒚 𝑷𝒓𝒆𝒎𝒊𝒖𝒎 𓂃 ♡\n୨୧ 𝑫𝑰𝑺𝑵𝑬𝒀+ | 07 𝑫𝑨𝒀𝑺 ୨୧\n\n┏━━━━━━━━━━━━━━━━┓\n🥛 𝑨𝒄𝒄𝒐𝒖𝒏𝒕 𝑰𝒏𝒇𝒐\n✉ disney01@mymuay.com\n♡ จอที่ 02  |  PIN : 2222\n⏰ หมดอายุ 27/11 • 22:00\n┗━━━━━━━━━━━━━━━━┛\n\n 𓈒 ୨୧ 𝒎𝒚𝒎𝒖𝒂𝒚.𝒄𝒐𝒎 ୨୧ 𓈒'} />
       <div className={css.row}>
         <button type="button" className="btn ghost sm" onClick={onCancel}>ยกเลิก</button>
         <button type="button" className="btn primary sm" disabled={!text.trim()} onClick={() => { setPicked(new Set()); setNames({}); setStep('pick'); }}>ต่อไป →</button>
