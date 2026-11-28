@@ -42,8 +42,8 @@ export function ReportsClient({ rows, enabled, ready }: { rows: AdminReport[]; e
       {!ready && <div className="card card-pad" style={{ marginBottom: 16 }}><b>⚠️ ต้องรัน SQL 0013_reports_slip_price.sql ก่อน</b></div>}
       {ready && rows.length > 0 && (
         <nav className="set-tabs" role="tablist" aria-label="สถานะเรื่อง">
-          <button type="button" role="tab" aria-selected={tab === 'open'} className={tab === 'open' ? 'on' : ''} onClick={() => setTab('open')}>📥 รายการใหม่ <span className={`pill ${open ? 'warn' : 'plain'}`}>{open}</span></button>
-          <button type="button" role="tab" aria-selected={tab === 'done'} className={tab === 'done' ? 'on' : ''} onClick={() => setTab('done')}>✅ แก้เรียบร้อย <span className="pill plain">{doneRows.length}</span></button>
+          <button type="button" role="tab" aria-selected={tab === 'open'} className={tab === 'open' ? 'on' : ''} onClick={() => setTab('open')}>รายการใหม่ <span className={`pill ${open ? 'warn' : 'plain'}`}>{open}</span></button>
+          <button type="button" role="tab" aria-selected={tab === 'done'} className={tab === 'done' ? 'on' : ''} onClick={() => setTab('done')}>แก้เรียบร้อย <span className="pill plain">{doneRows.length}</span></button>
         </nav>
       )}
       {ready && !rows.length && <div className="card card-pad"><p className="muted" style={{ margin: 0 }}>ยังไม่มีลูกค้าแจ้งปัญหา</p></div>}
