@@ -33,5 +33,17 @@ export function accentVars(v: string): Record<string, string> {
   const preset = ACCENTS.find((a) => a.key === v);
   const main = preset?.main ?? (HEX.test(v) ? v : ACCENTS[0].main);
   const pair = preset?.pair ?? `color-mix(in oklab, ${main} 60%, #ec4899)`;
-  return { '--accent': main, '--accent-2': pair, '--accent-soft': `color-mix(in srgb, ${main} 12%, var(--surface))` };
+  return { '--accent': main, '--accent-2': pair, '--accent-soft': `color-mix(in srgb, ${main} 12%, var(--surface))`, '--accent-ink': inkOn(main) };
+}
+
+/** ตัวหนังสือบนพื้นสีร้าน: สีอ่อน (เช่น ชมพูพาสเทล) = ตัวหนังสือเข้ม · สีเข้ม = ขาว */
+export function inkOn(hex: string): string {
+  if (!HEX.test(hex)) return '#ffffff';
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  // คอนทราสต์กับขาว < 3 (ตัวหนังสือขาวมองไม่ค่อยเห็น) → ใช้สีเข้มแทน
+  return 1.05 / (lum + 0.05) < 3 ? '#1f1d2b' : '#ffffff';
 }
