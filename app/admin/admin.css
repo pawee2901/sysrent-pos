@@ -1236,3 +1236,36 @@ body.lb-dragging, body.lb-dragging * { cursor: grabbing !important; user-select:
   .report-edit .report-acts { display: grid; grid-template-columns: 1fr 1fr; }
   .report-edit .report-acts .btn { width: 100%; height: 40px; }
 }
+
+/* ทีมงาน (app/admin/team) */
+.tm-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 16px; align-items: start; }
+.tm-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tm-mode button { display: grid; gap: 2px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); font: inherit; font-weight: 700; font-size: 14px; text-align: left; color: var(--text); cursor: pointer; }
+.tm-mode button small { font-weight: 400; font-size: 12px; color: var(--muted); }
+.tm-mode button.on { border-color: var(--accent); background: var(--accent-soft); }
+.tm-req { color: var(--bad); font-style: normal; }
+.tm-perms { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 12px; background: var(--surface-2); font: inherit; text-align: left; cursor: pointer; color: var(--text); }
+.tm-perms > span, .tm-tags { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.tm-perms i, .tm-tags i { padding: 2px 9px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-style: normal; font-size: 12px; font-weight: 600; }
+.tm-perms b { flex: none; font-size: 13px; color: var(--accent); }
+.tm-how ol { margin: 0; padding: 14px 22px 0 40px; display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+.tm-how ol b { color: var(--text); }
+.tm-how .rn-copy, .tm-how > p { margin: 10px 22px; }
+.tm-how > p { margin-top: 0; margin-bottom: 18px; }
+.tm-row { display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-top: 1px solid var(--line); }
+.tm .card-head + .tm-row { border-top: 0; }
+.tm-av { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; color: var(--accent-ink, #fff); background: var(--grad, var(--accent)); }
+.tm-main { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.tm-main b { overflow-wrap: anywhere; }
+.tm-main small { font-size: 12.5px; color: var(--muted); }
+.tm-acts { flex: none; display: flex; gap: 6px; }
+@media (max-width: 900px) { .tm-grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) {
+  .tm .two { grid-template-columns: 1fr; }
+  .tm .input { font-size: 16px; }
+  .tm form .btn.primary { width: 100%; }
+  .tm-row { flex-wrap: wrap; padding: 14px 16px; align-items: flex-start; }
+  .tm-main { flex-basis: calc(100% - 52px); }
+  .tm-acts { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .tm-acts .btn { width: 100%; }
+}

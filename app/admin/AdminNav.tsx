@@ -12,8 +12,8 @@ import { NavSearch } from './NavSearch';
 import css from './nav.module.css';
 import { LATEST_NEWS } from '@/lib/whats-new';
 
-const LOCKS: Record<string, Feature> = { '/otp': 'otp', '/accounting': 'accounting', '/agents': 'agents', '/reports': 'report', '/renewals': 'renewals', '/line-bot': 'line_shop' };
-const PERM_OF: Record<string, string> = { ...Object.fromEntries(PERMS.map((p) => [p.href, p.key])), '/stock': 'products' };
+const LOCKS: Record<string, Feature> = { '/otp': 'otp', '/accounting': 'accounting', '/agents': 'agents', '/reports': 'report', '/renewals': 'renewals', '/line-bot': 'line_shop', '/team': 'staff' };
+const PERM_OF: Record<string, string> = { ...Object.fromEntries(PERMS.map((p) => [p.href, p.key])), '/stock': 'products', '/team': 'customers' };
 
 /** เมนูหลัก 6 หมวด · แต่ละหมวดมีแท็บย่อย (path, ชื่อ) — หน้าแรกของหมวด = แท็บแรกที่เข้าได้ */
 type Group = { k: string; l: string; i: string; items: [string, string][] };
@@ -22,7 +22,7 @@ const GROUPS: Group[] = [
   { k: 'products', l: 'สินค้า', i: 'products', items: [['/products', 'สินค้าทั้งหมด'], ['/stock', 'สต็อก'], ['/coupons', 'คูปอง'], ['/reviews', 'รีวิว']] },
   { k: 'orders', l: 'ออเดอร์', i: 'orders', items: [['/orders', 'ออเดอร์ทั้งหมด'], ['/reports', 'แจ้งปัญหา'], ['/renewals', 'ต่อเมล'], ['/otp', 'ค้นหา OTP']] },
   { k: 'money', l: 'การเงิน', i: 'payments', items: [['/payments', 'การชำระเงิน'], ['/accounting', 'บัญชี']] },
-  { k: 'customers', l: 'ลูกค้า', i: 'customers', items: [['/customers', 'ลูกค้าทั้งหมด'], ['/agents', 'ตัวแทน']] },
+  { k: 'customers', l: 'ลูกค้า', i: 'customers', items: [['/customers', 'ลูกค้าทั้งหมด'], ['/agents', 'ตัวแทน'], ['/team', 'ทีมงาน']] },
   { k: 'settings', l: 'ตั้งค่า', i: 'settings', items: [['/settings', 'ตั้งค่าร้าน'], ['/line-bot', 'บอท LINE'], ['/resize', 'ย่อรูป']] },
 ];
 /** หน้าที่ทุกคนในหลังบ้านใช้ได้ (ไม่ผูกสิทธิ์) */
@@ -39,7 +39,8 @@ export function AdminNav({ shop, counts, slip, plan, perms, staff = false, child
   const path = fromPublic(usePathname() ?? '/');
   // เมนูที่เข้าได้ (เจ้าของร้าน = ทุกเมนู · แอดมิน = ตามสิทธิ์) — key ของสิทธิ์ = path เมนู ('' = ภาพรวม)
   // + แพ็กเกจของร้านต้องมีฟีเจอร์นั้น (ใช้ไม่ได้ = ซ่อนเมนูไปเลย ไม่แสดงแบบติดกุญแจ)
-  const allowed = ([h]: [string, ...string[]]) => OPEN.has(h) || (perms.includes(PERM_OF[h] ?? '') && (!LOCKS[h] || can(plan, LOCKS[h])));
+  // ทีมงาน: เฉพาะเจ้าของร้าน (แอดมินพนักงานไม่เห็นเมนูนี้)
+  const allowed = ([h]: [string, ...string[]]) => (h === '/team' ? !staff : true) && (OPEN.has(h) || (perms.includes(PERM_OF[h] ?? '') && (!LOCKS[h] || can(plan, LOCKS[h]))));
   const cur = path.replace(/^\/admin/, '').split('/').slice(0, 2).join('/');
   const groups = GROUPS.map((g) => ({ ...g, items: g.items.filter(allowed) })).filter((g) => g.items.some(([h]) => !OPEN.has(h)));
   const group = groupOf(cur);

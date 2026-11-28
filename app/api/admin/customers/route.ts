@@ -21,6 +21,14 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('password'), id: z.string().uuid(), password: z.string().min(6, 'รหัสผ่านอย่างน้อย 6 ตัว').max(72) }),
   // ยศ: ลูกค้าทั่วไป · ตัวแทน (ร้าน Pro) · แอดมิน (เข้าหลังบ้านได้ · ตั้ง/ถอดได้เฉพาะเจ้าของร้าน)
   z.object({ action: z.literal('role'), id: z.string().uuid(), role: z.enum(['customer', 'agent', 'admin']), perms: z.array(z.string()).max(20).optional() }),
+  // เพิ่มทีมงาน (หน้า ทีมงาน · เจ้าของร้านเท่านั้น): ใช้บัญชีลูกค้าที่มีอยู่ หรือใส่รหัสผ่าน = สร้างบัญชีใหม่ให้เลย
+  z.object({
+    action: z.literal('staff_add'),
+    username: z.string().trim().toLowerCase().transform((u) => u.replace(/^@/, '')).pipe(z.string().regex(/^[a-z0-9_]{3,20}$/, 'ชื่อผู้ใช้ใช้ได้แค่ a-z, 0-9, _ ยาว 3–20 ตัว')),
+    password: z.union([z.literal(''), z.string().min(6, 'รหัสผ่านอย่างน้อย 6 ตัว').max(72)]).default(''),
+    name: z.string().trim().max(60).default(''),
+    perms: z.array(z.string()).max(20),
+  }),
   // แก้สิทธิ์ของแอดมิน (เจ้าของร้านเท่านั้น)
   z.object({ action: z.literal('perms'), id: z.string().uuid(), perms: z.array(z.string()).max(20) }),
 ]);
@@ -41,6 +49,26 @@ export async function POST(req: Request) {
   if (x.action === 'adjust') {
     const { error } = await d.rpc('shop_adjust_balance', { p_shop: a.shop.id, p_customer: x.id, p_amount: Math.round(x.amount * 100) / 100, p_note: x.note });
     if (error) return fail(/INSUFFICIENT/.test(error.message) ? 'ยอดเงินลูกค้าไม่พอให้หัก' : 'ปรับยอดไม่สำเร็จ', 400);
+    return NextResponse.json({ ok: true });
+  }
+  if (x.action === 'staff_add') {
+    if ((await adminKind()) !== 'owner') return fail('เพิ่มทีมงานได้เฉพาะเจ้าของร้าน', 403);
+    if (!can(a.shop.plan, 'staff')) return fail('แพ็กเกจของร้านยังไม่มีระบบทีมงาน', 403);
+    const perms = cleanPerms(x.perms);
+    if (!perms.length) return fail('เลือกเมนูที่ทีมงานเข้าได้อย่างน้อย 1 เมนู');
+    let { data: c, error: e0 } = await d.from('shop_customers').select('id, role').eq('shop_id', a.shop.id).eq('username', x.username).maybeSingle();
+    if (e0) return fail(/role/.test(e0.message) ? 'ยังไม่ได้รัน SQL 0017_customer_roles.sql' : 'บันทึกไม่สำเร็จ', 500);
+    if (c && x.password) return fail(`ชื่อผู้ใช้ @${x.username} มีคนใช้แล้ว · ถ้าเป็นบัญชีของทีมงานเอง ให้ลบรหัสผ่านออกแล้วกดเพิ่มใหม่`, 409);
+    if (!c) {
+      if (!x.password) return fail(`ไม่พบสมาชิก @${x.username} · ให้ทีมงานสมัครสมาชิกร้านก่อน หรือใส่รหัสผ่านเพื่อสร้างบัญชีให้เลย`, 404);
+      const ins = await d.from('shop_customers').insert({ shop_id: a.shop.id, username: x.username, pass_hash: await hashPassword(x.password), contact: x.name }).select('id, role').single();
+      if (ins.error) return ins.error.code === '23505' ? fail('ชื่อผู้ใช้นี้มีคนใช้แล้ว', 409) : fail('สร้างบัญชีไม่สำเร็จ', 500);
+      c = ins.data;
+    }
+    if (c.role === 'admin') return fail(`@${x.username} อยู่ในทีมอยู่แล้ว · กด "🔑 สิทธิ์" เพื่อแก้เมนูที่เข้าได้`, 409);
+    const { error } = await d.from('shop_customers').update({ role: 'admin', admin_perms: perms }).eq('id', c.id).eq('shop_id', a.shop.id);
+    if (error) return fail(/admin_perms/.test(error.message) ? 'ยังไม่ได้รัน SQL 0018_admin_perms.sql' : 'บันทึกไม่สำเร็จ', 500);
+    await d.from('shop_agents').delete().eq('shop_id', a.shop.id).eq('customer_id', c.id); // เป็นทีมงานแล้ว ไม่ใช่ตัวแทน
     return NextResponse.json({ ok: true });
   }
   if (x.action === 'perms') {
